@@ -19,3 +19,9 @@
 | 2026-11-17 | A | After seeding, the seed calls `reindex_all()` and then `on_request_created()` for each open seeded request (errors are printed, not fatal) | Seeded requests get real matches once C3 lands, and never stay stuck on `matching_status='pending'` |
 | 2026-11-17 | A | Completing a give/swap of a `services` item leaves it `available` | A service ("bike repair help") isn't used up by helping one person; physical items still become `unavailable` per `PLAN.md` §7.7 |
 | 2026-11-17 | A | `DELETE /items/{id}` returns 409 while the item is reserved or borrowed; archived items return 404 to everyone, owner included | Avoids orphaning a handoff in progress |
+| 2026-11-17 | A | On completion each party gets one `tx_update` ("All done — leave a review") rather than a status update plus a separate review prompt | Two notifications for the same tap is noise; every other transition notifies the other party as in `PLAN.md` §7.5 |
+| 2026-11-17 | A | Acting in a transaction thread (sending a message or an accept/decline/…) marks that thread read for the actor | Otherwise your own action's system message shows up as unread |
+| 2026-11-17 | A | Requests cannot be `private` (400); a closed request (fulfilled/cancelled) cannot be edited (409); cancelling or fulfilling one auto-declines its pending offers | A private request reaches nobody; pending offers on a closed request would hang forever |
+| 2026-11-17 | A | Private "I have this" items can be offered on a request (`item_id`), but not borrowed from their page | That is how an anonymous ping turns into an offer (C5); private items have no public page |
+| 2026-11-17 | A | `POST /events` accepts logged-out and bad-token calls (stored with no user) and swallows DB errors | `PLAN.md` §7.3: "never fails the client" |
+| 2026-11-17 | A | Removing an item auto-declines borrow requests and offers still waiting on it | Nobody is left waiting on an item that is gone |
