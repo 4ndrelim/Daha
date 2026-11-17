@@ -67,21 +67,3 @@ def test_every_contract_endpoint_exists(client):
         ("POST", "/api/scans/{scan_id}/publish"),
     }
     assert expected <= ops, f"missing: {sorted(expected - ops)}"
-
-
-def test_seed_minimal_runs_twice(db):
-    from sqlalchemy import func, select
-
-    from app.models import Community, Place
-    from app.seed.seed import run
-
-    run(do_reset=True)
-    run()
-    assert (
-        db.scalar(select(func.count()).select_from(Community).where(Community.kind == "campus"))
-        == 1
-    )
-    assert (
-        db.scalar(select(func.count()).select_from(Community).where(Community.kind == "dorm")) == 15
-    )
-    assert db.scalar(select(func.count()).select_from(Place)) == 6

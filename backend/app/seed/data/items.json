@@ -1,0 +1,1484 @@
+[
+ {
+  "name": "Black 1.5\" three-ring binder",
+  "description": "Sturdy black binder with pockets. Barely used.",
+  "category": "academic",
+  "condition": "like_new",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "campus",
+  "key": "maya-black-binder",
+  "max_lend_days": 14
+ },
+ {
+  "name": "TI-84 Plus graphing calculator",
+  "description": "Fresh batteries. Fine for Math 51 and Chem 31.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "dorm",
+  "key": "maya-ti84",
+  "max_lend_days": 7
+ },
+ {
+  "name": "Organic chemistry model kit",
+  "description": "Molecular model set, all pieces included.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "campus"
+ },
+ {
+  "name": "Black 2\" binder with dividers",
+  "description": "Black D-ring binder, comes with 8 tab dividers.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend",
+  "owner": "nina",
+  "vis": "dorm",
+  "key": "nina-black-binder"
+ },
+ {
+  "name": "Black three-ring binder (1 inch)",
+  "description": "Slim black binder, clear cover sleeve.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend",
+  "owner": "ethan",
+  "vis": "campus",
+  "key": "ethan-black-binder"
+ },
+ {
+  "name": "White 3\" binder",
+  "description": "Big white binder for lab reports.",
+  "category": "academic",
+  "condition": "fair",
+  "type": "give",
+  "owner": "hana",
+  "vis": "campus"
+ },
+ {
+  "name": "TI-Nspire CX II graphing calculator",
+  "description": "Color screen, charger included.",
+  "category": "academic",
+  "condition": "like_new",
+  "type": "lend",
+  "owner": "priya",
+  "vis": "campus",
+  "key": "priya-nspire",
+  "max_lend_days": 5
+ },
+ {
+  "name": "TI-84 Plus CE graphing calculator",
+  "description": "Light blue. Great for stats.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend",
+  "owner": "leo",
+  "vis": "dorm",
+  "key": "leo-ti84"
+ },
+ {
+  "name": "Casio scientific calculator",
+  "description": "fx-300ES. Allowed on most exams.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend",
+  "vis": "campus"
+ },
+ {
+  "name": "Lab goggles",
+  "description": "Splash-proof chemistry goggles, unscratched.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Lab coat (size M)",
+  "description": "White cotton lab coat, washed.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend",
+  "owner": "aisha"
+ },
+ {
+  "name": "Calculus: Early Transcendentals (Stewart)",
+  "description": "8th edition. Some highlighting.",
+  "category": "academic",
+  "condition": "fair",
+  "type": "lend"
+ },
+ {
+  "name": "CS 106B course reader",
+  "description": "Programming Abstractions in C++ reader.",
+  "category": "academic",
+  "condition": "good",
+  "type": "give",
+  "owner": "ivan",
+  "vis": "groups",
+  "group": "cs-106b-study-group"
+ },
+ {
+  "name": "iClicker 2",
+  "description": "Works; needs AAA batteries.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Whiteboard + markers (small)",
+  "description": "Lap-size whiteboard, 4 markers, eraser.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Index cards (500 pack)",
+  "description": "Unopened ruled index cards.",
+  "category": "academic",
+  "condition": "new",
+  "type": "give"
+ },
+ {
+  "name": "Drafting ruler and compass set",
+  "description": "For ME 101 sketches.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend",
+  "owner": "ethan"
+ },
+ {
+  "name": "Noise-cancelling study earmuffs",
+  "description": "For finals week in a loud hall.",
+  "category": "academic",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "USB-C to HDMI adapter",
+  "description": "Works with MacBooks and most laptops.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "dorm"
+ },
+ {
+  "name": "USB-C phone charger (20W)",
+  "description": "Fast charger with a 1 m cable.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "leo",
+  "vis": "dorm",
+  "key": "leo-usbc-charger"
+ },
+ {
+  "name": "MacBook charger (67W USB-C)",
+  "description": "Spare MagSafe-compatible brick.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "priya",
+  "vis": "campus"
+ },
+ {
+  "name": "Portable monitor (15.6\")",
+  "description": "USB-C powered second screen.",
+  "category": "tech",
+  "condition": "like_new",
+  "type": "lend",
+  "owner": "priya",
+  "vis": "dorm",
+  "max_lend_days": 3
+ },
+ {
+  "name": "Mechanical keyboard",
+  "description": "Brown switches, a bit loud.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Webcam (1080p)",
+  "description": "Logitech, clips onto a laptop.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Mirrorless camera (Sony a6000)",
+  "description": "With kit lens and SD card. Please be careful.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "alex",
+  "vis": "campus",
+  "max_lend_days": 3
+ },
+ {
+  "name": "Camera tripod",
+  "description": "Aluminum, extends to 60 inches.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "alex",
+  "vis": "campus",
+  "key": "alex-tripod"
+ },
+ {
+  "name": "Ring light",
+  "description": "10-inch ring light with phone holder.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "owen"
+ },
+ {
+  "name": "HDMI cable (2 m)",
+  "description": "Standard HDMI 2.0.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Ethernet cable (5 m)",
+  "description": "Cat 6.",
+  "category": "tech",
+  "condition": "good",
+  "type": "give"
+ },
+ {
+  "name": "Power bank (20,000 mAh)",
+  "description": "Charges a phone about 4 times.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Bluetooth speaker (JBL Flip)",
+  "description": "Loud for its size, waterproof.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "diego",
+  "vis": "campus"
+ },
+ {
+  "name": "Over-ear headphones",
+  "description": "Wired studio headphones.",
+  "category": "tech",
+  "condition": "fair",
+  "type": "lend"
+ },
+ {
+  "name": "Arduino Uno starter kit",
+  "description": "Breadboard, sensors, jumper wires.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "felix",
+  "vis": "groups",
+  "group": "robotics-club"
+ },
+ {
+  "name": "Raspberry Pi 4 (4 GB)",
+  "description": "With case and power supply.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "felix",
+  "vis": "groups",
+  "group": "robotics-club"
+ },
+ {
+  "name": "Soldering iron kit",
+  "description": "Iron, stand, solder, helping hands.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "ethan",
+  "vis": "groups",
+  "group": "robotics-club"
+ },
+ {
+  "name": "USB hub (7 port)",
+  "description": "Powered hub.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Label maker",
+  "description": "Brother P-touch with spare tape.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Graphics tablet (Wacom)",
+  "description": "Small Intuos, pen included.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "lila"
+ },
+ {
+  "name": "Projector (portable)",
+  "description": "720p mini projector, HDMI in.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend",
+  "owner": "chloe",
+  "vis": "groups",
+  "group": "film-society"
+ },
+ {
+  "name": "SD card reader",
+  "description": "USB-C and USB-A.",
+  "category": "tech",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Navy suit (40R jacket, 32x32 pants)",
+  "description": "Slim-fit navy suit, dry-cleaned. Perfect for interviews.",
+  "category": "clothing",
+  "condition": "like_new",
+  "type": "lend",
+  "owner": "omar",
+  "vis": "campus",
+  "key": "omar-navy-suit",
+  "max_lend_days": 3
+ },
+ {
+  "name": "Black blazer (women's size 6)",
+  "description": "Classic black blazer for interviews and presentations.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend",
+  "owner": "zoe",
+  "vis": "campus",
+  "key": "zoe-blazer",
+  "max_lend_days": 3
+ },
+ {
+  "name": "Dress shoes (men's 10, brown)",
+  "description": "Leather oxfords, polished.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend",
+  "owner": "omar",
+  "vis": "campus"
+ },
+ {
+  "name": "Ties (set of 4)",
+  "description": "Navy, burgundy, grey, striped.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend",
+  "owner": "omar"
+ },
+ {
+  "name": "White dress shirt (M)",
+  "description": "Ironed and ready.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Formal dress (black, size S)",
+  "description": "Knee-length, worn once to a formal.",
+  "category": "clothing",
+  "condition": "like_new",
+  "type": "lend",
+  "owner": "pia",
+  "vis": "campus"
+ },
+ {
+  "name": "Winter ski jacket (L)",
+  "description": "Warm and waterproof, for Tahoe trips.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend",
+  "owner": "jade"
+ },
+ {
+  "name": "Rain jacket (M)",
+  "description": "Packable shell.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Halloween costume: astronaut",
+  "description": "Full jumpsuit, size M.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend",
+  "owner": "zoe",
+  "vis": "campus"
+ },
+ {
+  "name": "70s disco costume",
+  "description": "Sequin shirt and flares.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend",
+  "owner": "zoe"
+ },
+ {
+  "name": "Graduation gown (5'6\"–5'8\")",
+  "description": "Black gown; cap not included.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend",
+  "owner": "noor",
+  "vis": "campus"
+ },
+ {
+  "name": "Stanford hoodie (M)",
+  "description": "Cardinal red, outgrown.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "give",
+  "owner": "noor",
+  "vis": "campus"
+ },
+ {
+  "name": "Scrubs (size S)",
+  "description": "Two sets, teal.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "give",
+  "owner": "aisha"
+ },
+ {
+  "name": "Hiking boots (women's 8)",
+  "description": "Broken in, waterproof.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend",
+  "owner": "emma",
+  "vis": "groups",
+  "group": "hiking-outdoors"
+ },
+ {
+  "name": "Clothes steamer",
+  "description": "Handheld steamer, heats in 30 seconds.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "dorm"
+ },
+ {
+  "name": "Winter gloves and beanie",
+  "description": "Clean, one size.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Dyson cordless vacuum",
+  "description": "V8 with charger. Empty the bin after, please.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "dorm",
+  "key": "maya-vacuum",
+  "max_lend_days": 1
+ },
+ {
+  "name": "Shark upright vacuum",
+  "description": "Corded, strong suction, a little heavy.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "alex",
+  "vis": "dorm",
+  "key": "alex-vacuum",
+  "max_lend_days": 1
+ },
+ {
+  "name": "Handheld vacuum",
+  "description": "Good for crumbs and car seats.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "leo",
+  "vis": "dorm",
+  "key": "leo-vacuum"
+ },
+ {
+  "name": "Electric kettle",
+  "description": "1.7 L, auto shut-off.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "dorm"
+ },
+ {
+  "name": "Desk lamp (LED)",
+  "description": "Dimmable with USB port.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "dorm"
+ },
+ {
+  "name": "Mini fridge",
+  "description": "Compact fridge, moving out so it's yours.",
+  "category": "dorm",
+  "condition": "fair",
+  "type": "give",
+  "owner": "noor",
+  "vis": "campus"
+ },
+ {
+  "name": "Microwave",
+  "description": "700W, clean.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "give",
+  "owner": "noor",
+  "vis": "campus"
+ },
+ {
+  "name": "Box fan",
+  "description": "20-inch, three speeds.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Space heater",
+  "description": "Small ceramic heater with tip-over switch.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Rice cooker (6 cup)",
+  "description": "Makes rice. Also oatmeal.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "leo",
+  "vis": "dorm"
+ },
+ {
+  "name": "Blender",
+  "description": "Smoothie-size personal blender.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Toaster",
+  "description": "Two-slice.",
+  "category": "dorm",
+  "condition": "fair",
+  "type": "lend"
+ },
+ {
+  "name": "Cast iron skillet (10\")",
+  "description": "Seasoned. Do not put it in the dishwasher!",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "leo"
+ },
+ {
+  "name": "Baking sheet and mixing bowls",
+  "description": "Two sheets, three bowls.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "grace"
+ },
+ {
+  "name": "Stand mixer",
+  "description": "KitchenAid. For serious baking only.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "grace",
+  "vis": "dorm",
+  "max_lend_days": 2
+ },
+ {
+  "name": "Iron and ironing board",
+  "description": "Full-size board.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Drying rack",
+  "description": "Folding clothes rack.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Step stool",
+  "description": "Two-step folding stool.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Full-length mirror",
+  "description": "Leans against the wall.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "give"
+ },
+ {
+  "name": "Air mattress (twin) + pump",
+  "description": "For guests. Holds air all night.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "vis": "campus"
+ },
+ {
+  "name": "Sleeping bag",
+  "description": "Rated to 30°F.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "emma",
+  "vis": "campus"
+ },
+ {
+  "name": "Extra pillows and blanket",
+  "description": "Clean guest bedding.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Humidifier",
+  "description": "Cool mist, small.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "French press",
+  "description": "8-cup glass press.",
+  "category": "dorm",
+  "condition": "good",
+  "type": "lend",
+  "owner": "aisha"
+ },
+ {
+  "name": "Spice rack (cumin, turmeric, chili, garam masala)",
+  "description": "Help yourself to a few spoonfuls.",
+  "category": "consumables",
+  "condition": "good",
+  "type": "give",
+  "owner": "leo",
+  "vis": "dorm",
+  "key": "leo-spices"
+ },
+ {
+  "name": "Olive oil (half bottle)",
+  "description": "Extra virgin.",
+  "category": "consumables",
+  "condition": "good",
+  "type": "give"
+ },
+ {
+  "name": "Laundry detergent pods",
+  "description": "About 20 left.",
+  "category": "consumables",
+  "condition": "new",
+  "type": "give"
+ },
+ {
+  "name": "Dish soap and sponges",
+  "description": "Unopened sponges.",
+  "category": "consumables",
+  "condition": "new",
+  "type": "give"
+ },
+ {
+  "name": "Instant ramen (12 pack)",
+  "description": "Bought too many.",
+  "category": "consumables",
+  "condition": "new",
+  "type": "give",
+  "owner": "mateo",
+  "vis": "campus"
+ },
+ {
+  "name": "Tea assortment",
+  "description": "Green, chai, peppermint, chamomile.",
+  "category": "consumables",
+  "condition": "new",
+  "type": "give",
+  "owner": "aisha"
+ },
+ {
+  "name": "Coffee beans (medium roast)",
+  "description": "Half a bag, whole bean.",
+  "category": "consumables",
+  "condition": "good",
+  "type": "give"
+ },
+ {
+  "name": "Flour, sugar, baking powder",
+  "description": "For emergency cookies.",
+  "category": "consumables",
+  "condition": "good",
+  "type": "give",
+  "owner": "grace"
+ },
+ {
+  "name": "Hot sauce collection",
+  "description": "Six bottles, mild to regrettable.",
+  "category": "consumables",
+  "condition": "good",
+  "type": "give",
+  "owner": "mateo"
+ },
+ {
+  "name": "Printer paper (ream)",
+  "description": "500 sheets, letter size.",
+  "category": "consumables",
+  "condition": "new",
+  "type": "give"
+ },
+ {
+  "name": "AA and AAA batteries",
+  "description": "A handful of each.",
+  "category": "consumables",
+  "condition": "new",
+  "type": "give"
+ },
+ {
+  "name": "Hand sanitizer and tissues",
+  "description": "Cold season kit.",
+  "category": "consumables",
+  "condition": "new",
+  "type": "give"
+ },
+ {
+  "name": "Shampoo and conditioner (travel size)",
+  "description": "Unopened hotel sizes.",
+  "category": "consumables",
+  "condition": "new",
+  "type": "give"
+ },
+ {
+  "name": "Granola bars (box)",
+  "description": "Peanut-free.",
+  "category": "consumables",
+  "condition": "new",
+  "type": "give"
+ },
+ {
+  "name": "2-person backpacking tent",
+  "description": "Light, easy setup. Stakes included.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "campus",
+  "key": "maya-tent",
+  "max_lend_days": 4
+ },
+ {
+  "name": "40L hiking backpack",
+  "description": "Osprey, fits most torsos.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "groups",
+  "group": "hiking-outdoors"
+ },
+ {
+  "name": "Yoga mat",
+  "description": "6 mm, purple.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "dorm"
+ },
+ {
+  "name": "Road bike (54 cm)",
+  "description": "For a day trip. Lock included.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "kai",
+  "vis": "campus",
+  "max_lend_days": 2
+ },
+ {
+  "name": "Bike helmet (M)",
+  "description": "Adjustable.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "kai",
+  "vis": "campus"
+ },
+ {
+  "name": "Bike lock (U-lock)",
+  "description": "Kryptonite with two keys.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Tennis rackets (2) and balls",
+  "description": "Wilson, grip size 4 1/4.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "hana",
+  "vis": "campus"
+ },
+ {
+  "name": "Soccer ball and cones",
+  "description": "Size 5 ball, 12 cones.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "ben"
+ },
+ {
+  "name": "Basketball",
+  "description": "Indoor/outdoor.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Frisbee (ultimate disc)",
+  "description": "175 g.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Volleyball",
+  "description": "For the sand courts.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Climbing shoes (men's 9) and chalk bag",
+  "description": "For the climbing wall.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "jade",
+  "vis": "groups",
+  "group": "hiking-outdoors"
+ },
+ {
+  "name": "Camping stove and fuel",
+  "description": "Single burner.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "jade",
+  "vis": "groups",
+  "group": "hiking-outdoors"
+ },
+ {
+  "name": "Trekking poles",
+  "description": "Collapsible pair.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "emma"
+ },
+ {
+  "name": "Dumbbells (2 × 15 lb)",
+  "description": "Rubber coated.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Foam roller",
+  "description": "High density.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Skateboard",
+  "description": "Complete board, decent bearings.",
+  "category": "sports",
+  "condition": "fair",
+  "type": "lend"
+ },
+ {
+  "name": "Swim goggles and kickboard",
+  "description": "For lap swim.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Moving boxes (10 medium)",
+  "description": "Flattened, used once. Free this weekend.",
+  "category": "moving",
+  "condition": "good",
+  "type": "give",
+  "owner": "noor",
+  "vis": "campus",
+  "key": "noor-moving-boxes",
+  "avail": "weekend"
+ },
+ {
+  "name": "Moving boxes (6 large) and packing tape",
+  "description": "Take them all.",
+  "category": "moving",
+  "condition": "good",
+  "type": "give",
+  "owner": "quinn",
+  "vis": "campus",
+  "key": "quinn-moving-boxes",
+  "avail": "weekend"
+ },
+ {
+  "name": "Hand truck / dolly",
+  "description": "Holds 300 lb. Great for move-out.",
+  "category": "moving",
+  "condition": "good",
+  "type": "lend",
+  "owner": "quinn",
+  "vis": "campus",
+  "max_lend_days": 2
+ },
+ {
+  "name": "Folding wagon cart",
+  "description": "Collapsible, big wheels.",
+  "category": "moving",
+  "condition": "good",
+  "type": "lend",
+  "owner": "sofia",
+  "vis": "campus"
+ },
+ {
+  "name": "Storage bins (4, with lids)",
+  "description": "66-quart clear bins.",
+  "category": "moving",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Bubble wrap roll",
+  "description": "About 30 feet left.",
+  "category": "moving",
+  "condition": "good",
+  "type": "give"
+ },
+ {
+  "name": "Tool kit (hammer, screwdrivers, pliers)",
+  "description": "Basic 40-piece set.",
+  "category": "moving",
+  "condition": "good",
+  "type": "lend",
+  "owner": "ethan",
+  "vis": "campus"
+ },
+ {
+  "name": "Cordless drill",
+  "description": "With bit set and charger.",
+  "category": "moving",
+  "condition": "good",
+  "type": "lend",
+  "owner": "ethan",
+  "vis": "dorm",
+  "max_lend_days": 2
+ },
+ {
+  "name": "Furniture sliders",
+  "description": "Set of 8.",
+  "category": "moving",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Ratchet straps (4)",
+  "description": "For tying things to a car roof.",
+  "category": "moving",
+  "condition": "good",
+  "type": "lend",
+  "owner": "theo",
+  "vis": "campus"
+ },
+ {
+  "name": "Party speaker (large)",
+  "description": "Bluetooth, with mic input.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend",
+  "owner": "diego",
+  "vis": "campus",
+  "max_lend_days": 2
+ },
+ {
+  "name": "String lights (3 strands)",
+  "description": "Warm white, 30 ft each.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend",
+  "owner": "sofia",
+  "vis": "campus"
+ },
+ {
+  "name": "Folding table (6 ft)",
+  "description": "Seats 8.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend",
+  "owner": "sofia",
+  "vis": "campus"
+ },
+ {
+  "name": "Folding chairs (8)",
+  "description": "Stackable.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend",
+  "owner": "sofia"
+ },
+ {
+  "name": "Projector screen (80\")",
+  "description": "Tripod stand.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend",
+  "owner": "chloe",
+  "vis": "groups",
+  "group": "film-society"
+ },
+ {
+  "name": "Popcorn machine",
+  "description": "Tabletop, movie-night size.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend",
+  "owner": "chloe",
+  "vis": "groups",
+  "group": "film-society"
+ },
+ {
+  "name": "Cooler (48 qt)",
+  "description": "Keeps ice for a day.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Karaoke microphones (2)",
+  "description": "Wireless, plug into any speaker.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend",
+  "owner": "diego"
+ },
+ {
+  "name": "Board game: Catan",
+  "description": "Base game, all pieces.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend",
+  "owner": "maya",
+  "vis": "dorm"
+ },
+ {
+  "name": "Board games bundle (Codenames, Avalon, Uno)",
+  "description": "Game night kit.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend",
+  "owner": "ben",
+  "vis": "campus"
+ },
+ {
+  "name": "Birthday decorations",
+  "description": "Banner, balloons, candles — leftover and unused.",
+  "category": "events",
+  "condition": "new",
+  "type": "give"
+ },
+ {
+  "name": "Picnic blanket",
+  "description": "Waterproof back.",
+  "category": "events",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Bike repair help (flats, brakes, chains)",
+  "description": "I'll help you fix your bike — bring it by GovCo. Free.",
+  "category": "services",
+  "condition": "good",
+  "type": "give",
+  "owner": "kai",
+  "vis": "campus",
+  "key": "kai-bike-repair"
+ },
+ {
+  "name": "Math 51 tutoring",
+  "description": "An hour of linear algebra help.",
+  "category": "services",
+  "condition": "good",
+  "type": "give",
+  "owner": "hana",
+  "vis": "campus"
+ },
+ {
+  "name": "CS 106B debugging help",
+  "description": "Stuck on recursion? I'll take a look.",
+  "category": "services",
+  "condition": "good",
+  "type": "give",
+  "owner": "ivan",
+  "vis": "campus"
+ },
+ {
+  "name": "Headshot photography",
+  "description": "LinkedIn-style headshots on campus.",
+  "category": "services",
+  "condition": "good",
+  "type": "exchange",
+  "owner": "owen",
+  "vis": "campus"
+ },
+ {
+  "name": "Resume review",
+  "description": "Econ/consulting resumes especially.",
+  "category": "services",
+  "condition": "good",
+  "type": "give",
+  "owner": "omar",
+  "vis": "campus"
+ },
+ {
+  "name": "Moving help (I have a car)",
+  "description": "Can help move boxes on weekends.",
+  "category": "services",
+  "condition": "good",
+  "type": "exchange",
+  "owner": "quinn",
+  "vis": "campus"
+ },
+ {
+  "name": "Guitar lessons for beginners",
+  "description": "Chords and strumming basics.",
+  "category": "services",
+  "condition": "good",
+  "type": "exchange",
+  "owner": "diego"
+ },
+ {
+  "name": "Sewing and hemming",
+  "description": "Small fixes: buttons, hems, patches.",
+  "category": "services",
+  "condition": "good",
+  "type": "give",
+  "owner": "lila",
+  "vis": "campus"
+ },
+ {
+  "name": "Ride to the airport (SFO/SJC)",
+  "description": "Depends on my schedule — ask.",
+  "category": "services",
+  "condition": "good",
+  "type": "exchange",
+  "owner": "theo",
+  "vis": "campus"
+ },
+ {
+  "name": "Baking lesson",
+  "description": "Learn sourdough or cookies.",
+  "category": "services",
+  "condition": "good",
+  "type": "exchange",
+  "owner": "grace"
+ },
+ {
+  "name": "Acoustic guitar",
+  "description": "Yamaha, with capo and tuner.",
+  "category": "other",
+  "condition": "good",
+  "type": "lend",
+  "owner": "diego",
+  "vis": "campus"
+ },
+ {
+  "name": "Ukulele",
+  "description": "Concert size.",
+  "category": "other",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Watercolor set and brushes",
+  "description": "24 colors.",
+  "category": "other",
+  "condition": "good",
+  "type": "lend",
+  "owner": "lila"
+ },
+ {
+  "name": "Sewing machine",
+  "description": "Basic Singer.",
+  "category": "other",
+  "condition": "good",
+  "type": "lend",
+  "owner": "lila",
+  "vis": "campus",
+  "max_lend_days": 3
+ },
+ {
+  "name": "Umbrella (large)",
+  "description": "Fits two people.",
+  "category": "other",
+  "condition": "good",
+  "type": "lend"
+ },
+ {
+  "name": "Picture hanging kit",
+  "description": "Hooks, nails, level.",
+  "category": "other",
+  "condition": "good",
+  "type": "give"
+ },
+ {
+  "name": "Plant cuttings (pothos)",
+  "description": "Rooted and ready.",
+  "category": "other",
+  "condition": "new",
+  "type": "give",
+  "owner": "aisha",
+  "vis": "campus"
+ },
+ {
+  "name": "Jumper cables",
+  "description": "12 ft, heavy duty.",
+  "category": "other",
+  "condition": "good",
+  "type": "lend",
+  "owner": "theo",
+  "vis": "campus"
+ },
+ {
+  "name": "Bike pump",
+  "description": null,
+  "category": "sports",
+  "condition": null,
+  "type": "lend",
+  "owner": "alex",
+  "vis": "private"
+ },
+ {
+  "name": "Bike pump",
+  "description": null,
+  "category": "sports",
+  "condition": null,
+  "type": "lend",
+  "owner": "nina",
+  "vis": "private"
+ },
+ {
+  "name": "Tool kit",
+  "description": null,
+  "category": "moving",
+  "condition": null,
+  "type": "lend",
+  "owner": "priya",
+  "vis": "private"
+ },
+ {
+  "name": "Iron",
+  "description": null,
+  "category": "dorm",
+  "condition": null,
+  "type": "lend",
+  "owner": "zoe",
+  "vis": "private"
+ },
+ {
+  "name": "HDMI cable",
+  "description": null,
+  "category": "tech",
+  "condition": null,
+  "type": "lend",
+  "owner": "jordan",
+  "vis": "private"
+ },
+ {
+  "name": "Extension cord",
+  "description": null,
+  "category": "tech",
+  "condition": null,
+  "type": "lend",
+  "owner": "leo",
+  "vis": "private"
+ },
+ {
+  "name": "Umbrella",
+  "description": null,
+  "category": "other",
+  "condition": null,
+  "type": "lend",
+  "owner": "ben",
+  "vis": "private"
+ },
+ {
+  "name": "Screwdriver set",
+  "description": null,
+  "category": "moving",
+  "condition": null,
+  "type": "lend",
+  "owner": "felix",
+  "vis": "private"
+ },
+ {
+  "name": "First aid kit",
+  "description": null,
+  "category": "other",
+  "condition": null,
+  "type": "lend",
+  "owner": "aisha",
+  "vis": "private"
+ },
+ {
+  "name": "Sewing kit",
+  "description": null,
+  "category": "other",
+  "condition": null,
+  "type": "lend",
+  "owner": "pia",
+  "vis": "private"
+ },
+ {
+  "name": "Stapler",
+  "description": null,
+  "category": "academic",
+  "condition": null,
+  "type": "lend",
+  "owner": "nina",
+  "vis": "private"
+ },
+ {
+  "name": "Scissors",
+  "description": null,
+  "category": "academic",
+  "condition": null,
+  "type": "lend",
+  "owner": "hana",
+  "vis": "private"
+ },
+ {
+  "name": "Duct tape",
+  "description": null,
+  "category": "moving",
+  "condition": null,
+  "type": "lend",
+  "owner": "kai",
+  "vis": "private"
+ },
+ {
+  "name": "Phone charger (Lightning)",
+  "description": null,
+  "category": "tech",
+  "condition": null,
+  "type": "lend",
+  "owner": "chloe",
+  "vis": "private"
+ },
+ {
+  "name": "Jumper cables",
+  "description": null,
+  "category": "other",
+  "condition": null,
+  "type": "lend",
+  "owner": "quinn",
+  "vis": "private"
+ },
+ {
+  "name": "Hammer",
+  "description": null,
+  "category": "moving",
+  "condition": null,
+  "type": "lend",
+  "owner": "mateo",
+  "vis": "private"
+ },
+ {
+  "name": "Measuring tape",
+  "description": null,
+  "category": "moving",
+  "condition": null,
+  "type": "lend",
+  "owner": "lila",
+  "vis": "private"
+ },
+ {
+  "name": "Flashlight",
+  "description": null,
+  "category": "other",
+  "condition": null,
+  "type": "lend",
+  "owner": "emma",
+  "vis": "private"
+ },
+ {
+  "name": "Lint roller",
+  "description": null,
+  "category": "clothing",
+  "condition": null,
+  "type": "lend",
+  "owner": "omar",
+  "vis": "private"
+ },
+ {
+  "name": "Power strip",
+  "description": null,
+  "category": "tech",
+  "condition": null,
+  "type": "lend",
+  "owner": "ivan",
+  "vis": "private"
+ },
+ {
+  "name": "Bike pump",
+  "description": null,
+  "category": "sports",
+  "condition": null,
+  "type": "lend",
+  "owner": "emma",
+  "vis": "private"
+ },
+ {
+  "name": "Tool kit",
+  "description": null,
+  "category": "moving",
+  "condition": null,
+  "type": "lend",
+  "owner": "diego",
+  "vis": "private"
+ }
+]
