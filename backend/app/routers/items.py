@@ -3,10 +3,10 @@ from sqlalchemy import select
 
 from app import schemas
 from app.api.deps import DB, CurrentUser, Viewer
-from app.models import Item
-from app.routers._stub import not_implemented
+from app.models import Item, ItemRequest
 from app.services import items as items_service
-from app.services import serializers
+from app.services import serializers, transactions
+from app.services.notifications import notify
 from app.services.viewer import build_viewer
 
 router = APIRouter(tags=["items"])
@@ -68,12 +68,49 @@ def update_item(
 
 
 @router.delete("/items/{item_id}", status_code=204)
-def delete_item(item_id: int, viewer: Viewer, db: DB):
-    items_service.archive_item(db, items_service.get_own_item(db, item_id, viewer))
+def delete_item(item_id: int, user: CurrentUser, viewer: Viewer, db: DB):
+    item = items_service.get_own_item(db, item_id, viewer)
+    items_service.archive_item(db, item)
+    transactions.decline_pending_for_item(db, item, user, f"“{item.name}” was removed.")
     db.commit()
     return Response(status_code=204)
 
 
 @router.post("/items/{item_id}/borrow", response_model=schemas.Transaction, status_code=201)
-def borrow_item(item_id: int, body: schemas.BorrowBody):
-    not_implemented()
+def borrow_item(item_id: int, body: schemas.BorrowBody, user: CurrentUser, viewer: Viewer, db: DB):
+    """Ask to borrow (or take / swap) an item straight from its page."""
+    item = items_service.get_visible_item(db, item_id, viewer)
+    if item.owner_id == user.id:
+        raise HTTPException(400, "This is your own item")
+    if item.status != "available" or item.visibility == "private":
+        raise HTTPException(409, "This item isn't available right now")
+    if transactions.has_open_transaction(db, item.id, user.id):
+        raise HTTPException(409, "You already asked for this item")
+    request = None
+    if body.request_id is not None:
+        request = db.get(ItemRequest, body.request_id)
+        if request is None or request.requester_id != user.id or request.status != "open":
+            raise HTTPException(400, "That isn't one of your open requests")
+    tx = transactions.create_transaction(
+        db,
+        item=item,
+        borrower=user,
+        initiated_by="borrower",
+        message=body.message,
+        start_date=body.start_date,
+        due_date=body.due_date,
+        request=request,
+    )
+    verb = {"lend": "borrow", "give": "have", "exchange": "swap for"}[item.transaction_type]
+    notify(
+        db,
+        item.owner_id,
+        "borrow_request",
+        f"{user.name.split()[0]} wants to {verb} your item",
+        item.name,
+        f"/messages/{tx.conversation_id}",
+        actor_id=user.id,
+        data={"transaction_id": tx.id, "item_id": item.id},
+    )
+    db.commit()
+    return transactions.transaction_out(db, tx, viewer)
