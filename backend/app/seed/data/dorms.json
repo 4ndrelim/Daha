@@ -1,0 +1,17 @@
+[
+  {"slug": "wilbur", "name": "Wilbur Hall", "emoji": "🌴", "lat": 37.42402, "lng": -122.16308},
+  {"slug": "stern", "name": "Stern Hall", "emoji": "⭐", "lat": 37.42447, "lng": -122.16568},
+  {"slug": "flomo", "name": "Florence Moore Hall (FloMo)", "emoji": "🌸", "lat": 37.422, "lng": -122.17213},
+  {"slug": "lagunita", "name": "Lagunita Court", "emoji": "🦆", "lat": 37.42518, "lng": -122.17634},
+  {"slug": "roble", "name": "Roble Hall", "emoji": "🌳", "lat": 37.42428, "lng": -122.17466},
+  {"slug": "branner", "name": "Branner Hall", "emoji": "🏛️", "lat": 37.42553, "lng": -122.16282},
+  {"slug": "toyon", "name": "Toyon Hall", "emoji": "🍃", "lat": 37.42606, "lng": -122.16339},
+  {"slug": "crothers", "name": "Crothers Hall", "emoji": "📖", "lat": 37.42597, "lng": -122.16513},
+  {"slug": "govco", "name": "Governor's Corner", "emoji": "🏡", "lat": 37.42519, "lng": -122.17961},
+  {"slug": "manzanita", "name": "Manzanita Park", "emoji": "🍎", "lat": 37.4255, "lng": -122.1612, "approx": true},
+  {"slug": "mirrielees", "name": "Mirrielees", "emoji": "🏢", "lat": 37.4237, "lng": -122.1583, "approx": true},
+  {"slug": "kimball", "name": "Kimball Hall", "emoji": "🎨", "lat": 37.42507, "lng": -122.16188},
+  {"slug": "ev", "name": "Escondido Village", "emoji": "🏘️", "lat": 37.42562, "lng": -122.15723},
+  {"slug": "the-row", "name": "The Row", "emoji": "🏠", "lat": 37.42178, "lng": -122.16866, "approx": true},
+  {"slug": "off-campus", "name": "Off-campus", "emoji": "🚲", "lat": null, "lng": null}
+]
