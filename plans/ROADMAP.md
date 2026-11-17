@@ -20,5 +20,6 @@ Rough order, from quickest win to biggest project:
 | 7 | **Campus assistant agent** (via HarnessRouter) | the DAHA API as tools | An agent in dorm channels that answers "anyone have X?" with matches, suggests an exchange spot and time, and sends return reminders. Built as a HarnessRouter harness that calls our API | time-to-match ↓, messages per handoff ↓ |
 | 8 | **Image search & dedupe** | item photos | Multimodal embeddings (CLIP or SigLIP): "find something like this photo", merging duplicate listings | search success on vague queries ↑ |
 | 9 | **Impact analytics** | completed transactions | $ saved and CO₂ avoided per borrow (category estimates) → dorm leaderboards and a partnership pitch to campus sustainability groups | adoption by dorms and clubs |
+| 10 | **Personal inventory & declutter** (`plans/C-ai-discovery.md` F1–F3) | private items, scan photo areas | "You already have this" check, "My stuff" search, a Keep / Share / Give-away swipe flow, a move-out week campaign | fewer duplicate requests; items rehomed per user |
 
 **Before any of this:** get at least 4 weeks of real usage from 2–3 dorms. Models are only as good as the data.

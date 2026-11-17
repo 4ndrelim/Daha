@@ -26,7 +26,7 @@ Search and match evals use the seeded database (`make seed`) and refer to items 
 | **Scan** (vision) | Greedy-match predicted items to labels (same category and name embedding similarity ≥ 0.75). Report precision, recall, F1; category accuracy; quantity exact-match; **sensitive leak rate** (sensitive items with `suggested_share=true`); p50/p95 seconds per photo; $ per photo | recall ≥ 0.70, precision ≥ 0.80, leak rate 0, p50 ≤ 45 s (HarnessRouter) |
 | **Parse** (request text) | Per-field accuracy; exact date match on dated examples | kind and category ≥ 0.85, dates ≥ 0.90 |
 | **Search** | nDCG@10, P@5, MRR; same-dorm-first rate; zero-result rate; p95 latency | nDCG@10 ≥ 0.80 on the 5 demo queries; 0 zero-result queries; p95 < 300 ms |
-| **Match** | recall@5 and precision@5 vs. expected items; notification precision (notified owners who actually hold a relevant item) | recall@5 ≥ 0.80 |
+| **Match** | recall@5 and precision@5 vs. expected items; notification precision (notified owners who actually hold a relevant item, for both public matches and anonymous private pings) | recall@5 ≥ 0.80 |
 
 ## Online metrics (from real usage, `evals/online_metrics.sql`)
 - time to first publish (from `scan_started` to `scan_published`)

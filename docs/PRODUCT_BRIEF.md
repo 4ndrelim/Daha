@@ -75,6 +75,10 @@ Keep the simplicity of chat-style requests and add structure underneath. Users c
 
 **Requests for unlisted items must work.** A request is a chance for someone to contribute an item they haven't listed yet.
 
+**From user feedback: private "I have this".** People can self-report things they own (bike pump, tool kit…) without listing them publicly. When someone asks for one, DAHA pings them automatically and anonymously. The requester never sees who was pinged unless that person offers. Later, the same private list can double as:
+- a **personal inventory** ("do I already have this?");
+- a **declutter tool** (Keep · Share · Give away), where neighbors come and pick things up instead of you hauling them to a donation center.
+
 **Lifecycle:** requested → offered → accepted → handed off → completed, with cancellation and return handling where applicable.
 
 ## 7. Search & discovery
@@ -146,6 +150,8 @@ Payments or selling, native mobile apps, push or email notifications, and multi-
 | Location & safety | ✅ dorm-level only, walking minutes, exchange spots, private pickup notes | |
 | Reputation, badges, reviews, invites, share links | ✅ | dorm leaderboard (P1) |
 | Mobile-first UI with 5-tab navigation | ✅ responsive web app | PWA (P1), native apps |
+| Private self-reported haves + anonymous pings (user feedback) | ✅ C5 | |
+| Personal inventory keeper + declutter mode (user feedback) | | F1–F3 in `plans/C-ai-discovery.md` |
 
 ## Resources
 - HarnessRouter (our AI credit for photo detection): https://harnessrouter.ai/docs · community: https://community.harnessrouter.ai/roadmap

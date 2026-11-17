@@ -7,7 +7,7 @@
 
 Contract: `PLAN.md` §6–§7. Your paths: `backend/app/ai/**`, `backend/app/discovery/**`, the C scripts and tests, `web` scan files, `evals/` (`PLAN.md` §4).
 
-**Order:** C0 → C1 → C4 → C2 → C3. B uses mocks for search, feed, and matches until C2 and C3 land.
+**Order:** C0 → C1 → C4 → C2 → C3 → C5. B uses mocks for search, feed, and matches until C2 and C3 land.
 
 ## 🧑 Human TODOs (C)
 - [ ] **HarnessRouter key:**
@@ -30,6 +30,7 @@ Contract: `PLAN.md` §6–§7. Your paths: `backend/app/ai/**`, `backend/app/dis
 - **Scan review:** how much to pre-fill, plus the default visibility and default type.
 - **Ranking:** closeness vs. best match vs. newest.
 - **Match notifications:** how eager to be (how many owners get pinged per request).
+- **Anonymous pings for private haves (C5):** the daily cap per person (default 3) and the wording.
 
 ## Research & proposals (async)
 Research these in small slices, after a milestone or while CI runs. **Never let research block a milestone.** Write each finding as a proposal (`AGENTS.md` §6, template in `docs/proposals/README.md`) and present it at the start of the next session.
@@ -197,6 +198,7 @@ Checkpoint: *"C1 ✅ scan API live (mock + harnessrouter). Scans + publish creat
   - "Skip for now" → `PATCH /me {onboarded:true}` → `/home`, plus the `onboarding_skipped` event
 - **Events:** `scan_started`, `scan_review_shown` (n detections, seconds), `scan_published` (published, edited, discarded, total seconds).
 - **Target:** with 2 photos on mock, the whole flow takes ≤ 60 s.
+- **Mobile:** this flow is mostly used on phones. Follow the mobile checklist in `plans/B-frontend.md` §1 (safe areas, ≥ 16 px inputs, the sticky Share bar stays above the keyboard), and test on a real iPhone and Android.
 
 Checkpoint: *"C4 ✅ scan flow live at /onboarding and /add/scan."*
 
@@ -282,7 +284,49 @@ Checkpoint: *"C2 ✅ search live. B: unmock search."*
   - fulfillable correctness
   - community feed visibility
 
-Checkpoint: *"C3 ✅ parse-request, matches, fulfillable, home + community feeds live. B: NEXT_PUBLIC_MOCK=none. Phase 1 done (C)."*
+Checkpoint: *"C3 ✅ parse-request, matches, fulfillable, home + community feeds live. B: NEXT_PUBLIC_MOCK=none."*
+
+## C5 — Private "I have this" + anonymous pings (from user feedback)
+**Why:** many people won't post a public listing, but they're happy to help when asked. They tick what they own ("bike pump", "tool kit"). Nobody sees the list, and DAHA quietly pings them when someone nearby needs one.
+
+- **Matching** (`on_request_created` / `on_request_updated`):
+  - Also score **private** items with `pings_enabled=true` whose owner can view the request and isn't the requester. Use the same score and threshold as public matches.
+  - Store these matches in `request_matches` with `anonymous=true`.
+  - **Never** return them in match lists, search, or feeds.
+- **Pings:** send `private_match` to the top 5 distinct private owners.
+  - Wording: "Someone in FloMo needs a bike pump. You said you have one — want to help? They won't know it's you unless you offer."
+  - Link: `/requests/{id}?offer_item={item_id}`.
+  - At most 3 pings per person per day (count the last 24 h). Never ping the same person twice for one request.
+- **`GET /requests/{id}/matches`** returns `private_pinged_count`: how many anonymous pings were sent for this request. It's a number only, never who.
+- **"You could help"** (`/me/fulfillable` and the home feed) includes **my own** private items. They're mine, so that's allowed.
+- **Quick checklist: "Tick what you have"**, shown in `/onboarding` next to the photo scan and on the scan success screen.
+  - About 30 common lendables with emoji, listed in `web/src/components/scan/commonHaves.ts`: bike pump, tool kit, HDMI cable, extension cord, iron, umbrella, calculator, phone charger…
+  - Ticked items become private items through `POST /api/items/batch`.
+- **Scan review (C4):** each detection, and the defaults bar, gets a **Private: ping me only** choice next to My dorm / Campus / Groups.
+- **Tests:**
+  - private items never appear to others: search, feeds, profiles, match lists, direct URL → 404
+  - one ping per owner per request, and the cap of 3 per day
+  - the requester's view shows only the count
+  - offering with a private item works, and reveals the owner only through the offer
+- **Depends on:**
+  - A2: private items and `POST /items/batch`
+  - B3–B5: the Private option, the "quietly asked N people" line, and the notification's Help anonymously button
+
+Checkpoint: *"C5 ✅ private haves + anonymous pings live. B: show the Private option, the 'quietly asked N people' line, and private_match notifications. Phase 1 done (C)."*
+
+## Follow-ups after the MVP (from user feedback; build after `v0.1-mvp`, proposal first)
+These build on C5's private inventory. Start each one as a proposal (`AGENTS.md` §6) so the team can prioritise it after the demo feedback.
+
+- **F1 · Personal inventory keeper.** "My stuff" becomes a searchable list of everything you own, shared and private, grouped by area (desk, closet, kitchen…; the area comes from the scan photo).
+  - **"You already have this":** when you write a request, DAHA first checks your own inventory ("You may already have one: HDMI cable, desk drawer"). That saves asking, or buying, for nothing.
+  - **Find my stuff:** search your own things.
+  - Needs: an optional `storage_spot` field on items (A, additive); the "My stuff" view (B); the own-inventory check in the request composer (C, same embeddings).
+- **F2 · Declutter mode ("Marie Kondo").** Swipe through your inventory: **Keep · Share · Give away**.
+  - Give-away items are posted as Free with a pickup window ("come grab it by Sunday"), and neighbors come and take them. No throwing things out, no trip to a donation center.
+  - A feel-good summary at the end: "You rehomed 12 items."
+  - Pairs well with a **move-out week** campaign, when a lot of stuff gets thrown away on campus.
+  - Needs: the swipe flow (B); bulk visibility and type changes (A, additive); give-away boosts in feeds (C).
+- **F3 · Gentle nudges.** For example "You haven't lent your tent in 6 months — share it or give it away?", or seasonal prompts like "finals: share your calculator". Opt-in and rate-limited. Ties into `plans/ROADMAP.md` #3–#5.
 
 ## After Phase 1 (C)
 Drive integration with `plans/INTEGRATION.md`, then evals with `plans/EVALS.md`.

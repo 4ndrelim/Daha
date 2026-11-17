@@ -93,7 +93,17 @@ Checkpoint: *"A1 ✅ live: auth, me, users, communities, places, uploads. B: rem
   - Schedule `hooks.on_item_saved`.
 - **Item endpoints:** create, get (pickup-note privacy, `can_borrow`, `active_transaction_id`), patch (owner only; status limited to available ↔ unavailable; visibility changes rewrite audiences; reschedule the hook), delete (sets `archived`), and `/me/items`.
 - **Full seed** (`PLAN.md` §8). Transactions, messages, and reviews are inserted directly, keeping ledger and badges consistent. The hero accounts must look alive. Finish by calling `reindex_all()`.
-- **Tests:** item permissions, validation errors, pickup-note privacy, and that the seed runs twice cleanly.
+- **Private items** (for C5):
+  - `visibility='private'` gets no audience rows, so only the owner can see the item.
+  - Store `pings_enabled` (default true).
+  - Add `POST /api/items/batch`: ≤ 30 items in one transaction, with the same validation as `POST /items`. It powers the "tick what you have" checklist.
+  - Private items earn no "item published" points (`PLAN.md` §7.8).
+  - Seed about 20 private haves (`PLAN.md` §8).
+- **Tests:**
+  - item permissions, validation errors, pickup-note privacy
+  - private items are invisible to everyone else: `/users/{id}/items`, direct URL → 404
+  - the batch endpoint
+  - the seed runs twice cleanly
 
 Checkpoint: *"A2 ✅ items live + seed (`make seed`). Demo logins: maya@demo.daha, jordan@demo.daha, sam@demo.daha / daha-demo. B: unmock items. C: real data for search & matching."*
 

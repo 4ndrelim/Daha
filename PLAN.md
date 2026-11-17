@@ -33,6 +33,7 @@ Read this together with `AGENTS.md` (rules), `CONTRIBUTING.md` (git), `ARCHITECT
 11. Share links for requests (`/r/{id}`).
 12. Privacy rules in `ARCHITECTURE.md` §8.
 13. Logging for future ML: events, search logs, and scan detections with the user's edits.
+14. **Private "I have this"** (from user feedback): people tick things they own (bike pump, tool kit…) without posting a public listing. When someone asks for one, DAHA pings them anonymously, and the requester only sees "quietly asked N people nearby". Owner: C (C5), with small pieces in A2 and B3–B5.
 
 **P1: stretch.** Claim an item in the group chat first. The list is ordered from most to least valuable.
 1. Reverse matching: notify an item's owner about open requests the item matches (C).
@@ -52,7 +53,7 @@ Read this together with `AGENTS.md` (rules), `CONTRIBUTING.md` (git), `ARCHITECT
 | Phase | Person A | Person B | Person C |
 |---|---|---|---|
 | **0** (parallel) | **P0-A**: repo, backend skeleton, all DB models, schemas, 501 stubs | **P0-B**: web skeleton, `types.ts`, API client, app shell | **C0**: HarnessRouter spike (no repo needed) |
-| **1** (parallel) | A1 auth/communities/uploads/visibility → A2 items + seed → A3 requests/transactions/chat/notifications → A4 smoke script → A5 Docker + CI | B1 mocks + auth + home → B2 explore → B3 add/listing/request/item → B4 request detail/chat/transactions → B5 communities/profile/notifications → B6 polish + go live | C1 AI layer + scan API → C4 scan UI → C2 embeddings + search → C3 parsing + matching + feeds |
+| **1** (parallel) | A1 auth/communities/uploads/visibility → A2 items + seed → A3 requests/transactions/chat/notifications → A4 smoke script → A5 Docker + CI | B1 mocks + auth + home → B2 explore → B3 add/listing/request/item → B4 request detail/chat/transactions → B5 communities/profile/notifications → B6 polish + go live | C1 AI layer + scan API → C4 scan UI → C2 embeddings + search → C3 parsing + matching + feeds → C5 private haves + anonymous pings |
 | **2** (together) | fixes A issues | fixes B issues | **drives integration** (`plans/INTEGRATION.md`) |
 | **3** (sequential) | deploy | polish from feedback | **evals** (`plans/EVALS.md`) |
 
@@ -66,6 +67,7 @@ Read this together with `AGENTS.md` (rules), `CONTRIBUTING.md` (git), `ARCHITECT
 | C2 | B drops `search` |
 | A3 | B drops `requests,transactions,conversations,notifications,events`. C can test match notifications end to end |
 | C3 | B drops `feed,matches,ai` → `NEXT_PUBLIC_MOCK=none` |
+| C5 | B shows the Private option, the "quietly asked N people" line, and `private_match` notifications live |
 
 ## 4. Repo layout & ownership
 ```
@@ -188,12 +190,12 @@ Unless a table says otherwise:
 | `memberships` | PK(`user_id`, `community_id`), `role` (member\|admin) default member | Every user: campus + ≤ 1 dorm (enforced in the service) + groups |
 | `places` | `name`, `lat`, `lng`, `description` null | Campus exchange points |
 | `uploads` | `owner_id` FK, `path`, `url`, `width`, `height`, `sha256` | JPEG, metadata stripped |
-| `items` | `owner_id` FK, `name`, `description` null, `category`, `quantity` int default 1, `condition` null, `transaction_type` (lend\|give\|exchange), `max_lend_days` null, `available_from` date null, `available_until` date null, `visibility` (campus\|dorm\|groups), `status` (available\|reserved\|borrowed\|unavailable) default available, `archived` bool default false, `pickup_place_id` FK places null, `pickup_note` null, `source` (manual\|scan\|offer), `scan_detection_id` FK null, **C:** `embedding VECTOR(384)` null, `search_tsv TSVECTOR GENERATED` (name weight A, description weight B), `updated_at` | GIN on `search_tsv`, trigram GIN on `name`, HNSW (`vector_cosine_ops`) on `embedding`, index on (`owner_id`), (`status`) where not archived |
+| `items` | `owner_id` FK, `name`, `description` null, `category`, `quantity` int default 1, `condition` null, `transaction_type` (lend\|give\|exchange), `max_lend_days` null, `available_from` date null, `available_until` date null, `visibility` (campus\|dorm\|groups\|private), `pings_enabled` bool default true, `status` (available\|reserved\|borrowed\|unavailable) default available, `archived` bool default false, `pickup_place_id` FK places null, `pickup_note` null, `source` (manual\|scan\|offer), `scan_detection_id` FK null, **C:** `embedding VECTOR(384)` null, `search_tsv TSVECTOR GENERATED` (name weight A, description weight B), `updated_at` | GIN on `search_tsv`, trigram GIN on `name`, HNSW (`vector_cosine_ops`) on `embedding`, index on (`owner_id`), (`status`) where not archived |
 | `item_images` | `item_id` FK, `upload_id` FK, `position` int | First image = thumbnail |
 | `item_audiences` | PK(`item_id`, `community_id`) | Index on `community_id` |
 | `requests` | `requester_id` FK, `raw_text`, `title`, `item_name` null, `category` null, `attributes` JSONB default `{}`, `quantity` default 1, `needed_from` date null, `needed_until` date null, `duration_days` null, `transaction_type` null, `visibility`, `status` (open\|in_progress\|fulfilled\|cancelled) default open, `pickup_place_id` null, **C:** `matching_status` (pending\|done) default pending, `ai_enriched` bool default false, `embedding VECTOR(384)` null, `search_tsv GENERATED` (title, item_name, raw_text), `updated_at`, `fulfilled_at` null | `expired` is computed, not stored (see §7.7) |
 | `request_audiences` | PK(`request_id`, `community_id`) | |
-| `request_matches` (C) | PK(`request_id`, `item_id`), `score` float, `reason` text, `notified` bool default false | Written by C's matching |
+| `request_matches` (C) | PK(`request_id`, `item_id`), `score` float, `reason` text, `notified` bool default false, `anonymous` bool default false (a match on a private item; never shown to the requester) | Written by C's matching |
 | `transactions` | `kind`, `status` (requested\|offered\|accepted\|handed_off\|completed\|declined\|cancelled), `item_id` FK, `request_id` FK null, `owner_id` FK, `borrower_id` FK, `initiated_by` (owner\|borrower), `message` null, `start_date` null, `due_date` null, `pickup_place_id` null, `pickup_note` null, `conversation_id` FK, `accepted_at`/`handed_off_at`/`completed_at`/`declined_at`/`cancelled_at` null, `updated_at` | Indexes on owner, borrower, item |
 | `transaction_events` | `transaction_id` FK, `status`, `actor_id` null, `note` null | Timeline |
 | `conversations` | `kind` (direct\|transaction), `transaction_id` FK unique null, `last_message_at` null | Direct = one per user pair |
@@ -243,14 +245,14 @@ export interface Page<T> { items: T[]; next_offset: number | null }
 export type Category = "academic" | "tech" | "clothing" | "dorm" | "consumables" | "sports" | "moving" | "events" | "services" | "other";
 export type Condition = "new" | "like_new" | "good" | "fair" | "worn";
 export type TransactionType = "lend" | "give" | "exchange";   // UI labels: Lend · Free · Swap
-export type Visibility = "campus" | "dorm" | "groups";
+export type Visibility = "campus" | "dorm" | "groups" | "private";   // private = only me; used only for anonymous pings
 export type ItemStatus = "available" | "reserved" | "borrowed" | "unavailable";
 export type RequestStatus = "open" | "in_progress" | "fulfilled" | "cancelled" | "expired";
 export type TxStatus = "requested" | "offered" | "accepted" | "handed_off" | "completed" | "declined" | "cancelled";
 export type TxAction = "accept" | "decline" | "cancel" | "hand_off" | "mark_returned";
 export type CommunityKind = "campus" | "dorm" | "group";
 export type GroupType = "club" | "class" | "research" | "team" | "org" | "other";
-export type NotificationType = "match" | "offer" | "borrow_request" | "tx_update" | "review" | "badge" | "system";
+export type NotificationType = "match" | "offer" | "borrow_request" | "tx_update" | "review" | "badge" | "system" | "private_match";
 export type ItemSource = "manual" | "scan" | "offer";
 export type Domain = "auth" | "users" | "communities" | "places" | "uploads" | "items" | "requests" | "transactions"
   | "conversations" | "notifications" | "events" | "search" | "feed" | "matches" | "ai" | "scans";
@@ -294,7 +296,7 @@ export interface ItemImage { id: ID; url: string; width: number; height: number 
 export interface ItemCard {
   id: ID; name: string; category: Category; transaction_type: TransactionType; status: ItemStatus;
   condition: Condition | null; quantity: number; thumbnail_url: string | null; owner: UserRef;
-  visibility: Visibility; community_label: string;      // "Campus" | dorm name | first group name (+N)
+  visibility: Visibility; community_label: string;      // "Campus" | dorm name | first group name (+N) | "Only you" (private)
   distance_min: number | null; same_dorm: boolean; created_at: ISODateTime;
   match_score: number | null;    // only in search/match/fulfillable responses, else null
   match_reason: string | null;   // e.g. "Same dorm · 2 min walk"
@@ -305,6 +307,7 @@ export interface ItemDetail extends ItemCard {
   pickup_place: Place | null;
   pickup_note: string | null;    // only for the owner, or the counterparty of an accepted/handed_off transaction
   group_ids: ID[];               // owner only, else []
+  pings_enabled: boolean;        // owner can turn anonymous pings off for this item
   is_mine: boolean; can_borrow: boolean; active_transaction_id: ID | null;
   source: ItemSource; updated_at: ISODateTime;
 }
@@ -314,9 +317,12 @@ export interface ItemCreate {
   available_from?: ISODate | null; available_until?: ISODate | null;
   visibility: Visibility; group_ids?: ID[]; pickup_place_id?: ID | null; pickup_note?: string | null;
   image_upload_ids?: ID[];       // ≤ 6, first = thumbnail
+  pings_enabled?: boolean;       // default true
 }
 export type ItemUpdate = Partial<ItemCreate> & { status?: "available" | "unavailable" };
 export interface BorrowBody { message?: string | null; start_date?: ISODate | null; due_date?: ISODate | null; request_id?: ID | null }
+export interface ItemsBatchBody { items: ItemCreate[] }   // ≤ 30, e.g. the "tick what you have" checklist
+export interface ItemsBatchResponse { items: ItemDetail[] }
 
 // ---------- requests ----------
 export interface ParsedRequest {
@@ -344,7 +350,7 @@ export interface RequestCreate {
 }
 export type RequestUpdate = Partial<RequestCreate> & { status?: "cancelled" | "fulfilled" };
 export interface OfferCreate { item_id?: ID | null; new_item?: ItemCreate | null; message?: string | null }  // exactly one of item_id / new_item
-export interface MatchesResponse { matching_status: "pending" | "done"; items: ItemCard[] }
+export interface MatchesResponse { matching_status: "pending" | "done"; items: ItemCard[]; private_pinged_count: number }  // anonymous pings sent (a number only, never who)
 
 // ---------- transactions & reviews ----------
 export interface TxTimelineEntry { status: TxStatus; at: ISODateTime; by: UserRef | null; note: string | null }
@@ -431,6 +437,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | A | `GET /places` | | `Place[]` | Exchange points, with `distance_min` |
 | A | `POST /uploads` | multipart `file` | `Upload` 201 | jpeg/png/webp/heic, ≤ 15 MB; re-encoded as JPEG ≤ 1600 px with metadata stripped |
 | A | `POST /items` | `ItemCreate` | `ItemDetail` 201 | Schedules `on_item_saved` |
+| A | `POST /items/batch` | `ItemsBatchBody` | `ItemsBatchResponse` 201 | ≤ 30 items in one transaction, with the same validation as `POST /items`. Used by the "tick what you have" checklist |
 | A | `GET /items/{id}` · `PATCH` · `DELETE` | `ItemUpdate` | `ItemDetail` / 204 | Owner-only writes; DELETE sets `archived=true` |
 | A | `GET /me/items` | `status?` | `ItemCard[]` | All my non-archived items |
 | A | `POST /items/{id}/borrow` | `BorrowBody` | `Transaction` 201 | 409 if the item isn't available or the viewer already has an open transaction on it |
@@ -455,7 +462,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | C | `GET /search` | `q, kind=all\|items\|requests\|communities, category, community_id, scope=campus\|dorm, max_walk_min, transaction_type, condition, available_only=true, offset, limit` | `SearchResponse` | Explicit params override what was parsed from `q`; an empty `q` = browse |
 | C | `GET /feed/home` | | `HomeFeed` | |
 | C | `GET /communities/{id}/feed` | `kind=all\|items\|requests, offset, limit` | `Page<FeedEntry>` | Newest first |
-| C | `GET /requests/{id}/matches` | | `MatchesResponse` | Only items visible to the viewer |
+| C | `GET /requests/{id}/matches` | | `MatchesResponse` | Only items visible to the viewer, plus `private_pinged_count` (a number only, never who) |
 | C | `GET /me/fulfillable` | | `FulfillableRequest[]` | ≤ 20 |
 | C | `POST /ai/parse-request` | `ParseRequestBody` | `ParsedRequest` | Rule-based, < 300 ms |
 | C | `POST /scans` | `ScanCreate` | `Scan` 201 | 1..`AI_MAX_IMAGES_PER_SCAN` of your own uploads; 429 at the daily or budget limit |
@@ -469,6 +476,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
   - campus → {campus}
   - dorm → {owner's dorm} (400 if the owner has no dorm)
   - groups → `group_ids` (must be non-empty, and the owner must be a member of each)
+  - private → no audiences, so only the owner ever sees the item. It never appears in search, feeds, profiles, or match lists. C's matching uses it only for anonymous pings (§7.5).
 - **Discovery** (search, feeds, matches) shows only items with status available, reserved, or borrowed. Unavailable and archived items are excluded.
 - **Expired requests** are computed when read: `needed_until < today`, or no dates and older than 14 days. Expired requests are excluded from discovery.
 
@@ -476,6 +484,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | Type | Recipient | Trigger | Link |
 |---|---|---|---|
 | `match` | owner of a matching item | C's matching (top 5 distinct owners per request) | `/requests/{id}` |
+| `private_match` | owner of a matching **private** item who can view the request | C's matching; ≤ 3 per person per day; skipped when `pings_enabled=false`. The requester is never told who | `/requests/{id}?offer_item={item_id}` |
 | `borrow_request` | item owner | `POST /items/{id}/borrow` | `/messages/{conversation_id}` |
 | `offer` | requester | `POST /requests/{id}/offers` | `/requests/{id}` |
 | `tx_update` | the other party | accept, decline, cancel, hand_off, mark_returned, plus completion (both parties: "leave a review") | `/messages/{conversation_id}` |
@@ -517,7 +526,7 @@ Transitions and side effects (all inside one DB transaction):
 ### 7.8 Points, levels, badges (A's `services/points.py`)
 | Event | Who | Points |
 |---|---|---|
-| Item published (first 10 per day) | owner | +2 |
+| Item published, not private (first 10 per day) | owner | +2 |
 | Lend completed | owner | +10 |
 | Give completed | owner | +15 |
 | Exchange completed | both | +10 |
@@ -530,7 +539,7 @@ Transitions and side effects (all inside one DB transaction):
 **Badges** (re-checked after every relevant event):
 | Badge | Rule |
 |---|---|
-| `first_share` 🌱 | ≥ 1 published item |
+| `first_share` 🌱 | ≥ 1 published non-private item |
 | `first_lend` 🤝 | ≥ 1 completed lend as owner |
 | `generous` 🎁 | ≥ 3 completed gives |
 | `request_hero` 🦸 | ≥ 5 fulfilled requests as owner |
@@ -612,6 +621,7 @@ def reindex_all() -> int: ...                         # stub: return 0
   - Visibility mix: ~60% dorm, ~30% campus, ~10% groups.
   - Images: none. The web app shows an emoji tile per category.
   - Must include matches for the demo queries: several black binders, graphing calculators, two vacuums, a navy suit and a blazer, moving boxes available this weekend, and a "bike repair help" service.
+- **Private haves:** about 20 items with `visibility='private'` (bike pump, tool kit, iron, HDMI cable, extension cord, umbrella…), so anonymous pings have something to find.
 - **Requests:** about 25 open requests in casual student phrasing, with dates relative to seed time, e.g. "Does anyone have a calculator?", "Anyone have a vacuum?", "Can I borrow a black binder next Wednesday?", "need a phone charger (usb-c) for tonight", "anyone have spices I could use? making curry".
 - **History:** about 10 completed transactions with messages and reviews, plus 3 active ones for the hero accounts. The points ledger and badges must match that history.
 - `make seed` is deterministic (fixed random seed). `--reset` truncates every table first. At the end it calls `discovery.hooks.reindex_all()`.
@@ -637,15 +647,20 @@ Run this on two phones plus a laptop, with `AI_PROVIDER=harnessrouter`, `NEXT_PU
 3. Home shows "You could help", including at least one request that matches Sam's items.
 4. **Jordan** (FloMo) posts "anyone have a black binder I can borrow next Wednesday?" The chips show *black binder · Academic · Wed <date> · Borrow*. Within about 10 s the request lists matching binders, and their owners get a `match` notification.
 5. **Maya** opens the notification → "I can help" → offers her binder. Jordan accepts. They chat. Maya marks it handed off, then later "got it back". Both leave reviews. Points, badges, and the activity history update for both.
-6. Search on the laptop:
+6. **Private haves:**
+   - During onboarding, Sam also ticks "Bike pump" as private ("only me, ping me if someone needs it").
+   - Jordan posts "anyone have a bike pump?" and Sam gets an anonymous ping.
+   - Jordan's request shows "Quietly asked N people nearby", with no names. Jordan sees who it is only after Sam offers.
+7. Search on the laptop:
    - "graphing calculator near me" → calculators, same dorm first, with walking minutes
    - "anyone have a vacuum in my dorm?" → only dorm-visible vacuums
    - "formal clothes for an interview" → suit/blazer
    - "moving boxes available this weekend" → boxes
    - "someone who can help repair my bike" → the bike repair service
-7. In the Wilbur community channel, recent requests and shares appear like a chat feed. A new post from the composer appears at the top.
-8. Privacy checks:
+8. In the Wilbur community channel, recent requests and shares appear like a chat feed. A new post from the composer appears at the top.
+9. Privacy checks:
    - A dorm-only item from Wilbur is invisible to a FloMo user, both in search and by direct URL (404).
+   - A private item is invisible to everyone but its owner: search, profiles, match lists, and direct URL (404).
    - The pickup note is hidden until a transaction is accepted.
    - Downloaded photos have no EXIF data.
    - `grep -r "sk-hr" web/.next` finds nothing.
@@ -658,7 +673,7 @@ Run this on two phones plus a laptop, with `AI_PROVIDER=harnessrouter`, `NEXT_PU
 4. B1 (auth, shell, home)
 5. C1, then C4 (scan API + UI)
 6. A3
-7. C2, then C3
+7. C2, then C3, then C5
 8. B2, then B3, then B4, then B5, then B6
 9. A4, then A5
 10. `plans/INTEGRATION.md`

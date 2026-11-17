@@ -13,6 +13,7 @@ DAHA is a Stanford-wide app for lending, borrowing, giving away, and swapping ev
 - Sign up with a Stanford email and pick your dorm.
 - Photo scan → AI-detected items → review → share in one tap. You can also list a single item by hand.
 - Ask for things in plain English. Offer your items to other people's requests.
+- Privately tick things you own (bike pump, tool kit…). Nobody sees your list, but DAHA quietly pings you when someone nearby needs one.
 - Search ("graphing calculator near me", "formal clothes for an interview") with filters.
 - Dorm and group pages that feel like a chat channel, plus each community's shared inventory.
 - Chat, notifications, reviews, points, and badges.

@@ -6,3 +6,4 @@
 | 2026-11-16 | plan | Local fastembed embeddings; rule-based query and request parsing | Free and instant; paid AI reserved for photos |
 | 2026-11-16 | plan | Person C leads integration and evals | C's work spans backend and frontend, and the evals measure C's AI |
 | 2026-11-17 | plan | Guided 5–10 min kickoff (role + hands-off/involved mode + optional auto-merge) and async proposals in docs/proposals/ | Non-technical teammates can start by saying anything; research never blocks building |
+| 2026-11-17 | plan | Private "I have this" items + anonymous pings in the MVP (C5); personal inventory keeper and declutter mode as follow-ups (F1–F3) | From user feedback; private visibility is the base for both |

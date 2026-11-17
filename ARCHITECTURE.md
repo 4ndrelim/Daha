@@ -93,6 +93,7 @@ erDiagram
   - campus visibility → [campus]
   - dorm visibility → [owner's dorm]
   - groups visibility → [the selected groups]
+  - private visibility → [] (only the owner sees it; matching uses it only for anonymous pings)
 - **Visibility rule:** a viewer can see an item or request if they own it, **or** if its audiences overlap the viewer's communities. One helper (`backend/app/services/visibility.py`, Person A) applies this rule everywhere: details, search, feeds, and matching. That way they can never disagree.
 - There are no per-dorm tables and no duplicate inventories. A dorm page simply shows the shared data filtered through that dorm's audience.
 - Full schema: `PLAN.md` §6.
