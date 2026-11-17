@@ -7,3 +7,4 @@
 | 2026-11-16 | plan | Person C leads integration and evals | C's work spans backend and frontend, and the evals measure C's AI |
 | 2026-11-17 | plan | Guided 5–10 min kickoff (role + hands-off/involved mode + optional auto-merge) and async proposals in docs/proposals/ | Non-technical teammates can start by saying anything; research never blocks building |
 | 2026-11-17 | plan | Private "I have this" items + anonymous pings in the MVP (C5); personal inventory keeper and declutter mode as follow-ups (F1–F3) | From user feedback; private visibility is the base for both |
+| 2026-11-17 | plan | Hackathon schedule (submit Thu Nov 19 12:00): feature freeze Wed 18:00, code freeze Thu 10:30, per-person cut lists. Hosting, feedback week, full evals, and ML go after the hackathon | 5-day hackathon; ship the demo script first |

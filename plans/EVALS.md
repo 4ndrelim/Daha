@@ -1,8 +1,17 @@
-# Evals (Phase 3, Person C)
+# Evals (Person C): a quick version for the hackathon, the full version after it
 
 **Goal:** measure, with numbers, how good the AI parts are. Then improve them, and prove each change helped.
 
-## 🧑 Human TODOs (C, with help from A and B)
+## Hackathon mini-eval (Thu 08:00–09:00, ≤ $3 of HarnessRouter credit)
+The goal is three honest numbers for the pitch:
+1. **Scan:**
+   - Take 10 of C's photos and label them quickly (~5 min: a list of the items in each).
+   - Run `evals.run scan --limit 10`.
+   - Report "found X% of the items" and "~N s per photo".
+2. **Search:** for the 5 demo queries, check whether the expected seed item is in the top 3. Report "5/5 demo searches hit in the top 3".
+3. Paste the numbers into the submission write-up (`plans/INTEGRATION.md` §3.3).
+
+## 🧑 Human TODOs: full evals (after the hackathon; C, with help from A and B)
 - [ ] Collect 20–30 eval photos: no people, no documents. Put them in `evals/data/scan/images/`. These are committed only if everyone agrees; otherwise keep them in a shared drive and gitignore the folder.
 - [ ] Label them with Claude's sheet (`evals/data/scan/labels.csv`): list the shareable items in each photo with category and quantity, and mark sensitive ones. That's about 2 minutes per photo.
 - [ ] Write 30 real-sounding requests in your own words. Real dorm-chat messages work too, anonymized. Claude adds 30 synthetic ones.

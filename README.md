@@ -76,23 +76,26 @@ Full details are in `CONTRIBUTING.md`.
 
 ---
 
-## Timeline
-| Phase | Who | What happens | Done when |
-|---|---|---|---|
-| **0. Setup** (about 2 h) | A (repo and backend skeleton), B (app skeleton), C (HarnessRouter cost test) | The skeleton exists and everyone can run it | A and B both post "Phase 0 merged" |
-| **1. Build** (in parallel) | A, B, C separately | Each person builds their part. B uses fake data until A and C are ready | Each person posts "Phase 1 done" |
-| **2. Integrate** (about 2–3 h, together) | **C drives**; A and B fix their parts live | Connect everything, run the demo script on real phones, fix bugs | The demo script passes; tag `v0.1-mvp` |
-| **3. Demo & learn** (1–2 weeks) | A: put it online · B: polish from feedback · C: evals | Friends try it and we measure what works | Feedback and an eval report are in |
-| **4. Smarter** (later) | Whoever's excited | ML, RL, and agent features using real usage data | See `plans/ROADMAP.md` |
+## Timeline (hackathon: submit by **Thu Nov 19, 12:00**)
+| When | What | Who |
+|---|---|---|
+| **Tue morning**, by ~11:00 | Kickoff with Claude (10 min each), skeletons, HarnessRouter test | A, B, C |
+| **Tue → Wed afternoon** | Build in parallel. Leave Claude running in auto mode overnight if you can | A, B, C |
+| **Wed 18:00** | **Feature freeze**, then integrate together (~3–4 h; C drives) and tag `v0.1-mvp` | everyone |
+| **Wed night** | 3–5 friends try it through a temporary link. Note the top bugs | C hosts, everyone watches |
+| **Thu 08:00–10:30** | Fix the top bugs · record the demo video · get quick AI numbers for the pitch | A/C fix · B: video · C: numbers |
+| **Thu 10:30–11:30** | Submission: write-up, video, screenshots, repo link. **Submit by 11:30** (30-minute buffer) | C submits, everyone reviews |
+
+Per-person target times, and what gets cut if we fall behind: `PLAN.md` §0.
 
 ---
 
-## After the MVP: what's next
-1. **Integration (C leads).** C runs the whole app on one laptop and walks through the demo. Whatever breaks goes back to its owner (A, B, or C) to fix. Then we tag the first version.
-2. **Demo for feedback.** We share a temporary link from that laptop (free, about 1 minute to set up). 5–15 friends try it while we watch them do the photo scan, followed by a 5-question form.
-3. **Online for real (A).** A small cloud server, about $6 a month (often free with student credits), running the same setup.
-4. **Evals (C).** We score how well the AI does on our own photos and requests: did it find the right items, did search rank the right things first, how long it took, and what it cost. We improve the AI and re-run. Details are in `plans/EVALS.md`.
-5. **ML and RL (later).** Every scan, edit, search, and borrow is logged, so we can train smarter ranking and learn whom to notify. We can also learn from users' corrections and build a campus assistant agent. See `plans/ROADMAP.md`.
+## After the hackathon (beyond the hackathon scope; good next steps)
+1. **Online for real (A).** A small cloud server, about $6 a month (often free with student credits), running the same setup so the app stays up. *Beyond the hackathon scope.* For Thursday, the temporary link plus the demo video is enough.
+2. **A week of real feedback.** Dorm-mates use it, fill in a 5-question form, and we fix the top 5 issues each week.
+3. **Full evals (C).** Score the AI on 20–30 of our own photos and requests: did it find the right items, did search rank the right things first, speed, cost. Then improve and re-run (`plans/EVALS.md`).
+4. **Follow-ups from feedback:** the personal inventory keeper and declutter mode (`plans/C-ai-discovery.md` F1–F3), plus the P1 list in `PLAN.md` §2.
+5. **ML and RL (later).** Every scan, edit, search, and borrow is logged, so we can train smarter ranking, learn whom to notify, learn from users' corrections, and build a campus assistant agent (`plans/ROADMAP.md`).
 
 ---
 

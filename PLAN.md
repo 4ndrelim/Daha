@@ -2,6 +2,28 @@
 
 Read this together with `AGENTS.md` (rules), `CONTRIBUTING.md` (git), `ARCHITECTURE.md` (diagrams), and your sub-plan in `plans/`. **§6 and §7 are the contract**: implement them exactly.
 
+## 0. Hackathon mode: submit by **Thu Nov 19, 12:00**
+This is a 5-day hackathon. Everything here serves one goal: a working, demo-able MVP (the demo script in §10), submitted by Thursday noon. Times are local campus time, starting Tuesday morning.
+
+| When | Person A | Person B | Person C |
+|---|---|---|---|
+| Tue 11:00 | P0-A merged | P0-B merged | C0 spike done |
+| Tue 15:00 | A1 | B1 | C1 |
+| Tue 21:00 | A2 | B2 + B3 | C4 |
+| Wed 10:00 | A3 | B4 | C2 |
+| Wed 15:00 | A4 | B5 | C3 |
+| **Wed 18:00: feature freeze** | fixes only | B6 done | C5 done, or deferred |
+| Wed 18:00–22:00 | integration (`plans/INTEGRATION.md`; C drives) | ← | ← |
+| Wed night | quick demo with 3–5 friends (`plans/INTEGRATION.md` §3.1) | ← | ← |
+| Thu 08:00–10:30 | fix top bugs | polish + demo video | mini-eval + fixes |
+| **Thu 10:30: code freeze** | review the submission | review the submission | write-up, **submit by 11:30** |
+
+Rules:
+- **Feature freeze Wed 18:00:** after that, only fixes. **Code freeze Thu 10:30:** after that, only the submission.
+- **More than ~2 h behind?** Apply your sub-plan's **If behind, cut** list from the top, tell your human, and log it in `docs/decisions.md`. Never cut demo-script steps 1–5 or step 7 (search).
+- **Overnight:** before sleeping, tell Claude "keep going through your next milestones and leave me a report". Keep the laptop plugged in and awake.
+- **After the hackathon, beyond its scope:** A5 (Docker + CI), putting it online, a week of real feedback, full evals, the P1 list, follow-ups F1–F3, and `plans/ROADMAP.md`.
+
 ## 1. Documents
 | Doc | Use |
 |---|---|
@@ -35,7 +57,7 @@ Read this together with `AGENTS.md` (rules), `CONTRIBUTING.md` (git), `ARCHITECT
 13. Logging for future ML: events, search logs, and scan detections with the user's edits.
 14. **Private "I have this"** (from user feedback): people tick things they own (bike pump, tool kit…) without posting a public listing. When someone asks for one, DAHA pings them anonymously, and the requester only sees "quietly asked N people nearby". Owner: C (C5), with small pieces in A2 and B3–B5.
 
-**P1: stretch.** Claim an item in the group chat first. The list is ordered from most to least valuable.
+**P1: stretch, after the hackathon unless you're ahead of schedule.** Claim an item in the group chat first. The list is ordered from most to least valuable.
 1. Reverse matching: notify an item's owner about open requests the item matches (C).
 2. "Autofill from photo" on the manual listing form (C backend, B UI).
 3. Background AI enrichment of requests (C).

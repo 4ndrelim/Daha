@@ -2,6 +2,16 @@
 
 **Mission:** every screen except the scan flow, the design system, and a mock API, so you're never blocked by A or C. Contract: `PLAN.md` §7. Your paths: `web/` except C's (`PLAN.md` §4).
 
+**⏰ Hackathon targets** (`PLAN.md` §0): B0 Tue 11:00 · B1 Tue 15:00 · B2 + B3 Tue 21:00 · B4 Wed 10:00 · B5 Wed 15:00 · B6 Wed 18:00 (feature freeze) · demo video Thu 08:00–10:30.
+
+**If behind, cut** (in this order):
+1. invite links
+2. the `/u/[id]` public profile
+3. the Create-group sheet (seeded groups only)
+4. the Members tab
+5. analytics `track()` calls
+6. the profile Reviews tab
+
 ## 🧑 Human TODOs (B)
 - [ ] Install the prerequisites. Accept the GitHub invite (check your email), then clone the repo.
 - [ ] Phone testing: keep your phone on the same Wi-Fi as your laptop and open the link Claude prints (`http://<laptop-ip>:3000`).

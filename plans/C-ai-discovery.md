@@ -9,6 +9,14 @@ Contract: `PLAN.md` §6–§7. Your paths: `backend/app/ai/**`, `backend/app/dis
 
 **Order:** C0 → C1 → C4 → C2 → C3 → C5. B uses mocks for search, feed, and matches until C2 and C3 land.
 
+**⏰ Hackathon targets** (`PLAN.md` §0): C0 Tue 11:00 · C1 Tue 15:00 · C4 Tue 21:00 · C2 Wed 10:00 · C3 Wed 15:00 · C5 Wed 18:00 · integration Wed 18:00–22:00 · mini-eval and submission Thu.
+
+**If behind, cut** (in this order):
+1. C5 as a whole, if it hasn't started by Wed 14:00 (defer it to after the hackathon)
+2. `on_request_updated` re-matching
+3. the community feed's `kind` filter
+4. every P1 and LLM extra
+
 ## 🧑 Human TODOs (C)
 - [ ] **HarnessRouter key:**
   1. Sign in at https://app.harnessrouter.ai with the account that holds our $50 credit. If that isn't your account, ask its owner in the group chat to create the key and share it with you privately.

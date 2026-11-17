@@ -1,4 +1,6 @@
-# Roadmap: what comes after the MVP (ML, RL, agents)
+# Roadmap: after the hackathon (ML, RL, agents)
+
+Beyond the hackathon scope. Step one is putting the app online and getting real usage (`plans/INTEGRATION.md` → After the hackathon).
 
 The MVP already **logs the data these need**:
 - scan detections with user edits

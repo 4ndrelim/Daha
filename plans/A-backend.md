@@ -2,12 +2,21 @@
 
 **Mission:** the system of record: database, REST API (everything except discovery and AI), auth, transactions, chat, notifications, reputation, seed data, Docker, CI, and later the deploy. Contract: `PLAN.md` §6–§7. Your paths: `PLAN.md` §4.
 
+**⏰ Hackathon targets** (`PLAN.md` §0): P0-A Tue 11:00 · A1 Tue 15:00 · A2 Tue 21:00 · A3 Wed 10:00 · A4 Wed 15:00 · A5 after the hackathon.
+
+**If behind, cut** (in this order):
+1. A5 (it's already after the hackathon)
+2. `/users/{id}/reviews` and the reviews list (keep leaving a review)
+3. every badge except `first_share` and `first_lend`
+4. direct (non-transaction) conversations
+5. shrink A4 to the lend lifecycle only
+
 ## 🧑 Human TODOs (A)
 - [ ] Install the prerequisites (`README.md` → How we work). Confirm `docker run hello-world` works.
 - [ ] Once `backend/.env` exists, replace `JWT_SECRET` with the output of `openssl rand -hex 32`.
 - [ ] After P0-A merges, post Claude's "Phase 0 backend merged ✅" message. C is waiting for it.
 - [ ] At every ✅ checkpoint: merge the PR and paste the message into the chat.
-- [ ] Phase 3: create hosting. Recommended: a small Ubuntu VM such as a DigitalOcean droplet, which is free with GitHub Student Pack credit. Also create a free Cloudflare account for the quick-tunnel demo.
+- [ ] After the hackathon (beyond its scope): create hosting. Recommended: a small Ubuntu VM such as a DigitalOcean droplet, which is free with GitHub Student Pack credit. Also create a free Cloudflare account for the quick-tunnel demo.
 
 ## Design points (go through these with the human in *involved* mode; in hands-off mode use the defaults as written)
 - **Login:** email + password (planned) vs. a magic link by email. A magic link needs an email service, so it would be a proposal.
@@ -143,7 +152,7 @@ Checkpoint: *"A3 ✅ requests/offers/transactions/chat/notifications/reviews/eve
 
 Print ✅/❌ per step; exit non-zero on any failure.
 
-## A5 — Infra
+## A5 — Infra (after the hackathon; before Thursday only if you're ahead)
 - **`backend/Dockerfile`:** uv sync with frozen deps, a non-root user, uvicorn on 8000.
 - **`web/Dockerfile`:** multi-stage Next.js standalone build. A owns this one file inside `web/`.
 - **`docker-compose.yml` profile `full`:** db + api + web, with volumes for `uploads` and the fastembed cache (`FASTEMBED_CACHE_PATH`). `make up`.
