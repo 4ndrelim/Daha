@@ -9,11 +9,29 @@
 - [ ] At every ✅ checkpoint: merge the PR and paste the message into the chat.
 - [ ] Phase 3: create hosting. Recommended: a small Ubuntu VM such as a DigitalOcean droplet, which is free with GitHub Student Pack credit. Also create a free Cloudflare account for the quick-tunnel demo.
 
+## Design points (go through these with the human in *involved* mode; in hands-off mode use the defaults as written)
+- **Login:** email + password (planned) vs. a magic link by email. A magic link needs an email service, so it would be a proposal.
+- **Points and levels** (`PLAN.md` §7.8): keep them modest (trust first) or make them more generous.
+- **Badges:** which 5, with their names and emoji.
+- **Seed data:** which dorms and groups to feature, and how busy the demo campus should look.
+- **Notifications:** what triggers one, and the tone of the wording.
+- **Hosting for Phase 3:** a small VM (planned) vs. a managed platform.
+
+## Research & proposals (async)
+Research these in small slices, after a milestone or while CI runs. **Never let research block a milestone.** Write each finding as a proposal (`AGENTS.md` §6, template in `docs/proposals/README.md`) and present it at the start of the next session.
+
+- Email or push notifications for offers, accepts, and return reminders (e.g. a transactional email service; Web Push).
+- Real walking times from a routing API instead of straight-line estimates.
+- S3-compatible object storage for photos before going online.
+- Error monitoring and uptime alerts for the hosted app.
+- Stanford single sign-on: what it would take and who approves it.
+- Managed hosting vs. a VM: monthly cost and setup effort.
+
 ## P0-A — Repo + backend skeleton + contract in code (target ≤ 2 h)
 B builds `web/` in parallel and C runs the HarnessRouter spike. Don't touch `web/`.
 1. **Repo root:**
    - the docs from the plan package (already present)
-   - a root `.gitignore`: `.env`, `.env.local`, `*.env` (but not `*.env.example`), `backend/uploads/`, `.venv/`, `__pycache__/`, `node_modules/`, `.next/`, `.DS_Store`
+   - the root `.gitignore`, which already exists and ignores `.daha/`, env files, and build folders. Add anything that's missing
    - `Makefile` (`PLAN.md` §5.5)
    - `docker-compose.yml`: service `db` = `pgvector/pgvector:pg16`; user, password, and db all `daha`; port 5432; named volume; healthcheck
    - `infra/db/init.sql`, which creates the database `daha_test`

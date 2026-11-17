@@ -11,7 +11,7 @@ Contract: `PLAN.md` §6–§7. Your paths: `backend/app/ai/**`, `backend/app/dis
 
 ## 🧑 Human TODOs (C)
 - [ ] **HarnessRouter key:**
-  1. Sign in at https://app.harnessrouter.ai with the account that holds our $50 credit.
+  1. Sign in at https://app.harnessrouter.ai with the account that holds our $50 credit. If that isn't your account, ask its owner in the group chat to create the key and share it with you privately.
   2. Create a **Workspace API key** (`sk-hr-…`). Discovery endpoints need a Workspace key.
   3. Tell Claude *"the key is in my clipboard"* and paste it **only** into `backend/.env` (and the spike's `.env`) as `HARNESSROUTER_API_KEY=`.
   4. Never paste it in chat, Discord, screenshots, or code.
@@ -23,6 +23,26 @@ Contract: `PLAN.md` §6–§7. Your paths: `backend/app/ai/**`, `backend/app/dis
 - [ ] Optional fallback: if HarnessRouter vision is too slow or unreliable, get an Anthropic API key and set `AI_PROVIDER=anthropic`.
 - [ ] At every ✅ checkpoint: merge the PR and paste the message.
 - [ ] **Phase 2:** host the integration session on your laptop, which has the key. **Phase 3:** label the eval photos (about 1 hour; Claude prepares a labeling sheet).
+
+## Design points (go through these with the human in *involved* mode; in hands-off mode use the defaults as written)
+- **Model:** which HarnessRouter base and model to use, after the C0 spike's cost and latency table. Cost is the human's call.
+- **Sensitive items:** what the AI should never pre-tick for sharing.
+- **Scan review:** how much to pre-fill, plus the default visibility and default type.
+- **Ranking:** closeness vs. best match vs. newest.
+- **Match notifications:** how eager to be (how many owners get pinged per request).
+
+## Research & proposals (async)
+Research these in small slices, after a milestone or while CI runs. **Never let research block a milestone.** Write each finding as a proposal (`AGENTS.md` §6, template in `docs/proposals/README.md`) and present it at the start of the next session.
+
+- **Web search.** Andre has a web search API key. When you need it, print a 🧑 TODO: *"Tag Andre in the group chat for the web search API key."* Promising uses:
+  - pin down the exact product from a scan (e.g. "TI-84 Plus CE") and add its specs and typical retail price. That powers "you saved ~$X by borrowing" impact stats (`plans/ROADMAP.md` #9);
+  - "nobody has it yet" fallback: find campus resources that lend the item (libraries, tool libraries, rentals nearby) and show them on the request;
+  - autofill descriptions for manual listings.
+  Keep calls server-side, cached, and rate-limited. Never send personal text or photos of people.
+- A better embedding model or a reranker (hosted vs. local). Only worth it if the evals show search quality is the bottleneck.
+- Other vision providers (e.g. the direct Claude API) vs. HarnessRouter, compared on the spike's cost and latency numbers.
+- An image and text moderation API for inappropriate photos or posts.
+- LLM request enrichment (P1): which model, and the cost per request.
 
 ## C0 — HarnessRouter spike (do this now: no repo needed, ≤ 1 h)
 **What HarnessRouter is.** It runs full **agent harnesses** (Claude Code, Codex, Pi, …) behind one API. It does **not** give plain single-shot model calls. A "task" is: upload files → run the harness → get the final answer text, or files the agent wrote. Tasks can take tens of seconds to minutes.

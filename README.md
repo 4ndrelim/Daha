@@ -50,20 +50,26 @@ For the technical version, see `ARCHITECTURE.md`.
 |---|---|---|
 | **A: Backend & setup** | the database, the server, login, borrowing and returning, chat, notifications, points, fake demo data, putting the app online | ☐ Make a secret key for `.env` (Claude shows you how) · ☐ merge PRs · ☐ later: set up hosting |
 | **B: The app screens** | every screen (home, search, item pages, requests, chat, communities, profile) and how it looks; B can start right away using fake data | ☐ Check how it looks on your phone · ☐ give taste feedback (colors, wording) · ☐ optional: screenshots of real dorm-chat requests (names blurred) · ☐ merge PRs |
-| **C: AI, search & photo scan** | the photo → items AI (HarnessRouter), the scan screens, search, matching requests to items, home feed | ☐ Get the HarnessRouter API key ($50 credit) · ☐ take 20–30 photos of desks, closets, and kitchens (no faces or documents) · ☐ choose the AI model with the team after the cost test · ☐ **lead integration and evals** |
+| **C: AI, search & photo scan** | the photo → items AI (HarnessRouter), the scan screens, search, matching requests to items, home feed | ☐ Get the HarnessRouter API key ($50 team credit; ask the account holder) · ☐ take 20–30 photos of desks, closets, and kitchens (no faces or documents) · ☐ choose the AI model with the team after the cost test · ☐ **lead integration and evals** |
 
-**Can one person do everything?** Yes. Tell Claude "I'm doing all roles — follow Solo mode." It's slower but it works.
+**Can one person do everything?** Yes. Pick **Solo** when Claude asks for your role. It's slower but it works.
 **Only two people?** One takes A and C's backend parts; the other takes B and C's scan screens (see `PLAN.md` §11).
 
 ---
 
 ## How we work (no git knowledge needed)
-1. **Install once:** Git, GitHub CLI, Docker Desktop, Node.js 20+ (with pnpm), Python 3.12 (with uv), and Claude Code. Not sure how? Ask Claude: *"Check what I'm missing to work on this repo and help me install it."*
+1. **Install once:** Git, GitHub CLI, Docker Desktop, Node.js 20+ (with pnpm), Python 3.12 (with uv), and Claude Code. Not sure how? Claude helps in step 3.
 2. **Get the code:** accept the GitHub invite (check your email), run `gh repo clone 4ndrelim/Daha`, then open the `Daha` folder in Claude Code.
-3. **Start:** say ***"I am Person B"*** (or A, or C). Claude loads the rules by itself, shows your to-do list, and starts your next task.
-4. **Let Claude work.** It saves work on its own branch and opens a Pull Request (PR) when a piece is done.
-5. **Merge:** open the PR link Claude gives you, skim it, and press **Merge**. Then paste Claude's ✅ message into the group chat.
-6. **Next day:** say ***"Sync with main and continue my plan."***
+3. **Say anything**, e.g. ***"Understand the docs and begin."*** Plan on **5–10 minutes** together. Claude will:
+   - ask which role you're taking: A, B, C, or all of them (Solo);
+   - ask how involved you want to be:
+     - **hands-off:** it builds your plan as written;
+     - **involved:** it walks you through the design choices first, so you can change things;
+   - help you set up: tools, keys, accounts;
+   - show what it will build, phase by phase.
+4. **Approve, then switch Claude to auto mode** (Claude shows you how). It works on its own branch and opens Pull Requests (PRs) as pieces finish.
+5. **Merge:** open the PR link and press **Merge**. If you told Claude it can merge its own PRs, it does this itself. Then paste Claude's ✅ message into the group chat.
+6. **Next time:** open Claude in the folder and say ***"continue"***. It remembers your role and mode, and shows you anything it researched for you (see "Extra APIs & ideas" below).
 
 Full details are in `CONTRIBUTING.md`.
 
@@ -89,10 +95,17 @@ Full details are in `CONTRIBUTING.md`.
 
 ---
 
+## Extra APIs & ideas
+Claude may find APIs or services that would make DAHA a lot better, such as web search. It won't stop building to add them. Instead it writes a short proposal in `docs/proposals/` (what it is, why it helps, cost, effort) and shows you at the start of your next session. You decide: accept, defer, or reject. Nothing paid is ever added without your OK.
+
+**Team keys (who to ask):**
+- HarnessRouter ($50 team credit, photo AI): the team account holder; ask in the group.
+- **Web search API: tag Andre.**
+
 ## Money & secrets
-- **$50 HarnessRouter credit** pays only for photo detection. Dev and tests use a free fake AI. C holds the key.
-- Keys live only in `backend/.env`, which git ignores. **Never** paste keys into chat, screenshots, or code.
+- **$50 HarnessRouter credit** pays only for photo detection. Dev and tests use a free fake AI. Person C uses the key.
+- Keys live only in `backend/.env`, which git ignores. **Never** paste keys into the group chat, screenshots, or code. Share them privately.
 - Claude stops photo AI spending at $40 by default, keeping $10 for evals.
 
 ## Where things are
-`README.md` (you are here) · `docs/PRODUCT_BRIEF.md` (the full product idea) · `CONTRIBUTING.md` (how to work) · `ARCHITECTURE.md` (diagrams) · `PLAN.md` (technical plan) · `plans/` (per-person plans, integration, evals, roadmap) · `AGENTS.md` (rules for Claude)
+`README.md` (you are here) · `docs/PRODUCT_BRIEF.md` (the full product idea) · `CONTRIBUTING.md` (how to work) · `ARCHITECTURE.md` (diagrams) · `PLAN.md` (technical plan) · `plans/` (per-person plans, integration, evals, roadmap) · `docs/proposals/` (ideas Claude found for you to review) · `AGENTS.md` (rules for Claude)

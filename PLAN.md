@@ -6,6 +6,7 @@ Read this together with `AGENTS.md` (rules), `CONTRIBUTING.md` (git), `ARCHITECT
 | Doc | Use |
 |---|---|
 | `docs/PRODUCT_BRIEF.md` | The full product vision, refined from the original brief, mapped to MVP vs later |
+| `docs/proposals/` | Ideas, APIs, and services agents found; humans accept, defer, or reject them (`AGENTS.md` §6) |
 | `plans/A-backend.md` | Person A milestones P0-A, A1–A5 |
 | `plans/B-frontend.md` | Person B milestones P0-B, B1–B6, plus the design system and screen specs |
 | `plans/C-ai-discovery.md` | Person C milestones C0–C4: HarnessRouter, scans, search, matching, feeds, scan UI |
@@ -665,3 +666,16 @@ Run this on two phones plus a laptop, with `AI_PROVIDER=harnessrouter`, `NEXT_PU
 Print the end-of-milestone block after each step.
 
 **Two people.** Person 1 = A + C1–C3 (the whole backend). Person 2 = B + C4 (all the screens) + C0 (the spike; needs the key).
+
+## 12. Kickoff, proposals & team resources
+- **Kickoff:** every agent starts with a 5–10 minute guided kickoff (`AGENTS.md` §1):
+  1. pick a role;
+  2. pick a mode: *hands-off* (build the sub-plan as written) or *involved* (refine the sub-plan's **Design points** first);
+  3. setup and keys;
+  4. a phase overview;
+  5. approval, then auto mode.
+
+  Choices are saved in a local, gitignored `.daha/me.md`.
+- **Design points** and **Research & proposals** sections live in each sub-plan. Research never blocks milestones. Findings become `docs/proposals/<letter>-<name>.md` for the human to accept, defer, or reject next session.
+- **Anything beyond P1** (new APIs, paid services, new features) goes through a proposal. Once accepted, it's added to the owner's sub-plan as an additive task and must stay inside the contract (§6–§7), or follow the contract-change rule.
+- **Shared keys:** HarnessRouter → the team account holder; **web search → Andre** (`AGENTS.md` §7).

@@ -15,8 +15,10 @@ There are two parts here. **Part 1** is for humans: what to click and what to sa
 **Phrases to paste into Claude**
 | When | Say this |
 |---|---|
-| First time | `I am Person B. Set me up and start my plan.` |
-| Every new session | `Sync with main and continue my plan.` |
+| First time | `Understand the docs and begin.` Claude asks your role and how involved you want to be (about 5–10 min) |
+| Every new session | `Continue.` (or `Sync with main and continue my plan.`) |
+| See what Claude researched | `Show me your proposals.` |
+| Change how involved you are | `Switch me to involved mode.` or `Switch me to hands-off mode.` |
 | A piece is done | `Open a PR for this milestone.` |
 | After checks pass | `Merge my PR.` (or press **Merge** on GitHub) |
 | Something conflicts | `Fix the merge conflict with main, keeping everyone's changes.` |
@@ -24,7 +26,12 @@ There are two parts here. **Part 1** is for humans: what to click and what to sa
 | Someone announced a change | `Pull main and adapt to the new change: <paste message>.` |
 | Found a bug in someone else's part | `Open a GitHub issue for Person A: <describe bug>.` |
 
-**Merging on GitHub (about 30 seconds)**
+**Auto mode.** After the kickoff, switch Claude to auto mode so it doesn't ask about every command:
+- **Terminal:** press Shift+Tab until it shows auto mode.
+- **IDE or desktop app:** use the mode menu.
+- If auto mode isn't there, pick "accept edits".
+
+**Merging on GitHub (about 30 seconds).** Skip this if you let Claude merge its own PRs.
 1. Open the PR link Claude gave you.
 2. Wait for the green ✓ checks (after CI is set up).
 3. Click **Squash and merge**, then **Confirm**, then **Delete branch**.
@@ -84,8 +91,16 @@ EOF
 ```
 Add labels: `gh pr edit --add-label A` (or `B` / `C`), plus `contract` if the PR changes the API contract.
 
-### Merging (only when the human asks)
-Merge only after the human says so and the checks pass:
+### Proposal PRs
+Ideas from your sub-plan's "Research & proposals" section go in a docs-only PR (`AGENTS.md` §6):
+- title `proposal(<letter>): <topic>`, label `proposal`;
+- it adds one file, `docs/proposals/<letter>-<short-name>.md`;
+- it is safe to merge any time, because it changes no code.
+
+### Merging (when the human asks, or `auto_merge: yes` in `.daha/me.md`)
+Merge only when the checks pass **and** one of these is true:
+- the human said to merge;
+- `.daha/me.md` has `auto_merge: yes`, the PR doesn't change the contract, and it doesn't touch another person's paths.
 ```bash
 gh pr merge --squash --delete-branch
 git checkout main && git pull --rebase origin main

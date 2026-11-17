@@ -8,7 +8,23 @@
 - [ ] After B0: look at the app shell on your phone and tell Claude whether the look (colors, wording, vibe) feels right.
 - [ ] Optional but valuable: drop 5–10 screenshots of real dorm-chat requests (**blur names**) into `docs/ux-references/`. They guide tone and help C's evals.
 - [ ] At every ✅ checkpoint: merge the PR and paste the message.
-- [ ] When A or C post a checkpoint, tell Claude: *"Pull main and switch <domains> to live"*. Claude edits `NEXT_PUBLIC_MOCK` in `web/.env.local`.
+- [ ] When A or C post a checkpoint, tell Claude: *"Pull main and switch <domains> to live"*. Claude edits `NEXT_PUBLIC_MOCK` in `web/.env.local`. In hands-off mode, Claude does this on its own when it sees their milestones merged.
+
+## Design points (go through these with the human in *involved* mode; in hands-off mode use §1–§2 as written)
+- **Look and feel:** colors, wordmark, and tone of copy. The tokens in §1 are only a starting point.
+- **Home:** which sections come first, and how prominent the "Show us what you have" scan card is.
+- **Community channel:** how chat-like it should feel (bubbles vs. cards).
+- **Item cards:** photo-first or text-first, and which details show on the card.
+- **Empty states and microcopy**, e.g. "Nobody's listed that yet — ask your dorm?"
+
+## Research & proposals (async)
+Research these in small slices, after a milestone or while CI runs. **Never let research block a milestone.** Write each finding as a proposal (`AGENTS.md` §6, template in `docs/proposals/README.md`) and present it at the start of the next session.
+
+- A map view for "near me", using open map tiles and walking-distance rings.
+- Installable app (PWA) plus push notifications.
+- Privacy-friendly product analytics for the demo: funnels such as scan → publish and request → offer.
+- Motion and micro-interactions that make DAHA feel like a messaging app.
+- Accessibility audit tooling.
 
 ## B0 — Web skeleton (Phase 0; start right away; touch only `web/`)
 1. **Scaffold:** `pnpm create next-app@latest web` with TypeScript, App Router, Tailwind, ESLint, a `src/` directory, and the alias `@/*`. Add `"typecheck": "tsc --noEmit"`.
