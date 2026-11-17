@@ -4,6 +4,7 @@ The env vars must be set before anything imports app.core.config.
 """
 
 import os
+import tempfile
 from pathlib import Path
 
 from dotenv import dotenv_values
@@ -16,6 +17,7 @@ _TEST_DB_URL = (
 # lock_timeout: a test that forgets to release a transaction fails in 10 s instead of hanging.
 _TEST_DB_URL += ("&" if "?" in _TEST_DB_URL else "?") + "options=-c%20lock_timeout%3D10000"
 os.environ["DATABASE_URL"] = _TEST_DB_URL
+os.environ["UPLOAD_DIR"] = tempfile.mkdtemp(prefix="daha-test-uploads-")
 os.environ["AI_PROVIDER"] = "mock"
 os.environ["EMBEDDINGS_PROVIDER"] = "hash"
 os.environ["AI_MOCK_LATENCY_MS"] = "0"
@@ -40,9 +42,8 @@ assert settings.database_url == _TEST_DB_URL, "tests must use the test database"
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _schema(tmp_path_factory):
+def _schema():
     """Rebuild the test database from the real migrations once per run."""
-    settings.upload_dir = str(tmp_path_factory.mktemp("uploads"))
     with engine.begin() as conn:
         conn.execute(text("DROP SCHEMA public CASCADE"))
         conn.execute(text("CREATE SCHEMA public"))
