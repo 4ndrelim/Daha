@@ -1,5 +1,10 @@
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { Suspense } from "react";
+import { LoginScreen } from "./login-screen";
 
-export default function Page() {
-  return <PagePlaceholder title="Log in" note="B1: email + password, one-tap demo accounts." />;
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginScreen />
+    </Suspense>
+  );
 }
