@@ -48,7 +48,7 @@ For the technical version, see `ARCHITECTURE.md`.
 
 | Person | Builds | Your human to-dos (Claude will remind you) |
 |---|---|---|
-| **A: Backend & setup** | the database, the server, login, borrowing and returning, chat, notifications, points, fake demo data, putting the app online | ☐ Invite B and C to the GitHub repo (`4ndrelim/Daha`) · ☐ make a secret key for `.env` (Claude shows you how) · ☐ merge PRs · ☐ later: set up hosting |
+| **A: Backend & setup** | the database, the server, login, borrowing and returning, chat, notifications, points, fake demo data, putting the app online | ☐ Make a secret key for `.env` (Claude shows you how) · ☐ merge PRs · ☐ later: set up hosting |
 | **B: The app screens** | every screen (home, search, item pages, requests, chat, communities, profile) and how it looks; B can start right away using fake data | ☐ Check how it looks on your phone · ☐ give taste feedback (colors, wording) · ☐ optional: screenshots of real dorm-chat requests (names blurred) · ☐ merge PRs |
 | **C: AI, search & photo scan** | the photo → items AI (HarnessRouter), the scan screens, search, matching requests to items, home feed | ☐ Get the HarnessRouter API key ($50 credit) · ☐ take 20–30 photos of desks, closets, and kitchens (no faces or documents) · ☐ choose the AI model with the team after the cost test · ☐ **lead integration and evals** |
 

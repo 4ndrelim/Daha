@@ -4,8 +4,6 @@
 
 ## 🧑 Human TODOs (A)
 - [ ] Install the prerequisites (`README.md` → How we work). Confirm `docker run hello-world` works.
-- [ ] Make sure these docs are pushed to `main` of https://github.com/4ndrelim/Daha. The repo owner does this once.
-- [ ] Invite B and C: GitHub → repo → Settings → Collaborators → Add people. Post the repo link in the group chat.
 - [ ] Once `backend/.env` exists, replace `JWT_SECRET` with the output of `openssl rand -hex 32`.
 - [ ] After P0-A merges, post Claude's "Phase 0 backend merged ✅" message. C is waiting for it.
 - [ ] At every ✅ checkpoint: merge the PR and paste the message into the chat.

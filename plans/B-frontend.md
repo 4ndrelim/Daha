@@ -3,7 +3,7 @@
 **Mission:** every screen except the scan flow, the design system, and a mock API, so you're never blocked by A or C. Contract: `PLAN.md` §7. Your paths: `web/` except C's (`PLAN.md` §4).
 
 ## 🧑 Human TODOs (B)
-- [ ] Install the prerequisites. Accept A's GitHub invite (check your email), then clone the repo.
+- [ ] Install the prerequisites. Accept the GitHub invite (check your email), then clone the repo.
 - [ ] Phone testing: keep your phone on the same Wi-Fi as your laptop and open the link Claude prints (`http://<laptop-ip>:3000`).
 - [ ] After B0: look at the app shell on your phone and tell Claude whether the look (colors, wording, vibe) feels right.
 - [ ] Optional but valuable: drop 5–10 screenshots of real dorm-chat requests (**blur names**) into `docs/ux-references/`. They guide tone and help C's evals.
