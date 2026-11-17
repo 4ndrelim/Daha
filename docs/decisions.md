@@ -25,3 +25,5 @@
 | 2026-11-17 | A | Private "I have this" items can be offered on a request (`item_id`), but not borrowed from their page | That is how an anonymous ping turns into an offer (C5); private items have no public page |
 | 2026-11-17 | A | `POST /events` accepts logged-out and bad-token calls (stored with no user) and swallows DB errors | `PLAN.md` §7.3: "never fails the client" |
 | 2026-11-17 | A | Removing an item auto-declines borrow requests and offers still waiting on it | Nobody is left waiting on an item that is gone |
+| 2026-11-17 | A | `make smoke` creates its own fresh users and items on every run and leaves them behind (names start with "Smoke"); `make seed` clears them | It must never delete real data; reseed before a demo |
+| 2026-11-17 | A | The smoke script also runs inside pytest against the test database | Keeps it from going stale as endpoints change |
