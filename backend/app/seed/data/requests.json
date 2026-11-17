@@ -1,0 +1,325 @@
+[
+ {
+  "key": "jordan-binder",
+  "requester": "jordan",
+  "raw_text": "Can I borrow a black binder next Wednesday?",
+  "title": "Black binder",
+  "item_name": "black binder",
+  "category": "academic",
+  "type": "lend",
+  "vis": "campus",
+  "needed": "next_wednesday",
+  "attributes": {
+   "color": "black"
+  }
+ },
+ {
+  "key": "jordan-tent",
+  "requester": "jordan",
+  "raw_text": "anyone have a tent I could borrow this weekend? going to Big Basin",
+  "title": "Tent for the weekend",
+  "item_name": "tent",
+  "category": "sports",
+  "type": "lend",
+  "vis": "campus",
+  "needed": "weekend"
+ },
+ {
+  "requester": "hana",
+  "raw_text": "Does anyone have a calculator?",
+  "title": "Calculator",
+  "item_name": "calculator",
+  "category": "academic",
+  "type": "lend",
+  "vis": "dorm",
+  "needed": null
+ },
+ {
+  "requester": "ben",
+  "raw_text": "Anyone have a vacuum?",
+  "title": "Vacuum",
+  "item_name": "vacuum",
+  "category": "dorm",
+  "type": "lend",
+  "vis": "dorm",
+  "needed": null
+ },
+ {
+  "requester": "pia",
+  "raw_text": "need a phone charger (usb-c) for tonight",
+  "title": "USB-C phone charger",
+  "item_name": "phone charger",
+  "category": "tech",
+  "type": "lend",
+  "vis": "dorm",
+  "needed": [
+   0,
+   0
+  ],
+  "attributes": {
+   "connector": "usb-c"
+  }
+ },
+ {
+  "requester": "mateo",
+  "raw_text": "anyone have spices I could use? making curry",
+  "title": "Spices for curry",
+  "item_name": "spices",
+  "category": "consumables",
+  "type": "give",
+  "vis": "dorm",
+  "needed": [
+   0,
+   1
+  ]
+ },
+ {
+  "requester": "sofia",
+  "raw_text": "Looking for a navy or black suit jacket for a career fair on Friday",
+  "title": "Suit jacket for career fair",
+  "item_name": "suit jacket",
+  "category": "clothing",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   3,
+   3
+  ]
+ },
+ {
+  "requester": "lila",
+  "raw_text": "does anyone have a drill? need to hang a shelf",
+  "title": "Drill",
+  "item_name": "drill",
+  "category": "moving",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   1,
+   2
+  ]
+ },
+ {
+  "requester": "owen",
+  "raw_text": "Need moving boxes this weekend!! moving to EVGR",
+  "title": "Moving boxes",
+  "item_name": "moving boxes",
+  "category": "moving",
+  "type": "give",
+  "vis": "campus",
+  "needed": "weekend"
+ },
+ {
+  "requester": "grace",
+  "raw_text": "anyone got a bike pump? flat tire :(",
+  "title": "Bike pump",
+  "item_name": "bike pump",
+  "category": "sports",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   0,
+   1
+  ]
+ },
+ {
+  "requester": "ravi",
+  "raw_text": "Could I borrow an HDMI cable for a presentation tomorrow?",
+  "title": "HDMI cable",
+  "item_name": "HDMI cable",
+  "category": "tech",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   1,
+   1
+  ]
+ },
+ {
+  "requester": "emma",
+  "raw_text": "Does someone have a cooler for Saturday's picnic?",
+  "title": "Cooler for Saturday",
+  "item_name": "cooler",
+  "category": "events",
+  "type": "lend",
+  "vis": "campus",
+  "needed": "weekend"
+ },
+ {
+  "requester": "ivan",
+  "raw_text": "looking for a graphing calculator for the CS 109 midterm",
+  "title": "Graphing calculator",
+  "item_name": "graphing calculator",
+  "category": "academic",
+  "type": "lend",
+  "vis": "groups",
+  "group": "cs-106b-study-group",
+  "needed": [
+   4,
+   4
+  ]
+ },
+ {
+  "requester": "zoe",
+  "raw_text": "anyone have a sewing machine? costume emergency",
+  "title": "Sewing machine",
+  "item_name": "sewing machine",
+  "category": "other",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   1,
+   3
+  ]
+ },
+ {
+  "requester": "kai",
+  "raw_text": "Need an iron for 10 minutes before an interview",
+  "title": "Iron",
+  "item_name": "iron",
+  "category": "dorm",
+  "type": "lend",
+  "vis": "dorm",
+  "needed": [
+   1,
+   1
+  ]
+ },
+ {
+  "requester": "aisha",
+  "raw_text": "Anyone have a lab coat (size S or M) I can use Thursday?",
+  "title": "Lab coat",
+  "item_name": "lab coat",
+  "category": "academic",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   2,
+   2
+  ],
+  "attributes": {
+   "size": "S/M"
+  }
+ },
+ {
+  "requester": "diego",
+  "raw_text": "does anyone have an extension cord?",
+  "title": "Extension cord",
+  "item_name": "extension cord",
+  "category": "tech",
+  "type": "lend",
+  "vis": "dorm",
+  "needed": null
+ },
+ {
+  "requester": "noor",
+  "raw_text": "Looking for someone with a car to help me move a couch on Sunday",
+  "title": "Help moving a couch",
+  "item_name": "moving help",
+  "category": "services",
+  "type": null,
+  "vis": "campus",
+  "needed": "weekend"
+ },
+ {
+  "requester": "chloe",
+  "raw_text": "Need 6 folding chairs for a screening Friday night",
+  "title": "Folding chairs",
+  "item_name": "folding chairs",
+  "category": "events",
+  "type": "lend",
+  "vis": "groups",
+  "group": "film-society",
+  "needed": [
+   3,
+   3
+  ],
+  "quantity": 6
+ },
+ {
+  "requester": "theo",
+  "raw_text": "anyone have a air mattress? friend visiting next week",
+  "title": "Air mattress",
+  "item_name": "air mattress",
+  "category": "dorm",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   6,
+   9
+  ]
+ },
+ {
+  "requester": "quinn",
+  "raw_text": "Does anyone have an umbrella I can borrow today?",
+  "title": "Umbrella",
+  "item_name": "umbrella",
+  "category": "other",
+  "type": "lend",
+  "vis": "dorm",
+  "needed": [
+   0,
+   0
+  ]
+ },
+ {
+  "requester": "felix",
+  "raw_text": "Looking for a multimeter for a quick test",
+  "title": "Multimeter",
+  "item_name": "multimeter",
+  "category": "tech",
+  "type": "lend",
+  "vis": "groups",
+  "group": "robotics-club",
+  "needed": [
+   0,
+   2
+  ]
+ },
+ {
+  "requester": "alex",
+  "raw_text": "anyone have a stapler in Wilbur?",
+  "title": "Stapler",
+  "item_name": "stapler",
+  "category": "academic",
+  "type": "lend",
+  "vis": "dorm",
+  "needed": null
+ },
+ {
+  "requester": "priya",
+  "raw_text": "Can someone lend me a tennis racket for Saturday morning?",
+  "title": "Tennis racket",
+  "item_name": "tennis racket",
+  "category": "sports",
+  "type": "lend",
+  "vis": "campus",
+  "needed": "weekend"
+ },
+ {
+  "requester": "nina",
+  "raw_text": "does anyone have a tool kit? need a screwdriver for my desk",
+  "title": "Tool kit / screwdriver",
+  "item_name": "tool kit",
+  "category": "moving",
+  "type": "lend",
+  "vis": "dorm",
+  "needed": [
+   0,
+   2
+  ]
+ },
+ {
+  "requester": "omar",
+  "raw_text": "Anyone have a lint roller? black suit + white cat hair",
+  "title": "Lint roller",
+  "item_name": "lint roller",
+  "category": "clothing",
+  "type": "lend",
+  "vis": "dorm",
+  "needed": [
+   0,
+   1
+  ]
+ }
+]

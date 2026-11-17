@@ -1,0 +1,182 @@
+[
+ {
+  "key": "maya",
+  "name": "Maya C.",
+  "dorm": "wilbur",
+  "bio": "Junior, chem major. Happy to lend — just ask!"
+ },
+ {
+  "key": "jordan",
+  "name": "Jordan R.",
+  "dorm": "flomo",
+  "bio": "Sophomore in FloMo. Always missing one school supply."
+ },
+ {
+  "key": "sam",
+  "name": "Sam T.",
+  "dorm": "wilbur",
+  "bio": "Frosh in Wilbur. New here!"
+ },
+ {
+  "key": "alex",
+  "name": "Alex K.",
+  "dorm": "wilbur",
+  "bio": "Photography, bikes, and too many cables."
+ },
+ {
+  "key": "priya",
+  "name": "Priya S.",
+  "dorm": "wilbur",
+  "bio": "EE sophomore. I own every adapter ever made."
+ },
+ {
+  "key": "leo",
+  "name": "Leo M.",
+  "dorm": "flomo",
+  "bio": "Cooking for the whole hall most Sundays."
+ },
+ {
+  "key": "nina",
+  "name": "Nina P.",
+  "dorm": "flomo",
+  "bio": "Design + CS. Stationery hoarder."
+ },
+ {
+  "key": "omar",
+  "name": "Omar H.",
+  "dorm": "stern",
+  "bio": "Econ senior. Interview season survivor."
+ },
+ {
+  "key": "zoe",
+  "name": "Zoe L.",
+  "dorm": "stern",
+  "bio": "Theater kid with a costume closet."
+ },
+ {
+  "key": "ethan",
+  "name": "Ethan W.",
+  "dorm": "roble",
+  "bio": "MechE. I have tools."
+ },
+ {
+  "key": "aisha",
+  "name": "Aisha B.",
+  "dorm": "roble",
+  "bio": "Pre-med, tea enthusiast."
+ },
+ {
+  "key": "ben",
+  "name": "Ben F.",
+  "dorm": "branner",
+  "bio": "Club soccer, board games."
+ },
+ {
+  "key": "chloe",
+  "name": "Chloe D.",
+  "dorm": "branner",
+  "bio": "Film society regular."
+ },
+ {
+  "key": "diego",
+  "name": "Diego V.",
+  "dorm": "toyon",
+  "bio": "Guitarist. Ask me about speakers."
+ },
+ {
+  "key": "emma",
+  "name": "Emma J.",
+  "dorm": "toyon",
+  "bio": "Hiking most weekends."
+ },
+ {
+  "key": "felix",
+  "name": "Felix N.",
+  "dorm": "crothers",
+  "bio": "Grad student, robotics."
+ },
+ {
+  "key": "grace",
+  "name": "Grace Y.",
+  "dorm": "crothers",
+  "bio": "Baker. Will trade cookies for favors."
+ },
+ {
+  "key": "hana",
+  "name": "Hana O.",
+  "dorm": "lagunita",
+  "bio": "Tennis and tutoring."
+ },
+ {
+  "key": "ivan",
+  "name": "Ivan G.",
+  "dorm": "lagunita",
+  "bio": "CS 106B section leader."
+ },
+ {
+  "key": "jade",
+  "name": "Jade A.",
+  "dorm": "govco",
+  "bio": "Climber, camper, gear nerd."
+ },
+ {
+  "key": "kai",
+  "name": "Kai Z.",
+  "dorm": "govco",
+  "bio": "Bike mechanic at heart."
+ },
+ {
+  "key": "lila",
+  "name": "Lila E.",
+  "dorm": "manzanita",
+  "bio": "Art practice major."
+ },
+ {
+  "key": "mateo",
+  "name": "Mateo Q.",
+  "dorm": "manzanita",
+  "bio": "Hackathons and hot sauce."
+ },
+ {
+  "key": "noor",
+  "name": "Noor I.",
+  "dorm": "mirrielees",
+  "bio": "Senior. Moving out soon, giving stuff away."
+ },
+ {
+  "key": "owen",
+  "name": "Owen U.",
+  "dorm": "mirrielees",
+  "bio": "Photographer for hire (free for friends)."
+ },
+ {
+  "key": "pia",
+  "name": "Pia X.",
+  "dorm": "kimball",
+  "bio": "Dance team."
+ },
+ {
+  "key": "quinn",
+  "name": "Quinn S.",
+  "dorm": "ev",
+  "bio": "PhD student in EV. Has a car and a dolly."
+ },
+ {
+  "key": "ravi",
+  "name": "Ravi D.",
+  "dorm": "ev",
+  "bio": "Bio lab, 3rd floor."
+ },
+ {
+  "key": "sofia",
+  "name": "Sofia M.",
+  "dorm": "the-row",
+  "bio": "Row house manager. Event supplies central."
+ },
+ {
+  "key": "theo",
+  "name": "Theo B.",
+  "dorm": "off-campus",
+  "bio": "Off-campus senior with a garage."
+ }
+]

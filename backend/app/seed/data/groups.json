@@ -1,0 +1,98 @@
+[
+ {
+  "slug": "robotics-club",
+  "name": "Robotics Club",
+  "emoji": "🤖",
+  "group_type": "club",
+  "is_private": false,
+  "description": "Build nights Tuesdays and Thursdays.",
+  "admin": "felix",
+  "members": [
+   "ethan",
+   "priya",
+   "mateo",
+   "ivan",
+   "alex"
+  ]
+ },
+ {
+  "slug": "cs-106b-study-group",
+  "name": "CS 106B Study Group",
+  "emoji": "💻",
+  "group_type": "class",
+  "is_private": false,
+  "description": "Problem sets, section prep, shared snacks.",
+  "admin": "ivan",
+  "members": [
+   "jordan",
+   "sam",
+   "nina",
+   "mateo",
+   "hana",
+   "pia"
+  ]
+ },
+ {
+  "slug": "hiking-outdoors",
+  "name": "Hiking & Outdoors",
+  "emoji": "🥾",
+  "group_type": "club",
+  "is_private": false,
+  "description": "Weekend trips to the Dish and beyond. Gear swaps welcome.",
+  "admin": "emma",
+  "members": [
+   "maya",
+   "jade",
+   "kai",
+   "ben",
+   "theo",
+   "aisha"
+  ]
+ },
+ {
+  "slug": "bio-lab-3rd-floor",
+  "name": "Bio Lab 3rd Floor",
+  "emoji": "🧬",
+  "group_type": "research",
+  "is_private": true,
+  "join_code": "BIOLAB",
+  "description": "Shared lab supplies and equipment.",
+  "admin": "ravi",
+  "members": [
+   "aisha",
+   "quinn",
+   "grace"
+  ]
+ },
+ {
+  "slug": "hackathon-team-nova",
+  "name": "Hackathon Team Nova",
+  "emoji": "🚀",
+  "group_type": "team",
+  "is_private": false,
+  "description": "Shipping something by Thursday noon.",
+  "admin": "mateo",
+  "members": [
+   "jordan",
+   "priya",
+   "felix"
+  ]
+ },
+ {
+  "slug": "film-society",
+  "name": "Film Society",
+  "emoji": "🎬",
+  "group_type": "org",
+  "is_private": false,
+  "description": "Friday screenings. Projectors, speakers, popcorn.",
+  "admin": "chloe",
+  "members": [
+   "maya",
+   "zoe",
+   "owen",
+   "lila",
+   "diego",
+   "sofia"
+  ]
+ }
+]

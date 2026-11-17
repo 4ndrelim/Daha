@@ -13,6 +13,8 @@ _TEST_DB_URL = (
     or dotenv_values(Path(__file__).resolve().parents[1] / ".env").get("TEST_DATABASE_URL")
     or "postgresql+psycopg://daha:daha@localhost:5432/daha_test"
 )
+# lock_timeout: a test that forgets to release a transaction fails in 10 s instead of hanging.
+_TEST_DB_URL += ("&" if "?" in _TEST_DB_URL else "?") + "options=-c%20lock_timeout%3D10000"
 os.environ["DATABASE_URL"] = _TEST_DB_URL
 os.environ["AI_PROVIDER"] = "mock"
 os.environ["EMBEDDINGS_PROVIDER"] = "hash"
