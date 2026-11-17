@@ -1,0 +1,8 @@
+#!/bin/sh
+# Block commits on main. Every change goes through a branch and a PR (CONTRIBUTING.md → "The one rule").
+branch=$(git symbolic-ref --short -q HEAD)
+if [ "$branch" = "main" ]; then
+  echo "✋ Don't commit on main. Create a branch first:  git checkout -b <letter>/<topic>" >&2
+  exit 1
+fi
+exit 0

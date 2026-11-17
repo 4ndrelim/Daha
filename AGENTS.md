@@ -28,7 +28,7 @@ Say this up front: *"This takes about 5–10 minutes together: your role, how in
    Make sure `.daha/` is listed in `.gitignore`.
 5. **Set up together:**
    - Check the tools (`git`, `gh auth status`, `docker info`, `node -v`, `pnpm -v`, `uv --version`) and walk the human through installing anything missing.
-   - Run `gh auth login` if needed, and create the env files (`CONTRIBUTING.md` → "Start of a work session").
+   - Run `gh auth login` if needed, turn on the git safety hooks (`git config core.hooksPath .githooks`), sync with `main`, and create the env files (`CONTRIBUTING.md` → "Start of a work session").
    - Go through the sub-plan's **🧑 Human TODOs**: API keys, accounts, photos (see Team resources, §7).
 6. **Show the plan in phases.** Give a short table of your milestones (id · what gets built · what the human will see · rough time), the checkpoints teammates wait on, and the human to-dos that come later.
 7. **Get approval.** Then recommend auto mode:
@@ -56,7 +56,9 @@ Say this up front: *"This takes about 5–10 minutes together: your role, how in
   - *Additive* changes are OK: a new optional field or a new endpoint. Update `PLAN.md` §7 in the same PR, and print a 🧑 TODO to announce it in the group chat.
   - *Breaking* changes (rename, remove, retype) need all three humans to agree first. Never make one silently.
 - **Keep `main` working.** Use small PRs (one milestone or less). Run your checks before every PR.
-- **Git:** follow `CONTRIBUTING.md` exactly. Use your own branch (`a/…`, `b/…`, `c/…`). Never push to `main` directly and never force-push `main`.
+- **Git:** follow `CONTRIBUTING.md` exactly.
+  - **Always sync with `main`** at the start of a session, before each milestone, and before each PR (`CONTRIBUTING.md` → "Always sync with `main`"). Then work through **the development loop** one milestone at a time.
+  - **Every change, docs and proposals included, goes branch → PR → merge.** Never commit on `main`, push to `main`, or force-push `main` (`CONTRIBUTING.md` → "The one rule"). Use your own branch (`a/…`, `b/…`, `c/…`).
 - **No paid AI in dev or tests.** Defaults are `AI_PROVIDER=mock` and `EMBEDDINGS_PROVIDER=hash`. Only C runs real HarnessRouter calls, and only with C's OK for that run.
 - **Secrets:** never commit `.env` files or keys, never log keys, and never send keys to the browser. Only `*.env.example` files are committed.
 - **Privacy:** never commit real student data, real photos of people, or documents. Eval photos must have no faces and no personal info.

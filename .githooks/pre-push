@@ -1,0 +1,9 @@
+#!/bin/sh
+# Block pushes to main. main only changes by merging a PR (CONTRIBUTING.md → "The one rule").
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "✋ Don't push to main. Push your branch and open a PR:  git push -u origin HEAD && gh pr create" >&2
+    exit 1
+  fi
+done
+exit 0

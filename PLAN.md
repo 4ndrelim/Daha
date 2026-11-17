@@ -159,7 +159,7 @@ NEXT_PUBLIC_DEMO_MODE=true
 ```
 
 ### 5.5 Makefile targets (A)
-`db` (start Postgres) · `migrate` · `seed` (`--reset`, deterministic) · `api` (uvicorn `--reload --host 0.0.0.0 --port 8000`) · `web` (`pnpm dev --hostname 0.0.0.0`) · `test` (backend pytest + ruff, web lint + typecheck) · `smoke` (A4) · `reindex` (C) · `lan` (print the LAN IP) · `up` (A5: full stack in Docker).
+`db` (start Postgres and wait until healthy: `docker compose up -d --wait db`) · `migrate` · `seed` (`--reset`, deterministic) · `api` (uvicorn `--reload --host 0.0.0.0 --port 8000`) · `web` (`pnpm dev --hostname 0.0.0.0`) · `test` (backend pytest + ruff, web lint + typecheck) · `smoke` (A4) · `reindex` (C) · `lan` (print the LAN IP) · `up` (A5: full stack in Docker).
 
 ### 5.6 Conventions (both sides)
 - JSON is **snake_case** both ways. TypeScript types use the same snake_case names, with no case conversion.

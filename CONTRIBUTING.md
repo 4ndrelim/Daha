@@ -6,11 +6,14 @@ There are two parts here. **Part 1** is for humans: what to click and what to sa
 
 ## Part 1: for humans (no git knowledge needed)
 
+> **The one rule:** every change goes through a **branch** and a **Pull Request (PR)**, never straight to `main`. That includes docs and one-line fixes. Claude makes the branch and the PR for you. `main` only changes when a PR is merged.
+
 **Words you'll see**
 - **Branch:** your own copy of the code to work on, so you never break anyone else's work.
 - **PR (Pull Request):** a request to add your branch's work into the shared version (`main`).
 - **Merge:** accepting a PR. After that, everyone gets the work the next time they sync.
 - **Conflict:** two people changed the same lines. Claude fixes these for you.
+- **Sync / pull:** getting everyone's latest merged work. Claude does this on its own, before each piece of work.
 
 **Phrases to paste into Claude**
 | When | Say this |
@@ -46,21 +49,64 @@ There are two parts here. **Part 1** is for humans: what to click and what to sa
 
 ## Part 2: for agents (exact workflow)
 
+### The one rule: branch → PR → merge (never commit or push to `main`)
+- **Every change goes through a PR:** code, docs, proposals, one-line fixes. The path is always new branch → commits → push the branch → PR → merge the PR.
+- **Your local `main` is read-only.** Only ever `git pull` into it. Never `git commit` while on `main`, and never `git push origin main`, forced or not.
+- **Before every commit and push,** check `git branch --show-current`. If it says `main`, stop and create a branch first: `git checkout -b <letter>/<topic>`.
+- **`main` changes only by merging a PR,** with `gh pr merge` or the GitHub button (see "Merging" below).
+- **Safety net:** `.githooks/` blocks commits on `main` and pushes to `main`. Turn it on once per clone with `git config core.hooksPath .githooks`.
+- **Committed on `main` by accident?** Commit any loose changes first, then move the work to a branch:
+  ```bash
+  git branch <letter>/<topic>      # your commits are now saved on a new branch
+  git reset --hard origin/main     # local main back to the shared version
+  git checkout <letter>/<topic>    # continue here, then open a PR
+  ```
+
 ### Start of a work session
+1. **First time on a machine:**
+   - Run `gh auth status`. If logged out: `gh auth login`, then choose GitHub.com, HTTPS, and log in with a browser.
+   - Turn on the safety hooks: `git config core.hooksPath .githooks`.
+   - Create the env files once they exist on `main`: `cp backend/.env.example backend/.env` and `cp web/.env.example web/.env.local`.
+2. **Every session:** sync (next section), then follow the development loop.
+
+### Always sync with `main` (the golden rule)
+Teammates merge all day, so sync **every time** at these moments:
+- the start of every session;
+- before starting each milestone (every new branch comes from a fresh `main`);
+- before opening or updating a PR;
+- when a teammate's milestone you depend on lands (`gh pr list --state merged --limit 10`);
+- at least every ~2 hours during long auto-mode sessions.
+
 ```bash
+git status            # uncommitted work? commit it to your branch first (never discard someone's work)
+git fetch origin
 git checkout main && git pull --rebase origin main
-# continuing a branch that is not merged yet:
-git checkout <branch> && git rebase origin/main
-# starting the next milestone:
-git checkout -b <letter>/<milestone>-<topic>      # e.g. a/a1-auth, b/b2-explore, c/c1-scans
+# continuing your unmerged branch instead of starting a new one:
+git checkout <your-branch> && git rebase origin/main
 ```
-First time on a machine: `gh auth status` (if logged out: `gh auth login`, choose GitHub.com, HTTPS, log in with a browser). Then create the env files: `cp backend/.env.example backend/.env` and `cp web/.env.example web/.env.local`.
+After every pull, refresh. These are cheap and safe, so just run them (skip any part that doesn't exist yet):
+```bash
+(cd backend && uv sync)      # new backend dependencies
+make db && make migrate      # new database migrations (A adds these); make db starts Postgres if needed
+(cd web && pnpm install)     # new web dependencies
+```
+Run `make seed` again only if `backend/app/seed/` changed. It resets the demo data.
+
+### The development loop (one milestone at a time)
+1. **Branch** from a freshly synced `main`: `git checkout -b <letter>/<milestone>-<topic>`, e.g. `a/a1-auth`, `b/b2-explore`, `c/c1-scans`.
+   - If your previous PR isn't merged yet and the next milestone needs it, branch from your previous branch instead (`git checkout -b <new-branch> <previous-branch>`). Write `Depends on #<n>` in the new PR, and rebase onto `main` once the first PR merges. Don't sit idle waiting.
+2. **Run what you need locally** (`PLAN.md` §5.2): `make db` → `make migrate` → `make seed` → `make api` and/or `make web`. Before Phase 0 lands, follow your sub-plan's setup steps instead.
+3. **Build** the milestone from your sub-plan in small steps: code → test → run → commit. Anything a teammate hasn't merged yet comes from mocks or stubs; your sub-plan says how.
+4. **See it work the way the human will:** call the endpoint (`curl`, or `http://localhost:8000/docs`), or open the page at `http://localhost:3000`. On a phone: `make lan`.
+5. **Check, push, PR:** follow "Before opening a PR" and "Opening the PR" below.
+6. **Merge** per the rules below, sync again, and print the end-of-milestone block (`AGENTS.md` §4).
+7. Go back to step 1 for the next milestone.
 
 ### While working
 - Commit small and often, using the format `<type>(<area>): <summary> [<milestone>]`. Types: `feat`, `fix`, `test`, `docs`, `chore`, `refactor`. Areas: `api`, `db`, `web`, `ai`, `search`, `infra`.
   Example: `feat(api): transaction state machine [A3]`.
 - Touch only the paths you own (`PLAN.md` §4).
-- **Shared files** may get small, append-only edits by anyone: `PLAN.md` §7 (additive contract changes), `backend/.env.example`, `web/.env.example`, `docs/decisions.md`. Rebase right before you merge.
+- **Shared files** may get small, append-only edits by anyone, always inside your own branch and PR: `PLAN.md` §7 (additive contract changes), `backend/.env.example`, `web/.env.example`, `docs/decisions.md`. Rebase right before you merge.
 - Adding a dependency: backend → `cd backend && uv add <pkg>`; web → `cd web && pnpm add <pkg>`. Commit the lockfile in the same commit.
 
 ### Before opening a PR
@@ -71,6 +117,8 @@ cd backend && uv run ruff check . && uv run pytest -q && cd ..
 # web changes:
 cd web && pnpm lint && pnpm typecheck && pnpm build && cd ..
 git push -u origin HEAD
+# already pushed this branch before the rebase? use this instead (your own branch only):
+# git push --force-with-lease
 ```
 
 ### Opening the PR
@@ -118,6 +166,6 @@ PRs that change the contract, or touch another person's paths, need that person'
 Bugs found in someone else's area go to them as an issue: `gh issue create --title "<bug>" --body "<steps, expected, actual>" --label <A|B|C>`. During integration, fix your own issues first and link them in the PR with `Fixes #<n>`.
 
 ### Never
-- Push to `main` directly, or force-push `main`.
+- Commit on `main`, push to `main`, or force-push `main`. Every change goes through a PR.
 - Commit `.env`, keys, real photos of people, `backend/uploads/`, `node_modules/`, or `.venv/`.
 - Rewrite another person's files to make your code work. Ask them instead (print a 🧑 TODO).
