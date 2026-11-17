@@ -1,6 +1,8 @@
-"""In-app notifications (PLAN.md §7.5). Stub in P0-A; implemented in A3."""
+"""In-app notifications (PLAN.md §7.5)."""
 
 from sqlalchemy.orm import Session
+
+from app.models import Notification
 
 
 def notify(
@@ -13,4 +15,16 @@ def notify(
     actor_id: int | None = None,
     data: dict | None = None,
 ) -> None:
-    raise NotImplementedError("notify arrives in A3")
+    """Add a notification row. The caller commits."""
+    db.add(
+        Notification(
+            user_id=user_id,
+            type=type,
+            title=title,
+            body=body,
+            link=link,
+            actor_id=actor_id,
+            data=data or {},
+        )
+    )
+    db.flush()

@@ -27,11 +27,13 @@ from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import text  # noqa: E402
 
 from alembic import command  # noqa: E402
+from app.core import security  # noqa: E402
 from app.core.config import BACKEND_DIR, settings  # noqa: E402
 from app.core.db import SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Base  # noqa: E402
 
+security.BCRYPT_ROUNDS = 4
 assert settings.database_url == _TEST_DB_URL, "tests must use the test database"
 
 
