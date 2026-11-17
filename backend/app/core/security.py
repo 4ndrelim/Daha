@@ -9,11 +9,14 @@ from app.core.config import settings
 
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_DAYS = 30
+BCRYPT_ROUNDS = 12  # tests lower this to stay fast
 
 
 def hash_password(password: str) -> str:
     # bcrypt only uses the first 72 bytes; truncate explicitly so long passwords don't error.
-    return bcrypt.hashpw(password.encode("utf-8")[:72], bcrypt.gensalt()).decode("utf-8")
+    return bcrypt.hashpw(
+        password.encode("utf-8")[:72], bcrypt.gensalt(rounds=BCRYPT_ROUNDS)
+    ).decode("utf-8")
 
 
 def verify_password(password: str, password_hash: str) -> bool:
