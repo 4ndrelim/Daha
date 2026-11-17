@@ -1,5 +1,10 @@
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { Suspense } from "react";
+import { SignupScreen } from "./signup-screen";
 
-export default function Page() {
-  return <PagePlaceholder title="Join DAHA" note="B1: Stanford email, name, dorm." />;
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupScreen />
+    </Suspense>
+  );
 }
