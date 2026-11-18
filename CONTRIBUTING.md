@@ -20,6 +20,7 @@ There are two parts here. **Part 1** is for humans: what to click and what to sa
 |---|---|
 | First time | `Understand the docs and begin.` Claude asks your role and how involved you want to be (about 5–10 min) |
 | Every new session | `Continue.` (or `Sync with main and continue my plan.`) |
+| After a pull, or you got a new key | `Refresh my env files.` Claude runs `make env`. Paste keys only into `backend/.env` |
 | See what Claude researched | `Show me your proposals.` |
 | Change how involved you are | `Switch me to involved mode.` or `Switch me to hands-off mode.` |
 | A piece is done | `Open a PR for this milestone.` |
@@ -66,8 +67,32 @@ There are two parts here. **Part 1** is for humans: what to click and what to sa
 1. **First time on a machine:**
    - Run `gh auth status`. If logged out: `gh auth login`, then choose GitHub.com, HTTPS, and log in with a browser.
    - Turn on the safety hooks: `git config core.hooksPath .githooks`.
-   - Create the env files once they exist on `main`: `cp backend/.env.example backend/.env` and `cp web/.env.example web/.env.local`.
+   - Create your env files: `make env`. Then fill in the keys you have (see "Environment files" below).
 2. **Every session:** sync (next section), then follow the development loop.
+
+### Environment files (`.env`)
+Settings and secret keys live in two local files that git ignores. Only the `*.env.example` templates are committed, and they explain every variable.
+
+| Your file | Used by | Template (committed) |
+|---|---|---|
+| `backend/.env` | the API, `make` targets, backend scripts, `make up` (Docker) | `backend/.env.example` |
+| `web/.env.local` | the Next.js dev server (no secrets) | `web/.env.example` |
+
+- **Create or refresh them with `make env`.** The first time, it copies the templates. After a pull, it appends any variables a teammate added (with the template's default) and prints their names. It never changes a line you already have, so your keys stay put.
+- **Fill in the keys you have,** only in `backend/.env`. Never put them in chat, screenshots, or code.
+
+  | Variable | What it's for | Format | Who has it |
+  |---|---|---|---|
+  | `JWT_SECRET` | signs login tokens | the output of `openssl rand -hex 32` | make your own |
+  | `HARNESSROUTER_API_KEY` | photo AI (HarnessRouter) | one key, or several comma-separated with no spaces: `sk-hr-aaa,sk-hr-bbb`. Photos are load-balanced across them | the team account holder (`AGENTS.md` §7) |
+  | `HARNESSROUTER_VISION_HARNESS_ID` | the harness each key runs | don't type it: after setting the keys, run `cd backend && uv run python scripts/setup_harnessrouter.py --write-env` (free; one harness per key, saved in key order) | generated |
+  | `ANTHROPIC_API_KEY` | optional vision fallback | `sk-ant-…` | nobody yet (proposal first) |
+
+  Any other key (for example web search) is listed in `AGENTS.md` §7 and explained in `backend/.env.example`.
+- **Check your HarnessRouter keys for free:** `cd backend && uv run python scripts/setup_harnessrouter.py --check` prints `key 1/3: OK` and so on, never the keys themselves.
+- **Real AI costs credit, so it's opt-in:** set `AI_PROVIDER=harnessrouter` in `backend/.env` only when you mean to spend. The default, `mock`, is free.
+- **After editing `backend/.env`,** restart `make api`: settings are read once at startup.
+- **Agents adding a variable:** add it to the right `.env.example` in the same PR, with a comment and a safe default (empty for keys), and mention it in the PR description. Teammates pick it up with `make env`.
 
 ### Always sync with `main` (the golden rule)
 Teammates merge all day, so sync **every time** at these moments:
@@ -89,6 +114,7 @@ After every pull, refresh. These are cheap and safe, so just run them (skip any 
 (cd backend && uv sync)      # new backend dependencies
 make db && make migrate      # new database migrations (A adds these); make db starts Postgres if needed
 (cd web && pnpm install)     # new web dependencies
+make env                     # new settings from the .env.example files (keeps your values)
 ```
 Run `make seed` again only if `backend/app/seed/` changed. It resets the demo data.
 

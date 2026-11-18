@@ -128,8 +128,7 @@ Git, GitHub CLI, Docker Desktop, Node.js ≥ 20 with pnpm (`corepack enable`), P
 ### 5.2 First run
 ```bash
 gh repo clone 4ndrelim/Daha && cd Daha
-cp backend/.env.example backend/.env
-cp web/.env.example web/.env.local
+make env        # creates backend/.env + web/.env.local from the examples (CONTRIBUTING.md)
 make db         # Postgres+pgvector in Docker
 make migrate    # create tables
 make seed       # demo data
@@ -156,12 +155,12 @@ AI_MOCK_LATENCY_MS=2500
 AI_MAX_IMAGES_PER_SCAN=6
 AI_DAILY_SCANS_PER_USER=20
 AI_BUDGET_USD=40                     # hard stop for paid vision calls (keeps $10 of $50 for evals)
-HARNESSROUTER_API_KEY=               # human (C): from app.harnessrouter.ai — never commit
+HARNESSROUTER_API_KEY=               # human: one key, or several comma-separated (load-balanced) — never commit
 HARNESSROUTER_BASE_URL=https://api.harnessrouter.ai
-HARNESSROUTER_VISION_HARNESS_ID=     # printed by scripts/setup_harnessrouter.py
+HARNESSROUTER_VISION_HARNESS_ID=     # setup_harnessrouter.py --write-env: one id per key, same order
 HARNESSROUTER_BASE=claude-code       # harness base chosen in the C0 spike
 HARNESSROUTER_MODEL=                 # model id chosen in the C0 spike (from GET /v1/models)
-HARNESSROUTER_MAX_CONCURRENCY=2
+HARNESSROUTER_MAX_CONCURRENCY=2      # per key
 HARNESSROUTER_TIMEOUT_S=180
 HARNESSROUTER_EST_COST_PER_IMAGE=0.10   # from the spike; used when the API reports no cost
 ANTHROPIC_API_KEY=                   # optional fallback provider
@@ -183,7 +182,7 @@ NEXT_PUBLIC_DEMO_MODE=true
 ```
 
 ### 5.5 Makefile targets (A)
-`db` (start Postgres and wait until healthy: `docker compose up -d --wait db`) · `migrate` · `seed` (`--reset`, deterministic) · `api` (uvicorn `--reload --host 0.0.0.0 --port 8000`) · `web` (`pnpm dev --hostname 0.0.0.0`) · `test` (backend pytest + ruff, web lint + typecheck) · `smoke` (A4) · `reindex` (C) · `lan` (print the LAN IP) · `up` (full stack in Docker: db + api + web; `DB_PORT`/`API_PORT`/`WEB_PORT` change the host ports) · `down` · `logs`.
+`env` (create `backend/.env` + `web/.env.local` from the examples; after a pull, append new variables without touching yours) · `db` (start Postgres and wait until healthy: `docker compose up -d --wait db`) · `migrate` · `seed` (`--reset`, deterministic) · `api` (uvicorn `--reload --host 0.0.0.0 --port 8000`) · `web` (`pnpm dev --hostname 0.0.0.0`) · `test` (backend pytest + ruff, web lint + typecheck) · `smoke` (A4) · `reindex` (C) · `lan` (print the LAN IP) · `up` (full stack in Docker: db + api + web; `DB_PORT`/`API_PORT`/`WEB_PORT` change the host ports) · `down` · `logs`.
 
 ### 5.6 Conventions (both sides)
 - JSON is **snake_case** both ways. TypeScript types use the same snake_case names, with no case conversion.

@@ -108,7 +108,7 @@ In hands-off mode, keep working on anything that isn't blocked, and put the bloc
 
 Keys are never pasted into the group chat and never committed:
 - Ask for keys to be shared privately (a one-to-one message deleted afterwards, or a password manager).
-- Paste them only into `backend/.env`.
+- Paste them only into `backend/.env`. Several HarnessRouter keys go comma-separated in `HARNESSROUTER_API_KEY` (load-balanced); `make env` creates or refreshes the file.
 - Add the variable name, with an empty value, to `backend/.env.example`.
 
 ## 8. Definition of done for any PR
