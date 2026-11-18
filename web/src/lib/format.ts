@@ -34,3 +34,8 @@ export function initials(name: string): string {
 export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
 }
+
+/** "Florence Moore Hall (FloMo)" → "FloMo"; names without a nickname stay as they are. */
+export function shortCommunityName(name: string): string {
+  return name.match(/\(([^)]+)\)\s*$/)?.[1] ?? name;
+}
