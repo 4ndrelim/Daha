@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Bell, MessageCircle } from "lucide-react";
 import { useMe } from "@/lib/queries/me";
+import { useUnread } from "@/lib/queries/unread";
 import { cn } from "@/lib/utils";
 
 function CountBadge({ count }: { count: number }) {
@@ -16,6 +17,7 @@ function CountBadge({ count }: { count: number }) {
 
 export function TopBar() {
   const { data: me } = useMe();
+  const { data: unread } = useUnread();
   const iconBtn = "relative flex size-11 items-center justify-center rounded-full text-foreground hover:bg-muted";
   return (
     <header className="pt-safe sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur">
@@ -34,11 +36,11 @@ export function TopBar() {
         <div className="ml-auto flex items-center">
           <Link href="/notifications" aria-label="Notifications" className={cn(iconBtn)}>
             <Bell className="size-[22px]" />
-            <CountBadge count={me?.unread_notifications ?? 0} />
+            <CountBadge count={unread?.notifications ?? me?.unread_notifications ?? 0} />
           </Link>
           <Link href="/messages" aria-label="Messages" className={cn(iconBtn)}>
             <MessageCircle className="size-[22px]" />
-            <CountBadge count={me?.unread_messages ?? 0} />
+            <CountBadge count={unread?.messages ?? me?.unread_messages ?? 0} />
           </Link>
         </div>
       </div>

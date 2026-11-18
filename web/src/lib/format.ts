@@ -29,3 +29,8 @@ export function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
+
+/** plural(1, "ask") → "1 ask"; plural(3, "ask") → "3 asks"; plural(2, "thing", "things"). */
+export function plural(n: number, one: string, many = `${one}s`): string {
+  return `${n} ${n === 1 ? one : many}`;
+}

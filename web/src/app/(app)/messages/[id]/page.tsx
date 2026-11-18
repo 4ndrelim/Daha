@@ -69,6 +69,7 @@ export default function ChatPage() {
   useEffect(() => {
     api.conversations.markRead(convId).then(() => {
       qc.invalidateQueries({ queryKey: ["me"] });
+      qc.invalidateQueries({ queryKey: ["unread"] });
       qc.invalidateQueries({ queryKey: ["conversations"] });
     }).catch(() => {});
   }, [convId, qc]);
