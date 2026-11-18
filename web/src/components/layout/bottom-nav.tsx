@@ -15,6 +15,8 @@ const tabs = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  // Inside a chat the composer takes the bottom of the screen.
+  if (/^\/messages\/\d+/.test(pathname)) return null;
   return (
     <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 backdrop-blur">
       <ul className="mx-auto flex h-16 max-w-md items-stretch justify-around px-2">
