@@ -22,4 +22,5 @@
 | 2026-11-17 | One `/search` call with per-page JSON summaries, not `outputSchema` synthesis | Each offer stays tied to the page it came from; synthesis has a 10-property schema limit and adds ~2 s |
 | 2026-11-17 | `POST`, not `GET` | An opted-in location never lands in URLs or access logs |
 | 2026-11-17 | Spend tracked through `commercial_lookup` events (counts and kinds only), no new table | No migration; the events table already exists for analytics |
-| 2026-11-17 | Default `COMMERCIAL_PROVIDER=mock` | No paid calls in dev or tests (`AGENTS.md` §3); the UI labels mock results "Sample data" |
+| 2026-11-17 | `backend/.env.example` defaults to `COMMERCIAL_PROVIDER=exa`; the code default stays `mock` | The team tries it with the shared key; tests and CI never call Exa; the daily cap and monthly budget limit spend. Mock results are labeled "Sample data" |
+| 2026-11-17 | Live test: location is only a hint to Exa (results came from other states); real "nearby" needs a places API later | Honest limit of web search; prices and ranking work |

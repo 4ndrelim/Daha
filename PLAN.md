@@ -172,7 +172,7 @@ EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
 MATCH_MIN_SCORE=0.55                 # calibrated by C on seed data
 AI_ENRICH_REQUESTS=false
 # --- buy or rent nearby (C6, accepted proposal docs/proposals/C-exa-buy-nearby.md) ---
-COMMERCIAL_PROVIDER=mock             # mock | exa | off
+COMMERCIAL_PROVIDER=exa              # exa | mock | off (the code default is mock, so tests never call Exa)
 EXA_API_KEY=                         # human (Andre) — never commit
 EXA_BASE_URL=https://api.exa.ai
 EXA_SEARCH_TYPE=auto
