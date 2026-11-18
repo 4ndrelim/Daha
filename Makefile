@@ -3,7 +3,7 @@
 # already on PATH.
 export PATH := $(HOME)/.local/bin:$(HOME)/.local/node/bin:$(HOME)/.docker/bin:$(PATH)
 
-.PHONY: env db migrate seed api web test smoke reindex lan up down logs
+.PHONY: env db migrate seed api web test smoke reindex lan up down logs deploy
 
 env:  ## create backend/.env + web/.env.local, or add new variables after a pull (keeps yours)
 	@sh infra/env-sync.sh
@@ -47,3 +47,6 @@ down:  ## stop the Docker stack (data is kept)
 
 logs:  ## follow the Docker stack's logs
 	docker compose --profile full logs -f --tail 100
+
+deploy:  ## put DAHA online on the Azure VM (infra/deploy/OWNERACTIONS.md)
+	@bash infra/deploy/deploy.sh

@@ -92,7 +92,7 @@ Per-person target times, and what gets cut if we fall behind: `PLAN.md` §0.
 ---
 
 ## After the hackathon (beyond the hackathon scope; good next steps)
-1. **Online for real (A).** A small cloud server, about $6 a month (often free with student credits), running the same setup so the app stays up. *Beyond the hackathon scope.* For Thursday, the temporary link plus the demo video is enough.
+1. **Online for real.** One script puts the whole app on an Azure VM with a free `https://<name>.duckdns.org` link that works on phones: `infra/deploy/OWNERACTIONS.md` (about 30 minutes).
 2. **A week of real feedback.** Dorm-mates use it, fill in a 5-question form, and we fix the top 5 issues each week.
 3. **Full evals (C).** Score the AI on 20–30 of our own photos and requests: did it find the right items, did search rank the right things first, speed, cost. Then improve and re-run (`plans/EVALS.md`).
 4. **Follow-ups from feedback:** the personal inventory keeper and declutter mode (`plans/C-ai-discovery.md` F1–F3), plus the P1 list in `PLAN.md` §2.
