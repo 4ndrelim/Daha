@@ -68,7 +68,7 @@
 
 ## After the hackathon (beyond the hackathon scope; good next steps)
 ### Online for real (A)
-**Built:** follow `infra/deploy/OWNERACTIONS.md` (about 30 minutes). One command from your laptop, `./infra/deploy/deploy.sh` (or `make deploy`), sets up an Azure Ubuntu VM end to end: Docker, the full Compose stack, **Caddy** for automatic HTTPS on a free **DuckDNS** name, the server's `.env` (your keys plus a server-only `JWT_SECRET`, `PUBLIC_BASE_URL`, and your `DEMO_MODE` choice), and nightly backups of the database and photos (7 days). How it works and day-to-day operations: `infra/deploy/PLAN.md`.
+**Built:** follow `infra/deploy/OWNERACTIONS.md` (about 30 minutes). One command from your laptop, `./infra/deploy/deploy.sh` (or `make deploy`), sets up an Azure Ubuntu VM end to end: Docker, the full Compose stack, **Caddy** for automatic HTTPS on your own subdomain (one DNS A record) or a free **DuckDNS** name, the server's `.env` (your keys plus a server-only `JWT_SECRET`, `PUBLIC_BASE_URL`, and your `DEMO_MODE` choice), and nightly backups of the database and photos (7 days). How it works and day-to-day operations: `infra/deploy/PLAN.md`.
 - **Done when:** the deployed app passes demo-script steps 1–6 on a phone.
 
 ### A week of real feedback (B)

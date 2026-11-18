@@ -4,7 +4,7 @@
 #
 # Expects (uploaded by deploy.sh):
 #   ~/daha/src.new/             the code to deploy
-#   ~/daha/config/deploy.env    SITE, DEMO_MODE, DUCKDNS_SUBDOMAIN, DUCKDNS_TOKEN, PUBLIC_IP
+#   ~/daha/config/deploy.env    SITE, DEMO_MODE, PUBLIC_IP, and DUCKDNS_SUBDOMAIN/TOKEN if used
 #   ~/daha/config/backend.env.new   your backend/.env with the server settings applied
 set -euo pipefail
 
@@ -15,7 +15,7 @@ log() { printf '\n==> %s\n' "$*"; }
 
 # shellcheck source=/dev/null
 . "$CONF/deploy.env"
-: "${SITE:?}" "${DEMO_MODE:?}" "${DUCKDNS_SUBDOMAIN:?}" "${DUCKDNS_TOKEN:?}"
+: "${SITE:?}" "${DEMO_MODE:?}"
 
 # 1. Swap: building the web app needs more memory than small VMs have.
 mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
@@ -36,13 +36,18 @@ if ! command -v docker >/dev/null 2>&1; then
 fi
 sudo systemctl enable --now docker >/dev/null 2>&1 || true   # (a snap-installed Docker runs on its own)
 
-# 3. Point the DuckDNS name at this VM (an empty ip= means "the address this request comes from").
-log "Pointing $SITE at this VM"
-answer=$(curl -fsS --max-time 20 "https://www.duckdns.org/update?domains=${DUCKDNS_SUBDOMAIN}&token=${DUCKDNS_TOKEN}&ip=${PUBLIC_IP:-}" || true)
-if [ "$answer" != "OK" ]; then
-  echo "DuckDNS didn't accept the update (it answered: ${answer:-nothing})."
-  echo "Check DUCKDNS_SUBDOMAIN (just the name, without .duckdns.org) and DUCKDNS_TOKEN in infra/deploy/.env."
-  exit 1
+# 3. The web address. DuckDNS: point the name at this VM (an empty ip= means "the address this
+#    request comes from"). Your own subdomain: its DNS A record already points here.
+if [ -n "${DUCKDNS_SUBDOMAIN:-}" ]; then
+  log "Pointing $SITE at this VM"
+  answer=$(curl -fsS --max-time 20 "https://www.duckdns.org/update?domains=${DUCKDNS_SUBDOMAIN}&token=${DUCKDNS_TOKEN:-}&ip=${PUBLIC_IP:-}" || true)
+  if [ "$answer" != "OK" ]; then
+    echo "DuckDNS didn't accept the update (it answered: ${answer:-nothing})."
+    echo "Check DUCKDNS_SUBDOMAIN (just the name, without .duckdns.org) and DUCKDNS_TOKEN in infra/deploy/.env."
+    exit 1
+  fi
+else
+  log "Using your own address: $SITE (its DNS A record must point at this VM)"
 fi
 
 # 4. Swap in the new code; the previous version stays in src.old until the next deploy.

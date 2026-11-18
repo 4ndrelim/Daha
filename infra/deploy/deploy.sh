@@ -21,12 +21,22 @@ say() { printf '\n==> %s\n' "$*"; }
 # shellcheck source=/dev/null
 . "$CONF"
 if [ -z "${VM:-}" ] || [ "$VM" = "azureuser@0.0.0.0" ]; then die "Set VM=azureuser@<public IP> in infra/deploy/.env"; fi
-[ -n "${DUCKDNS_SUBDOMAIN:-}" ] || die "Set DUCKDNS_SUBDOMAIN in infra/deploy/.env"
-[ -n "${DUCKDNS_TOKEN:-}" ] || die "Set DUCKDNS_TOKEN in infra/deploy/.env"
-DUCKDNS_SUBDOMAIN="${DUCKDNS_SUBDOMAIN%.duckdns.org}"
+DOMAIN="${DOMAIN:-}"
+DOMAIN="${DOMAIN#https://}"
+DOMAIN="${DOMAIN#http://}"
+DOMAIN="${DOMAIN%%/*}"
+if [ -n "$DOMAIN" ]; then
+  SITE="$DOMAIN" # your own subdomain; its DNS A record points at the VM
+  DUCKDNS_SUBDOMAIN=""
+  DUCKDNS_TOKEN=""
+else
+  [ -n "${DUCKDNS_SUBDOMAIN:-}" ] || die "Set DOMAIN (your own subdomain) or DUCKDNS_SUBDOMAIN + DUCKDNS_TOKEN in infra/deploy/.env"
+  [ -n "${DUCKDNS_TOKEN:-}" ] || die "Set DUCKDNS_TOKEN in infra/deploy/.env"
+  DUCKDNS_SUBDOMAIN="${DUCKDNS_SUBDOMAIN%.duckdns.org}"
+  SITE="$DUCKDNS_SUBDOMAIN.duckdns.org"
+fi
 DEMO_MODE="${DEMO_MODE:-true}"
 case "$DEMO_MODE" in true | false) ;; *) die "DEMO_MODE must be true or false" ;; esac
-SITE="$DUCKDNS_SUBDOMAIN.duckdns.org"
 
 SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 -o ConnectTimeout=15)
 if [ -n "${SSH_KEY:-}" ]; then
@@ -55,6 +65,15 @@ deploy() {
   fi
   host="${VM#*@}"
   if [[ "$host" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then public_ip="$host"; fi
+  if [ -n "$DOMAIN" ] && [ -n "$public_ip" ] && command -v dig >/dev/null; then
+    local resolved
+    resolved=$(dig +short "$DOMAIN" A 2>/dev/null | tail -1 || true)
+    if [ "$resolved" != "$public_ip" ]; then
+      echo "⚠️  $DOMAIN points to ${resolved:-nothing yet}, not to the VM ($public_ip)."
+      echo "   Add a DNS record: type A, name ${DOMAIN%%.*}, value $public_ip (OWNERACTIONS.md step 2)."
+      echo "   HTTPS starts working within a minute or two of the record being right."
+    fi
+  fi
 
   say "Connecting to $VM"
   ssh_vm 'mkdir -p ~/daha/config' \

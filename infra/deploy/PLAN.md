@@ -5,7 +5,8 @@ The checklist is `OWNERACTIONS.md`. This page is how it works and how to run it 
 ## 1. The picture
 ```
  phone / laptop
-      │  https://<name>.duckdns.org          (DuckDNS: free name → the VM's public IP)
+      │  https://daha.yourdomain.com  (one DNS A record → the VM's public IP)
+      │  or https://<name>.duckdns.org (free DuckDNS name → the same IP)
       ▼
  Azure VM (Ubuntu 24.04) · network rules allow only 22 (SSH), 80, 443
  └─ Docker Compose, project "daha"
@@ -22,11 +23,13 @@ The checklist is `OWNERACTIONS.md`. This page is how it works and how to run it 
 ```
 Only Caddy listens on the public network. The web app, the API and the database answer on `127.0.0.1` only. It's the same `docker-compose.yml` everyone uses with `make up`, plus `infra/deploy/docker-compose.prod.yml`, which adds Caddy, keeps the other ports local, and gives the API a long first-boot allowance.
 
-**Why DuckDNS + Caddy:** it's free, the link is permanent, and people connect straight to the VM. `duckdns.org` is on the Public Suffix List, so our certificate limits aren't shared with other DuckDNS users. Azure's own free names (`*.cloudapp.azure.com`) are not on it, so their free certificates often fail. Other options we looked at: Tailscale Funnel (no open ports, but an unpublished bandwidth limit), Cloudflare quick tunnels (the link changes on every restart), and a named Cloudflare Tunnel or Cloudflare Access email gate (both need a domain you pay for).
+**Your own subdomain:** one `A` record (`daha` → the VM's IP) at your DNS provider is all it takes. Nothing else on the domain changes, and Caddy gets a certificate for that one name only. That's also why it's not a Cloudflare Tunnel here: a tunnel needs the whole domain's DNS moved to Cloudflare.
+
+**Why DuckDNS + Caddy without a domain:** it's free, the link is permanent, and people connect straight to the VM. `duckdns.org` is on the Public Suffix List, so our certificate limits aren't shared with other DuckDNS users. Azure's own free names (`*.cloudapp.azure.com`) are not on it, so their free certificates often fail. Other options we looked at: Tailscale Funnel (no open ports, but an unpublished bandwidth limit), Cloudflare quick tunnels (the link changes on every restart), and a named Cloudflare Tunnel or Cloudflare Access email gate (both need a domain you pay for).
 
 ## 2. What `deploy.sh` does
 On your laptop:
-1. Reads `infra/deploy/.env` (VM, SSH key, DuckDNS, demo choice) and checks that `backend/.env` has the keys.
+1. Reads `infra/deploy/.env` (VM, SSH key, your subdomain or DuckDNS, demo choice), checks that `backend/.env` has the keys, and, for your own subdomain, warns if its DNS doesn't point at the VM yet.
 2. Sends the committed code (`git archive HEAD`, so uncommitted edits never ship) to `~/daha/src.new` on the VM.
 3. Sends your `backend/.env`, minus `JWT_SECRET`, `DEMO_MODE`, `PUBLIC_BASE_URL` and `CORS_ORIGINS`, plus the server's values for the last three. Files are written with owner-only permissions.
 4. Runs `infra/deploy/remote.sh` on the VM, then waits until `https://<name>.duckdns.org/api/health` answers.
@@ -34,7 +37,7 @@ On your laptop:
 On the VM (`remote.sh`; every step checks first, so re-running is safe):
 1. Adds a 4 GB swap file if the VM has under ~4 GB of memory and no swap.
 2. Installs Docker (official `get.docker.com` script) if it's missing.
-3. Points the DuckDNS name at the VM's IP.
+3. DuckDNS only: points the name at the VM's IP. (Your own subdomain is already pointed by its A record.)
 4. Moves the new code into `~/daha/src`; the previous version stays in `~/daha/src.old` until the next deploy.
 5. Writes `~/daha/config/backend.env` (your settings + a `JWT_SECRET` created once on the VM, so redeploys never log anyone out), links it as `src/backend/.env`, and writes `src/.env` with Docker Compose's own settings.
 6. `docker compose up -d --build --remove-orphans --wait`: builds, starts, and waits until everything is healthy, or prints the logs.
@@ -46,7 +49,7 @@ On the VM (`remote.sh`; every step checks first, so re-running is safe):
 | `~/daha/src` | the running code (`~/daha/src.old` = the previous deploy) |
 | `~/daha/config/backend.env` | the server's settings and keys (owner-only) |
 | `~/daha/config/jwt_secret` | the login-token secret, made once on the VM |
-| `~/daha/config/deploy.env` | DuckDNS name, token, demo choice (owner-only) |
+| `~/daha/config/deploy.env` | the web address, demo choice, and DuckDNS name and token if used (owner-only) |
 | `~/daha/backups` | `db-YYYY-MM-DD.sql.gz`, `uploads-YYYY-MM-DD.tgz`, `backup.log` |
 
 To run Docker commands yourself: `ssh` in, `cd ~/daha/src`, then e.g. `sudo docker compose ps`. The compose `.env` there already picks the right files and profile.
@@ -88,7 +91,7 @@ Then set `DEMO_MODE=false` in `infra/deploy/.env` and run `./infra/deploy/deploy
 ## 8. Later (not in this setup)
 - **Email verification** at sign-up: a 6-digit code to the `@stanford.edu` address. It needs an email sender, either a team Gmail account over SMTP for a pilot, or a proper sending domain. That's A's backend work plus a web screen.
 - **Backups off the VM:** copy the nightly files to Azure Blob Storage with a SAS token.
-- **Uptime alerts:** a free external monitor on `https://<name>.duckdns.org/api/health`.
+- **Uptime alerts:** a free external monitor on `https://<your address>/api/health`.
 - **Auto-deploy:** a GitHub Action that runs `deploy.sh` when `main` changes.
 - **Your own domain someday:** then a named Cloudflare Tunnel (no open ports) and the Cloudflare Access email gate become options.
 - **More users:** a bigger VM first; Azure's managed Postgres later, if needed.
