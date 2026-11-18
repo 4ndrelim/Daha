@@ -60,7 +60,7 @@ Say this up front: *"This takes about 5–10 minutes together: your role, how in
 - **Git:** follow `CONTRIBUTING.md` exactly.
   - **Always sync with `main`** at the start of a session, before each milestone, and before each PR (`CONTRIBUTING.md` → "Always sync with `main`"). Then work through **the development loop** one milestone at a time.
   - **Every change, docs and proposals included, goes branch → PR → merge.** Never commit on `main`, push to `main`, or force-push `main` (`CONTRIBUTING.md` → "The one rule"). Use your own branch (`a/…`, `b/…`, `c/…`).
-- **No paid AI in dev or tests.** Defaults are `AI_PROVIDER=mock` and `EMBEDDINGS_PROVIDER=hash`. Only C runs real HarnessRouter calls, and only with C's OK for that run.
+- **No paid AI in tests.** Tests and CI always run with `AI_PROVIDER=mock` and `EMBEDDINGS_PROVIDER=hash` (forced in `backend/tests/conftest.py` and CI), and the code's defaults stay `mock`. For trying the app, `backend/.env.example` turns the real providers on (`AI_PROVIDER=harnessrouter`; for C6 store search, `COMMERCIAL_PROVIDER=exa`) so the shared keys work right away; `AI_BUDGET_USD` and `COMMERCIAL_BUDGET_USD` cap the spend. No keys yet? Set them to `mock`. Never loop paid calls, or run paid evals, without the key holder's OK.
 - **Secrets:** never commit `.env` files or keys, never log keys, and never send keys to the browser. Only `*.env.example` files are committed.
 - **Privacy:** never commit real student data, real photos of people, or documents. Eval photos must have no faces and no personal info.
 - **Versions:** scaffold with the latest stable libraries and don't pin old major versions. Don't add frameworks, APIs, or services that aren't in `PLAN.md` without an accepted proposal (§6).
@@ -108,7 +108,7 @@ In hands-off mode, keep working on anything that isn't blocked, and put the bloc
 
 Keys are never pasted into the group chat and never committed:
 - Ask for keys to be shared privately (a one-to-one message deleted afterwards, or a password manager).
-- Paste them only into `backend/.env`.
+- Paste them only into `backend/.env`. Several HarnessRouter keys go comma-separated in `HARNESSROUTER_API_KEY` (load-balanced); `make env` creates or refreshes the file.
 - Add the variable name, with an empty value, to `backend/.env.example`.
 
 ## 8. Definition of done for any PR

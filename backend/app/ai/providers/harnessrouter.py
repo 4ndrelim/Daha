@@ -1,17 +1,29 @@
 """HarnessRouter vision: upload → run a harness task (SSE stream) → JSON (PLAN.md C0/C1.2).
 
 HarnessRouter runs full agent harnesses, so a "task" can take tens of seconds. Guard rails:
-- a process-wide semaphore (HARNESSROUTER_MAX_CONCURRENCY; the free plan allows 2 tasks);
+- several API keys (HARNESSROUTER_API_KEY, comma-separated) are load-balanced: each photo goes to
+  the least-busy key and stays on it for upload → run → repair, because a file id only works with
+  the key that uploaded it (docs: "Any other key that names it gets 404");
+- at most HARNESSROUTER_MAX_CONCURRENCY tasks at once in total (the free trial allows 2 per
+  organization; keys in one organization share that limit and its credit);
+- a key that is refused (401/403), out of credit (402, or a task that ends "balance_exhausted"),
+  or still rate-limited after a retry (429) rests for a while, and the photo moves to the next key;
 - an overall timeout per photo (HARNESSROUTER_TIMEOUT_S);
-- one retry on network errors and 5xx; one "repair" turn if the reply isn't valid JSON.
-The API key is only ever sent in the Authorization header and never logged.
+- one retry on network errors, 429, 502, 503 and 504 (the documented retry policy), reusing the
+  same Idempotency-Key so the server replays rather than reruns; one "repair" turn if the reply
+  isn't valid JSON.
+Keys are only ever sent in the Authorization header and never logged (logs say "key 2/3").
 """
 
 import asyncio
+import hashlib
 import json
 import logging
 import time
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
@@ -24,20 +36,133 @@ from app.core.config import settings
 
 log = logging.getLogger(__name__)
 TERMINAL = {"response.completed", "response.incomplete", "response.failed"}
-_semaphore: asyncio.Semaphore | None = None
 
-
-def _sem() -> asyncio.Semaphore:
-    global _semaphore
-    if _semaphore is None:
-        _semaphore = asyncio.Semaphore(max(1, settings.harnessrouter_max_concurrency))
-    return _semaphore
+# How long a key rests after it fails in a way another key might not.
+REST_RATE_LIMITED_S = 30.0  # unless the API sends Retry-After
+REST_NO_CREDIT_S = 600.0
+REST_REFUSED_S = 900.0
+NOT_SET_UP = "AI scanning isn't set up yet — list items manually"
+SET_UP_WRONG = "AI scanning isn't set up correctly — list items manually"
+NO_CREDIT = "AI scanning is paused — list items manually"
 
 
 class _Retryable(Exception):
     pass
 
 
+class _RateLimited(_Retryable):
+    def __init__(self, retry_after: float | None):
+        super().__init__("HTTP 429")
+        self.retry_after = retry_after
+
+
+class _KeyUnavailable(Exception):
+    """This key can't serve the photo right now; another key might."""
+
+    def __init__(self, reason: str, rest_s: float, user_message: str):
+        super().__init__(reason)
+        self.rest_s = rest_s
+        self.user_message = user_message
+
+
+# ---------------------------------------------------------------- key pool
+@dataclass(eq=False)
+class KeySlot:
+    number: int  # 1-based; the only thing about a key that is ever logged
+    api_key: str = field(repr=False)
+    harness_id: str
+    in_flight: int = 0  # photos running on this key now
+    resting_until: float = 0.0  # time.monotonic()
+    last_used: int = 0  # round-robin tie-break
+
+
+class KeyPool:
+    def __init__(self, pairs: list[tuple[str, str]], concurrency: int):
+        self.slots = [KeySlot(i + 1, key, harness) for i, (key, harness) in enumerate(pairs)]
+        self.semaphore = asyncio.Semaphore(concurrency)  # tasks at once, all keys together
+        self._ticks = 0
+
+    def __len__(self) -> int:
+        return len(self.slots)
+
+    def pick(self, exclude: set[int]) -> KeySlot | None:
+        """The least-busy key that isn't resting (least recently used on a tie).
+
+        If every remaining key is resting, the one that wakes up first; None when all are excluded.
+        """
+        left = [s for s in self.slots if s.number not in exclude]
+        if not left:
+            return None
+        now = time.monotonic()
+        awake = [s for s in left if s.resting_until <= now]
+        if awake:
+            return min(awake, key=lambda s: (s.in_flight, s.last_used))
+        return min(left, key=lambda s: s.resting_until)
+
+    @contextmanager
+    def running(self, slot: KeySlot) -> Iterator[KeySlot]:
+        self._ticks += 1
+        slot.last_used = self._ticks
+        slot.in_flight += 1
+        try:
+            yield slot
+        finally:
+            slot.in_flight -= 1
+
+    def rest(self, slot: KeySlot, seconds: float) -> None:
+        slot.resting_until = max(slot.resting_until, time.monotonic() + seconds)
+
+
+def key_pairs(keys: list[str], harness_ids: list[str]) -> list[tuple[str, str]]:
+    """(key, harness id) per key: one shared harness id, or one per key in the same order."""
+    if not keys or not harness_ids:
+        raise ProviderError(
+            "HARNESSROUTER_API_KEY / HARNESSROUTER_VISION_HARNESS_ID not set", NOT_SET_UP
+        )
+    if len(harness_ids) == 1:
+        harness_ids = harness_ids * len(keys)
+    elif len(harness_ids) != len(keys):
+        raise ProviderError(
+            f"HARNESSROUTER_VISION_HARNESS_ID has {len(harness_ids)} ids for {len(keys)} keys: "
+            "use one shared id, or one per key in the same order "
+            "(scripts/setup_harnessrouter.py --write-env)",
+            SET_UP_WRONG,
+        )
+    pairs: dict[str, str] = {}
+    for key, harness in zip(keys, harness_ids, strict=True):
+        pairs.setdefault(key, harness)  # a key listed twice still counts once
+    return list(pairs.items())
+
+
+_pool: KeyPool | None = None
+_pool_config = ""
+
+
+def get_pool() -> KeyPool:
+    """The process-wide pool, rebuilt only when the key/harness settings change."""
+    global _pool, _pool_config
+    keys, ids = settings.harnessrouter_api_keys, settings.harnessrouter_vision_harness_ids
+    concurrency = max(1, settings.harnessrouter_max_concurrency)
+    config = hashlib.sha256(f"{keys}|{ids}|{concurrency}".encode()).hexdigest()
+    if _pool is None or config != _pool_config:
+        _pool = KeyPool(key_pairs(keys, ids), concurrency)
+        _pool_config = config
+    return _pool
+
+
+def _idempotency_keys() -> tuple[str, str]:
+    return str(uuid.uuid4()), str(uuid.uuid4())
+
+
+def _retry_after(resp: httpx.Response) -> float | None:
+    value = resp.headers.get("retry-after")
+    try:
+        return min(max(float(value), 1.0), REST_NO_CREDIT_S) if value else None
+    except ValueError:  # the HTTP-date form; use the default rest
+        return None
+
+
+# ---------------------------------------------------------------- response parsing
 def _cost_from(response: dict[str, Any]) -> float | None:
     """Look for a reported cost in the final response object (shape not guaranteed)."""
     for container in (response, response.get("usage") or {}, response.get("metadata") or {}):
@@ -62,6 +187,7 @@ def _final_text(response: dict[str, Any]) -> str:
     return "".join(parts) or str(response.get("output_text") or "")
 
 
+# ---------------------------------------------------------------- provider
 class HarnessRouterVisionProvider:
     name = "harnessrouter"
 
@@ -69,41 +195,61 @@ class HarnessRouterVisionProvider:
         self.model = settings.harnessrouter_model or settings.harnessrouter_base
         self._transport = transport
 
-    def _client(self) -> httpx.AsyncClient:
-        if not settings.harnessrouter_api_key or not settings.harnessrouter_vision_harness_id:
-            raise ProviderError(
-                "HARNESSROUTER_API_KEY / HARNESSROUTER_VISION_HARNESS_ID not set",
-                "AI scanning isn't set up yet — list items manually",
-            )
+    def _client(self, slot: KeySlot) -> httpx.AsyncClient:
         return httpx.AsyncClient(
             base_url=settings.harnessrouter_base_url.rstrip("/"),
-            headers={"Authorization": f"Bearer {settings.harnessrouter_api_key}"},
+            headers={"Authorization": f"Bearer {slot.api_key}"},
             timeout=httpx.Timeout(30.0, read=float(settings.harnessrouter_timeout_s)),
             transport=self._transport,
         )
 
     async def detect(self, image_jpeg: bytes, filename: str) -> ProviderResult:
+        pool = get_pool()
         start = time.monotonic()
-        async with _sem():
-            try:
-                return await asyncio.wait_for(
-                    self._detect(image_jpeg, filename, start), settings.harnessrouter_timeout_s
-                )
-            except TimeoutError as exc:
-                raise ProviderError(
-                    "harnessrouter timeout", "The AI took too long on this photo"
-                ) from exc
+        tried: set[int] = set()
+        last: _KeyUnavailable | None = None
+        async with pool.semaphore:  # wait for a free task slot, then pick the least-busy key
+            while (slot := pool.pick(tried)) is not None:
+                tried.add(slot.number)
+                with pool.running(slot):
+                    try:
+                        return await asyncio.wait_for(
+                            self._detect(slot, image_jpeg, filename, start),
+                            settings.harnessrouter_timeout_s,
+                        )
+                    except TimeoutError as exc:
+                        raise ProviderError(
+                            "harnessrouter timeout", "The AI took too long on this photo"
+                        ) from exc
+                    except _KeyUnavailable as exc:
+                        last = exc
+                        pool.rest(slot, exc.rest_s)
+                        nxt = "trying the next key" if len(tried) < len(pool) else "no keys left"
+                        log.warning(
+                            "harnessrouter: key %d/%d %s; %s", slot.number, len(pool), exc, nxt
+                        )
+        raise ProviderError(
+            f"harnessrouter: no key could take the photo ({last})",
+            last.user_message if last else NOT_SET_UP,
+        )
 
-    async def _detect(self, image: bytes, filename: str, start: float) -> ProviderResult:
-        async with self._client() as client:
+    async def _detect(
+        self, slot: KeySlot, image: bytes, filename: str, start: float
+    ) -> ProviderResult:
+        async with self._client(slot) as client:
             file_id = await self._with_retry(lambda: self._upload(client, image, filename))
             content = [
                 {"type": "input_file", "file_id": file_id},
                 {"type": "input_text", "text": vision_task(filename)},
             ]
             body: dict[str, Any] = {"input": [{"role": "user", "content": content}], "stream": True}
-            text, response = await self._with_retry(lambda: self._run(client, body))
-            raw: dict[str, Any] = {"response_id": response.get("id"), "text": text[:20000]}
+            harness, keys = slot.harness_id, _idempotency_keys()
+            text, response = await self._with_retry(lambda: self._run(client, body, harness, keys))
+            raw: dict[str, Any] = {
+                "response_id": response.get("id"),
+                "key": slot.number,  # which key (account) paid for this photo; never the key
+                "text": text[:20000],
+            }
             try:
                 payload = payload_from_text(text)
             except ValueError as first:
@@ -115,7 +261,10 @@ class HarnessRouterVisionProvider:
                     "previous_response_id": response.get("id"),
                     "stream": True,
                 }
-                text, response = await self._with_retry(lambda: self._run(client, repair))
+                keys = _idempotency_keys()
+                text, response = await self._with_retry(
+                    lambda: self._run(client, repair, harness, keys)
+                )
                 raw["repair_text"] = text[:20000]
                 try:
                     payload = payload_from_text(text)
@@ -137,15 +286,28 @@ class HarnessRouterVisionProvider:
             await asyncio.sleep(1.0)
             try:
                 return await fn()
+            except _RateLimited as exc2:  # still busy: let another key take it
+                raise _KeyUnavailable(
+                    "is rate-limited (HTTP 429)",
+                    exc2.retry_after or REST_RATE_LIMITED_S,
+                    "The AI is busy right now — try again in a minute",
+                ) from exc2
             except _Retryable as exc2:
                 raise ProviderError(f"harnessrouter: {exc2}") from exc2
 
     @staticmethod
     def _check(resp: httpx.Response) -> None:
-        if resp.status_code >= 500 or resp.status_code == 429:
-            raise _Retryable(f"HTTP {resp.status_code}")
-        if resp.status_code >= 400:
-            raise ProviderError(f"harnessrouter HTTP {resp.status_code}: {resp.text[:300]}")
+        code = resp.status_code
+        if code == 429:
+            raise _RateLimited(_retry_after(resp))
+        if code in (502, 503, 504):
+            raise _Retryable(f"HTTP {code}")
+        if code in (401, 403):
+            raise _KeyUnavailable(f"was refused (HTTP {code})", REST_REFUSED_S, SET_UP_WRONG)
+        if code == 402:
+            raise _KeyUnavailable("is out of credit (HTTP 402)", REST_NO_CREDIT_S, NO_CREDIT)
+        if code >= 400:
+            raise ProviderError(f"harnessrouter HTTP {code}: {resp.text[:300]}")
 
     async def _upload(self, client: httpx.AsyncClient, image: bytes, filename: str) -> str:
         try:
@@ -162,20 +324,26 @@ class HarnessRouterVisionProvider:
             raise ProviderError("harnessrouter: upload returned no id")
         return file_id
 
-    async def _run(self, client: httpx.AsyncClient, body: dict) -> tuple[str, dict]:
-        harness = settings.harnessrouter_vision_harness_id
-        headers = {"Idempotency-Key": str(uuid.uuid4()), "Accept": "text/event-stream"}
+    async def _run(
+        self, client: httpx.AsyncClient, body: dict, harness: str, keys: tuple[str, str]
+    ) -> tuple[str, dict]:
+        """One task. `keys` = Idempotency-Keys for the path form and the metadata form; a retry
+        reuses them, so the server replays a task it already ran instead of billing it twice."""
+        headers = {"Idempotency-Key": keys[0], "Accept": "text/event-stream"}
         try:
             text, response = await self._stream(client, f"/{harness}/v1/responses", body, headers)
             if response is None:  # path form not found → documented alternative
                 alt = {**body, "metadata": {"harness_id": harness}}
-                headers["Idempotency-Key"] = str(uuid.uuid4())
+                headers["Idempotency-Key"] = keys[1]  # a different body needs its own key
                 text, response = await self._stream(client, "/v1/responses", alt, headers)
         except httpx.TransportError as exc:
             raise _Retryable(type(exc).__name__) from exc
         if response is None:
             raise ProviderError("harnessrouter: responses endpoint not found")
         status = response.get("status")
+        reason = (response.get("incomplete_details") or {}).get("reason")
+        if status == "incomplete" and reason == "balance_exhausted":
+            raise _KeyUnavailable("ran out of credit mid-task", REST_NO_CREDIT_S, NO_CREDIT)
         if status == "failed":
             raise ProviderError(f"harnessrouter: task failed {str(response.get('error'))[:300]}")
         return text, response

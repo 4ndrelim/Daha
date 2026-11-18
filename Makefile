@@ -3,7 +3,10 @@
 # already on PATH.
 export PATH := $(HOME)/.local/bin:$(HOME)/.local/node/bin:$(HOME)/.docker/bin:$(PATH)
 
-.PHONY: db migrate seed api web test smoke reindex lan up down logs
+.PHONY: env db migrate seed api web test smoke reindex lan up down logs
+
+env:  ## create backend/.env + web/.env.local, or add new variables after a pull (keeps yours)
+	@sh infra/env-sync.sh
 
 db:  ## start Postgres (+pgvector) and wait until healthy
 	docker compose up -d --wait db
@@ -35,7 +38,7 @@ lan:  ## print this laptop's LAN address for testing on a phone
 	echo "Phone on the same Wi-Fi: http://$$ip:3000"
 
 up:  ## full stack in Docker: Postgres + API + web → http://localhost:3000 (needs backend/.env)
-	@test -f backend/.env || (echo "Create backend/.env first: cp backend/.env.example backend/.env" && exit 1)
+	@test -f backend/.env || (echo "Create backend/.env first: make env" && exit 1)
 	docker compose --profile full up -d --build --wait
 	@echo "DAHA is up: http://localhost:$${WEB_PORT:-3000}  (API docs: http://localhost:$${API_PORT:-8000}/docs)"
 

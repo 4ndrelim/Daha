@@ -2,8 +2,9 @@
 
     cd backend && uv run python scripts/hr_spike.py ~/daha-spike/photos/*.jpg
 
-PAID: each photo is one HarnessRouter task (~$0.02–0.20). Uses the harness in
-HARNESSROUTER_VISION_HARNESS_ID (create it with scripts/setup_harnessrouter.py).
+PAID: each photo is one HarnessRouter task (~$0.02–0.20). Uses the harness(es) in
+HARNESSROUTER_VISION_HARNESS_ID (scripts/setup_harnessrouter.py --write-env); with several
+keys in HARNESSROUTER_API_KEY, photos are spread across them (raw output records which key).
 Raw outputs go to ~/daha-spike/out/. Only use photos with no people or personal info.
 """
 
@@ -13,10 +14,12 @@ import statistics
 import sys
 from pathlib import Path
 
-from app.ai.providers import ProviderError
-from app.ai.providers.harnessrouter import HarnessRouterVisionProvider
-from app.ai.vision import downscale
-from app.core.config import settings
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # `python scripts/x.py` finds `app`
+
+from app.ai.providers import ProviderError  # noqa: E402
+from app.ai.providers.harnessrouter import HarnessRouterVisionProvider  # noqa: E402
+from app.ai.vision import downscale  # noqa: E402
+from app.core.config import settings  # noqa: E402
 
 OUT = Path.home() / "daha-spike" / "out"
 
@@ -40,7 +43,9 @@ async def main(paths: list[str]) -> None:
             print(f"{p}: FAILED {exc}")
     lat = [r[1] for r in rows if r[1] is not None]
     cost = [r[4] for r in rows if r[4] is not None]
-    print(f"\nconfig: {settings.harnessrouter_base}/{settings.harnessrouter_model or '(default)'}")
+    model = settings.harnessrouter_model or "(default)"
+    keys = len(settings.harnessrouter_api_keys)
+    print(f"\nconfig: {settings.harnessrouter_base}/{model} · {keys} key(s), load-balanced")
     for r in rows:
         print(f"  {r[0]:30} {r[1] or 0:6.1f}s  valid={r[2]}  items={r[3]}  ${r[4] or 0:.3f}")
     if lat:

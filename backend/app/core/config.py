@@ -9,6 +9,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 
+def csv_list(value: str) -> list[str]:
+    """'a, b,,c' → ['a', 'b', 'c'] (trimmed, empties dropped, order kept)."""
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=BACKEND_DIR / ".env", env_file_encoding="utf-8", extra="ignore"
@@ -31,9 +36,9 @@ class Settings(BaseSettings):
     ai_max_images_per_scan: int = 6
     ai_daily_scans_per_user: int = 20
     ai_budget_usd: float = 40.0
-    harnessrouter_api_key: str = Field(default="", repr=False)
+    harnessrouter_api_key: str = Field(default="", repr=False)  # comma-separated if several
     harnessrouter_base_url: str = "https://api.harnessrouter.ai"
-    harnessrouter_vision_harness_id: str = ""
+    harnessrouter_vision_harness_id: str = ""  # one shared id, or one per key in the same order
     harnessrouter_base: str = "claude-code"
     harnessrouter_model: str = ""
     harnessrouter_max_concurrency: int = 2
@@ -73,6 +78,15 @@ class Settings(BaseSettings):
     def upload_path(self) -> Path:
         p = Path(self.upload_dir)
         return p if p.is_absolute() else BACKEND_DIR / p
+
+    @property
+    def harnessrouter_api_keys(self) -> list[str]:
+        """Every HarnessRouter key, in order; tasks are load-balanced across them."""
+        return csv_list(self.harnessrouter_api_key)
+
+    @property
+    def harnessrouter_vision_harness_ids(self) -> list[str]:
+        return csv_list(self.harnessrouter_vision_harness_id)
 
 
 @lru_cache

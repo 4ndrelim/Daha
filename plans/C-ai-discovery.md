@@ -21,7 +21,7 @@ Contract: `PLAN.md` §6–§7. Your paths: `backend/app/ai/**`, `backend/app/dis
 - [ ] **HarnessRouter key:**
   1. Sign in at https://app.harnessrouter.ai with the account that holds our $50 credit. If that isn't your account, ask its owner in the group chat to create the key and share it with you privately.
   2. Create a **Workspace API key** (`sk-hr-…`). Discovery endpoints need a Workspace key.
-  3. Tell Claude *"the key is in my clipboard"* and paste it **only** into `backend/.env` (and the spike's `.env`) as `HARNESSROUTER_API_KEY=`.
+  3. Tell Claude *"the key is in my clipboard"* and paste it **only** into `backend/.env` (and the spike's `.env`) as `HARNESSROUTER_API_KEY=`. Several keys go comma-separated (`sk-hr-aaa,sk-hr-bbb`) and are load-balanced; then run `uv run python scripts/setup_harnessrouter.py --write-env`.
   4. Never paste it in chat, Discord, screenshots, or code.
 - [ ] **Photos:** take 20–30 photos of real spaces (desk, open drawer, closet, shelf, kitchen or pantry, common room). **No people, no documents, IDs, or screens with personal info.**
   - Put 3 of them in `~/daha-spike/photos/` for the spike.
