@@ -28,12 +28,13 @@
 - **`downscaleImage`** lives in `web/src/lib/image.ts` (C's `components/scan/downscale.ts` exists too).
 - **PWA:** icons are committed PNGs in `web/public/icons/`. Two extra events: `install_prompt_shown`, `app_installed`.
 - **Demo:** in step 4 Jordan must pick **Who sees it → Campus**. The composer defaults to My dorm, so Wilbur's Maya isn't pinged for a FloMo-only request.
-- **Not done (optional):** the `docs/ux-references/` screenshots (a human TODO), and the `page_view` event from `PLAN.md` §7.6, which is never sent.
+- **Not done (optional):** the `docs/ux-references/` screenshots (a human TODO).
+- **B8:** `page_view` is sent on every route change inside the app (path only, never the query string). Playwright smoke test: `web/e2e/smoke.spec.ts`; run `cd web && pnpm e2e` against a running `make api` + `make web` (mock AI, so it's free). It posts one test request; `make seed` clears it.
 
 **Next phase: improve and iterate** (most students will use DAHA on their phones, so phone UX comes first):
 1. The weekly top 5 UX fixes from feedback (`plans/INTEGRATION.md` → "Iterate").
-2. Phone location for "Buy or rent nearby": use where the person is when location is on, otherwise Stanford campus (`plans/LOCATION.md`, web part).
-3. The Playwright smoke test (P1 #6) and the missing `page_view` event.
+2. ✅ Phone location for "Buy or rent nearby" (built by A in #24).
+3. ✅ The Playwright smoke test (P1 #6) and the missing `page_view` event (B8).
 4. From the research list above: an accessibility audit, messaging-style motion, a map view for "near me".
 
 **If behind, cut** (in this order):

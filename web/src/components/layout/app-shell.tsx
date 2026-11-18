@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import { BottomNav } from "./bottom-nav";
+import { PageView } from "./page-view";
 import { TopBar } from "./top-bar";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
+      <PageView />
       <TopBar />
       <main className="mx-auto w-full max-w-md flex-1 px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))]">{children}</main>
       <BottomNav />
