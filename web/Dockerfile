@@ -19,7 +19,10 @@ ENV API_PROXY_TARGET=$API_PROXY_TARGET \
     NEXT_PUBLIC_MOCK=$NEXT_PUBLIC_MOCK \
     NEXT_PUBLIC_DEMO_MODE=$NEXT_PUBLIC_DEMO_MODE
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+# Copy only the sources (never the laptop's node_modules, .next, or env files).
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml next.config.ts tsconfig.json ./
+COPY public ./public
+COPY src ./src
 RUN pnpm build
 
 FROM base AS run
