@@ -1,5 +1,13 @@
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { Suspense } from "react";
+import { AuthGate } from "@/components/layout/auth-gate";
+import { OnboardingScreen } from "./onboarding-screen";
 
-export default function Page() {
-  return <PagePlaceholder title="Show us what you have" note="Person C owns this page (scan flow, first-run mode)." />;
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-dvh bg-background" />}>
+      <AuthGate>
+        <OnboardingScreen />
+      </AuthGate>
+    </Suspense>
+  );
 }
