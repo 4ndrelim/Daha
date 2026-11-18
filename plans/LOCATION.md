@@ -96,6 +96,14 @@ For each: the right label, results within ~6 s, no prompt again after a denial, 
 5. Coordinates leave the browser only rounded to ~1 km, only in the POST body, and are never stored or logged.
 6. The checks pass: `uv run ruff check . && uv run pytest -q` and `pnpm lint && pnpm typecheck && pnpm build`.
 
+## 7a. Built later: saying where you are without location services (2026-11-18)
+Stanford campus is only a good fallback for people at Stanford. So when the phone's location is off, refused, or unavailable, people can say where they are themselves, all from the "Where should we look?" sheet:
+- **Pick a spot on the map:** a draggable pin (Leaflet with OpenStreetMap tiles, `web/src/components/daha/map-picker.tsx`). It's sent like the phone's location, rounded to ~1 km, with `pinned: true`, and labeled "Near the pin". The pin is remembered in this browser, rounded to ~1 km, like a typed place. The map's tiles come from OpenStreetMap only while the map is open.
+- **Type a US ZIP:** `94305`, `94305-1234` or `Stanford, CA 94305` becomes a real location, offline (GeoNames ZIP data, `backend/app/discovery/data/us_zip_points.csv.gz`). A ZIP after other words only counts when they say US, so `Paris 75001` isn't taken for Texas.
+- **Type coordinates:** `1.30, 103.85` counts as a pin.
+- **Type a town:** as before, sent as words. The country is added when we can tell (`Kyoto, Japan`, `Austin TX`).
+The "Couldn't use your location" line offers **Pick a spot on the map** next to **Turn on location**.
+
 ## 8. Later (not in this plan)
 - **Real store distances** ("Target · 2.1 mi"): Exa treats location only as a hint, so truly local results need a places service (Google Places, Mapbox, or OpenStreetMap). Its own proposal (`docs/proposals/`), because of cost and keys.
 - **Location for campus features** (e.g. "items near you right now"): needs a privacy review first; DAHA is dorm-level by design.

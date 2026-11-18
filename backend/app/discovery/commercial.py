@@ -7,7 +7,8 @@ What leaves our server (one Exa web search):
 - the search words only. Filler ("anyone have", "near me", dates), emails, phone numbers and
   links are stripped first;
 - a coarse location: the device's location when the person allowed it (rounded to ~1 km in the
-  browser and again here), else Stanford campus, or a town/ZIP they typed (plans/LOCATION.md);
+  browser and again here), else Stanford campus, or a town/ZIP they typed (plans/LOCATION.md),
+  plus that location's country, worked out offline here (app/discovery/countries.py);
 - never the person's name, id, email, or anything else stored about them. Coordinates are not
   stored or logged here; the cache key is a hash.
 
@@ -34,6 +35,13 @@ from sqlalchemy.orm import Session
 
 from app import schemas
 from app.core.config import settings
+from app.discovery.countries import (
+    country_for,
+    local_currency,
+    parse_coordinates,
+    place_country,
+    us_zip_point,
+)
 from app.discovery.query_parser import parse_query
 from app.models import AICache, Event
 from app.services.viewer import ViewerContext
@@ -45,7 +53,11 @@ EVENT_TYPE = "commercial_lookup"
 MAX_OFFERS = 8
 UNITS = ("each", "hour", "day", "week", "month")
 OFFER_TYPES = ("buy", "rent", "service")
-CURRENCY_SYMBOL = {"USD": "$", "CAD": "CA$", "EUR": "€", "GBP": "£"}
+CURRENCY_SYMBOL = {
+    "USD": "$", "CAD": "CA$", "MXN": "MX$", "EUR": "€", "GBP": "£", "JPY": "¥", "CNY": "CN¥",
+    "HKD": "HK$", "TWD": "NT$", "KRW": "₩", "SGD": "S$", "MYR": "RM", "THB": "฿", "VND": "₫",
+    "PHP": "₱", "IDR": "Rp", "INR": "₹", "AUD": "A$", "NZD": "NZ$", "ILS": "₪", "BRL": "R$",
+}  # fmt: skip
 
 _EMAIL = re.compile(r"\S+@\S+")
 _URL = re.compile(r"(?:https?://|www\.)\S+", re.I)
@@ -117,11 +129,12 @@ def search_words(q: str) -> tuple[str, str | None]:
 @dataclass(frozen=True)
 class Near:
     label: str  # shown to the person
-    source: str  # place | device | campus ("dorm" is no longer returned)
+    source: str  # place | device | pin | campus ("dorm" is no longer returned)
     lat: float | None
     lng: float | None
     place: str | None  # typed town/ZIP, used in the query text when there are no coordinates
     cache_part: str
+    country: str | None = None  # ISO code, worked out offline; None when we can't tell
 
 
 def clean_place(text: str | None) -> str | None:
@@ -133,7 +146,7 @@ def clean_place(text: str | None) -> str | None:
 
 def _geo(label: str, source: str, lat: float, lng: float) -> Near:
     lat, lng = round(lat, 2), round(lng, 2)  # ~1 km: enough for "nearby", and no closer
-    return Near(label, source, lat, lng, None, f"geo:{lat:.2f},{lng:.2f}")
+    return Near(label, source, lat, lng, None, f"geo:{lat:.2f},{lng:.2f}", country_for(lat, lng))
 
 
 def resolve_near(viewer: ViewerContext, body: schemas.CommercialSearchBody) -> Near:
@@ -144,8 +157,16 @@ def resolve_near(viewer: ViewerContext, body: schemas.CommercialSearchBody) -> N
     """
     place = clean_place(body.place)
     if place:
-        return Near(place, "place", None, None, place, f"place:{place.lower()}")
+        if coords := parse_coordinates(place):  # typed coordinates count as a pin
+            return _geo(f"{coords[0]:.2f}, {coords[1]:.2f}", "pin", *coords)
+        if zip_point := us_zip_point(place):  # a US ZIP becomes a real location
+            return _geo(place, "place", *zip_point)
+        return Near(
+            place, "place", None, None, place, f"place:{place.lower()}", place_country(place)
+        )
     if body.lat is not None and body.lng is not None:
+        if body.pinned:  # a spot the person put on the map
+            return _geo("the pin", "pin", body.lat, body.lng)
         return _geo("your location", "device", body.lat, body.lng)
     return _geo(
         settings.commercial_default_label,
@@ -161,14 +182,10 @@ def exa_request(words: str, category: str | None, near: Near) -> dict[str, Any]:
         query = f"{words} near {where}: local shop or service with prices"
     else:
         query = f"{words} for sale or rent near {where}: store or rental listing with price"
-    location: str | dict[str, Any] = "US"
-    if near.lat is not None and near.lng is not None:
-        location = {"country": "US", "latitude": near.lat, "longitude": near.lng}
-    return {
+    request: dict[str, Any] = {
         "query": query,
         "type": settings.exa_search_type,
         "numResults": 10,
-        "userLocation": location,
         "excludeDomains": EXCLUDE_DOMAINS,
         "moderation": True,
         "contents": {
@@ -179,6 +196,17 @@ def exa_request(words: str, category: str | None, near: Near) -> dict[str, Any]:
             }
         },
     }
+    # Exa wants the country with any coordinates. When we can't tell the country (a typed place
+    # like "Tokyo", or a spot at sea), leave it out rather than guess: the words do the work.
+    if near.country and near.lat is not None and near.lng is not None:
+        request["userLocation"] = {
+            "country": near.country,
+            "latitude": near.lat,
+            "longitude": near.lng,
+        }
+    elif near.country:
+        request["userLocation"] = near.country
+    return request
 
 
 # ---------------------------------------------------------------- reading results
@@ -237,8 +265,13 @@ def _summary_dict(summary: Any) -> dict[str, Any] | None:
     return None
 
 
-def offer_from_result(result: dict[str, Any]) -> schemas.CommercialOffer | None:
-    """One Exa result → an offer, or None if the page doesn't actually offer the thing."""
+def offer_from_result(
+    result: dict[str, Any], default_currency: str = "USD"
+) -> schemas.CommercialOffer | None:
+    """One Exa result → an offer, or None if the page doesn't actually offer the thing.
+
+    A price with no clear currency is taken to be in the local one (`default_currency`).
+    """
     data = _summary_dict(result.get("summary"))
     url = _web_url(result.get("url"))
     if not data or data.get("is_offer") is not True or not url:
@@ -250,7 +283,7 @@ def offer_from_result(result: dict[str, Any]) -> schemas.CommercialOffer | None:
     currency = unit = None
     if price is not None:
         code = _text(data.get("currency"), 3)
-        currency = code.upper() if code and len(code) == 3 and code.isalpha() else "USD"
+        currency = code.upper() if code and len(code) == 3 and code.isalpha() else default_currency
         unit = data.get("price_unit") if data.get("price_unit") in UNITS else "each"
     offer_type = data.get("offer_type") if data.get("offer_type") in OFFER_TYPES else "buy"
     return schemas.CommercialOffer(
@@ -267,8 +300,13 @@ def offer_from_result(result: dict[str, Any]) -> schemas.CommercialOffer | None:
     )
 
 
-def rank(offers: list[schemas.CommercialOffer]) -> list[schemas.CommercialOffer]:
-    """Drop duplicates, then cheapest first. No price, or a currency we can't compare, goes last."""
+def rank(
+    offers: list[schemas.CommercialOffer], currency: str = "USD"
+) -> list[schemas.CommercialOffer]:
+    """Drop duplicates, then cheapest first in the local `currency`.
+
+    No price, or a price in another currency (we don't convert), goes last.
+    """
     seen: set[str] = set()
     unique: list[schemas.CommercialOffer] = []
     for offer in offers:
@@ -282,7 +320,7 @@ def rank(offers: list[schemas.CommercialOffer]) -> list[schemas.CommercialOffer]
         enumerate(unique),
         key=lambda pair: (
             pair[1].price is None,
-            pair[1].currency not in (None, "USD"),
+            pair[1].currency not in (None, currency),
             pair[1].price or 0.0,
             pair[0],  # ties keep the search engine's order
         ),
@@ -328,11 +366,13 @@ class ExaProvider:
             transport=self._transport,
         ) as client:
             data = self._post(client, exa_request(words, category, near))
-        offers = [o for r in data.get("results") or [] if (o := offer_from_result(r))]
+        currency = local_currency(near.country)
+        results = data.get("results") or []
+        offers = [o for r in results if (o := offer_from_result(r, currency))]
         total = (data.get("costDollars") or {}).get("total")
         cost = float(total) if isinstance(total, int | float) and total >= 0 else None
         estimate = settings.commercial_est_cost_usd
-        return Found(rank(offers)[:MAX_OFFERS], cost if cost is not None else estimate)
+        return Found(rank(offers, currency)[:MAX_OFFERS], cost if cost is not None else estimate)
 
     def _post(self, client: httpx.Client, body: dict[str, Any], retry: bool = True) -> dict:
         try:

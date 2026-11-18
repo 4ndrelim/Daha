@@ -13,6 +13,7 @@ from sqlalchemy import select
 from app import schemas
 from app.core.config import settings
 from app.discovery import commercial as c
+from app.discovery import countries
 from app.models import AICache, Event
 from app.services.viewer import ViewerContext
 from tests.core.factories import community_id, seed_base, signup
@@ -80,10 +81,141 @@ def test_exa_request_with_coordinates_asks_for_near_me():
 
 
 def test_exa_request_with_a_typed_place_and_a_service():
-    near = c.resolve_near(WILBUR, body(place="94040"))
+    near = c.resolve_near(WILBUR, body(place="Berkeley, CA"))
     sent = c.exa_request("repair bike", "services", near)
     assert sent["userLocation"] == "US"
-    assert "near 94040" in sent["query"] and "service" in sent["query"]
+    assert "near Berkeley, CA" in sent["query"] and "service" in sent["query"]
+
+
+# ---------------------------------------------------------------- saying where you are, by hand
+def test_a_typed_us_zip_becomes_a_real_location():
+    for typed in ("94305", "94305-1234", "Stanford, CA 94305"):
+        near = c.resolve_near(NO_DORM, body(place=typed))
+        assert (near.source, near.label, near.country) == ("place", typed, "US")
+        assert (near.lat, near.lng) == (37.42, -122.16)
+        sent = c.exa_request("desk lamp", "dorm", near)
+        assert sent["userLocation"] == {"country": "US", "latitude": 37.42, "longitude": -122.16}
+        assert "near me" in sent["query"]
+
+
+def test_a_foreign_postcode_is_not_taken_for_a_us_zip():
+    near = c.resolve_near(NO_DORM, body(place="Paris 75001"))  # 75001 is also Addison, Texas
+    assert (near.lat, near.country) == (None, None)
+    assert "near Paris 75001" in c.exa_request("tent", None, near)["query"]
+
+
+@pytest.mark.parametrize(
+    ("typed", "lat", "lng", "country"),
+    [("1.30, 103.85", 1.3, 103.85, "SG"), ("37.43 -122.17", 37.43, -122.17, "US")],
+)
+def test_typed_coordinates_count_as_a_pin(typed, lat, lng, country):
+    near = c.resolve_near(NO_DORM, body(place=typed))
+    assert (near.source, near.lat, near.lng, near.country) == ("pin", lat, lng, country)
+
+
+def test_numbers_that_arent_coordinates_stay_words():
+    near = c.resolve_near(NO_DORM, body(place="123, 456"))
+    assert (near.source, near.lat) == ("place", None)
+
+
+def test_a_map_pin_is_used_and_labeled_as_a_pin():
+    tokyo = c.resolve_near(NO_DORM, body(lat=35.6812, lng=139.7671, pinned=True))
+    assert (tokyo.source, tokyo.label, tokyo.lat, tokyo.lng, tokyo.country) == (
+        "pin",
+        "the pin",
+        35.68,
+        139.77,
+        "JP",
+    )
+    phone = c.resolve_near(NO_DORM, body(lat=35.6812, lng=139.7671))
+    assert (phone.source, phone.label) == ("device", "your location")
+
+
+# ---------------------------------------------------------------- country and currency
+@pytest.mark.parametrize(
+    ("lat", "lng", "country"),
+    [
+        (37.43, -122.17, "US"),  # Stanford
+        (37.87, -122.26, "US"),  # Berkeley
+        (42.36, -71.09, "US"),  # MIT
+        (21.30, -157.82, "US"),  # Honolulu
+        (43.66, -79.40, "CA"),  # Toronto
+        (51.51, -0.13, "GB"),  # London
+        (1.30, 103.85, "SG"),  # Singapore
+        (35.68, 139.76, "JP"),  # Tokyo
+        (0.0, -160.0, None),  # the middle of the Pacific
+    ],
+)
+def test_country_comes_from_the_coordinates_offline(lat, lng, country):
+    assert countries.country_for(lat, lng) == country
+
+
+@pytest.mark.parametrize(
+    ("place", "country"),
+    [
+        ("94040", "US"),
+        ("Berkeley, CA", "US"),
+        ("Austin TX", "US"),
+        ("Mountain View, California", "US"),
+        ("Cambridge, UK", "GB"),
+        ("Kyoto, Japan", "JP"),
+        ("Singapore", "SG"),
+        ("Tokyo", None),  # can't tell: the words in the query do the work
+        ("Palo Alto", None),
+    ],
+)
+def test_country_of_a_typed_place(place, country):
+    assert countries.place_country(place) == country
+
+
+def test_exa_request_sends_the_real_country():
+    campus = c.exa_request("tent", None, c.resolve_near(NO_DORM, body()))
+    assert campus["userLocation"]["country"] == "US"
+    singapore = c.resolve_near(NO_DORM, body(lat=1.3005, lng=103.8501))
+    sent = c.exa_request("tent", None, singapore)
+    assert sent["userLocation"] == {"country": "SG", "latitude": 1.3, "longitude": 103.85}
+    assert (
+        c.exa_request("tent", None, c.resolve_near(NO_DORM, body(place="Kyoto, Japan")))[
+            "userLocation"
+        ]
+        == "JP"
+    )
+    unknown = c.exa_request("tent", None, c.resolve_near(NO_DORM, body(place="Tokyo")))
+    assert "userLocation" not in unknown and "near Tokyo" in unknown["query"]
+
+
+def test_prices_rank_and_show_in_the_local_currency():
+    results = [
+        result("https://a.test/1", product="Tent A", price=30, currency="USD", seller="A"),
+        result("https://b.test/1", product="Tent B", price=120, currency="SGD", seller="B"),
+        result("https://c.test/1", product="Tent C", price=45, seller="C"),  # no currency given
+    ]
+    offers = c.rank([o for r in results if (o := c.offer_from_result(r, "SGD"))], "SGD")
+    assert [o.title for o in offers] == ["Tent C", "Tent B", "Tent A"]  # SGD first, USD last
+    assert (offers[0].currency, offers[0].price_text) == ("SGD", "S$45")
+    assert c.price_text(1200.0, "JPY", "each") == "¥1,200"
+    assert countries.local_currency("JP") == "JPY" and countries.local_currency(None) == "USD"
+
+
+@respx.mock
+def test_exa_provider_ranks_in_the_local_currency(exa_settings):
+    respx.post(f"{EXA}/search").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "results": [
+                    result("https://a.test/1", product="Desk lamp A", price=25, currency="USD"),
+                    result("https://b.test/1", product="Desk lamp B", price=39),
+                ]
+            },
+        )
+    )
+    tokyo = c.resolve_near(NO_DORM, body(lat=35.68, lng=139.76))
+    found = c.ExaProvider().search("desk lamp", "dorm", tokyo)
+    assert [(o.title, o.currency) for o in found.offers] == [
+        ("Desk lamp B", "JPY"),
+        ("Desk lamp A", "USD"),
+    ]
 
 
 # ---------------------------------------------------------------- reading what comes back
@@ -110,7 +242,7 @@ def test_price_text():
     assert c.price_text(12.0, "USD", "each") == "$12"
     assert c.price_text(1299.5, "USD", "each") == "$1,299.50"
     assert c.price_text(15.0, "USD", "day") == "$15/day"
-    assert c.price_text(9.0, "JPY", "each") == "9 JPY"
+    assert c.price_text(9.0, "SEK", "each") == "9 SEK"  # no symbol: amount + code
     assert c.price_text(None, None, None) is None
 
 
