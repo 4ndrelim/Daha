@@ -18,6 +18,7 @@ from pathlib import Path
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.db import SessionLocal
 from app.core.geo import campus_today
 from app.core.security import hash_password
@@ -773,14 +774,15 @@ def _refresh_discovery() -> int:
     return reindexed
 
 
-def run(do_reset: bool = False) -> dict[str, int]:
+def run(do_reset: bool = False, demo: bool = True) -> dict[str, int]:
+    """`demo=False` seeds only the campus, dorms, and exchange points (a real deployment)."""
     with SessionLocal() as db:
         if do_reset:
             reset(db)
         communities = seed_communities(db)
         places = seed_places(db)
         already = db.scalar(select(User.id).where(User.seed_key == "user:maya"))
-        if already is None:
+        if demo and already is None:
             DemoSeeder(db, communities, places).run()
         db.commit()
 
@@ -803,13 +805,28 @@ def run(do_reset: bool = False) -> dict[str, int]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Seed DAHA demo data")
     parser.add_argument("--reset", action="store_true", help="truncate every table first")
-    args = parser.parse_args()
-    counts = run(do_reset=args.reset)
-    print("Seeded: " + ", ".join(f"{v} {k}" for k, v in counts.items()))
-    print(
-        f"Demo logins: maya@{DEMO_EMAIL_DOMAIN}, jordan@{DEMO_EMAIL_DOMAIN}, "
-        f"sam@{DEMO_EMAIL_DOMAIN} / {DEMO_PASSWORD}"
+    parser.add_argument(
+        "--if-empty",
+        action="store_true",
+        help="do nothing unless the database has no communities yet (used when a container starts)",
     )
+    parser.add_argument(
+        "--base-only", action="store_true", help="only campus, dorms, and places — no demo world"
+    )
+    args = parser.parse_args()
+    if args.if_empty:
+        with SessionLocal() as db:
+            if db.scalar(select(func.count()).select_from(Community)):
+                print("Database already has data — not seeding.")
+                return
+    demo = settings.demo_mode and not args.base_only
+    counts = run(do_reset=args.reset and not args.if_empty, demo=demo)
+    print("Seeded: " + ", ".join(f"{v} {k}" for k, v in counts.items()))
+    if demo:
+        print(
+            f"Demo logins: maya@{DEMO_EMAIL_DOMAIN}, jordan@{DEMO_EMAIL_DOMAIN}, "
+            f"sam@{DEMO_EMAIL_DOMAIN} / {DEMO_PASSWORD}"
+        )
 
 
 if __name__ == "__main__":
