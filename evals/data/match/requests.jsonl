@@ -1,0 +1,8 @@
+{"text": "anyone have a black binder I can borrow next Wednesday?", "requester": "user:jordan", "visibility": "campus", "expected": ["item:nina-black-binder", "item:ethan-black-binder", "item:maya-black-binder"]}
+{"text": "anyone have a tent I could borrow this weekend?", "requester": "user:jordan", "visibility": "campus", "expected": ["item:maya-tent"]}
+{"text": "anyone got a bike pump? flat tire", "requester": "user:jordan", "visibility": "campus", "expected": ["item:154-bike-pump", "item:153-bike-pump", "item:173-bike-pump"], "private": true}
+{"text": "need moving boxes this weekend", "requester": "user:sam", "visibility": "campus", "expected": ["item:noor-moving-boxes", "item:quinn-moving-boxes"]}
+{"text": "Looking for a navy suit jacket for a career fair", "requester": "user:sam", "visibility": "campus", "expected": ["item:omar-navy-suit"]}
+{"text": "does anyone have a tool kit? need a screwdriver", "requester": "user:sam", "visibility": "campus", "expected": ["item:119-tool-kit-hammer-screwdrivers-pliers"]}
+{"text": "can I borrow an umbrella today?", "requester": "user:jordan", "visibility": "campus", "expected": ["item:159-umbrella"], "private": true}
+{"text": "anyone have a graphing calculator for the midterm?", "requester": "user:sam", "visibility": "campus", "expected": ["item:priya-nspire", "item:maya-ti84"]}

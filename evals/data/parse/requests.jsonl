@@ -1,0 +1,20 @@
+{"text": "Does anyone have a calculator?", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "calculator", "category": "academic"}}
+{"text": "Anyone have a vacuum?", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "vacuum", "category": "dorm"}}
+{"text": "Can I borrow a black binder next Wednesday?", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "black binder", "category": "academic", "needed_from": "2026-11-25", "transaction_type": "lend"}}
+{"text": "Does anyone want a leather jacket?", "now": "2026-11-17", "gold": {"kind": "offer", "item_name": "leather jacket", "category": "clothing", "transaction_type": "give"}}
+{"text": "yo anyone got a phone charger i can use rn", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "phone charger", "category": "tech"}}
+{"text": "need a hair dryer tonight pls", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "hair dryer", "category": "dorm", "needed_from": "2026-11-17"}}
+{"text": "giving away my old desk lamp", "now": "2026-11-17", "gold": {"kind": "offer", "item_name": "old desk lamp", "category": "dorm", "transaction_type": "give"}}
+{"text": "could someone lend me a camera for the weekend", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "camera", "category": "tech", "needed_from": "2026-11-21", "transaction_type": "lend"}}
+{"text": "looking for a couple of folding chairs for friday", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "folding chairs", "category": "events", "needed_from": "2026-11-20"}}
+{"text": "anyone have a sleeping bag for 3 days", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "sleeping bag", "category": "sports", "duration_days": 3}}
+{"text": "free textbooks for CS 106B, up for grabs", "now": "2026-11-17", "gold": {"kind": "offer", "item_name": "textbooks", "category": "academic", "transaction_type": "give"}}
+{"text": "anyone want to trade a skateboard", "now": "2026-11-17", "gold": {"kind": "offer", "item_name": "skateboard", "category": "sports", "transaction_type": "exchange"}}
+{"text": "need someone who can tutor me in organic chem", "now": "2026-11-17", "gold": {"kind": "request", "category": "services"}}
+{"text": "does anyone have a projector for a movie night tomorrow?", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "projector", "category": "events", "needed_from": "2026-11-18"}}
+{"text": "anyone have a bike lock i could borrow next friday", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "bike lock", "category": "sports", "needed_from": "2026-11-27", "transaction_type": "lend"}}
+{"text": "Need packing tape and boxes this weekend", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "packing tape and boxes", "category": "moving", "needed_from": "2026-11-21"}}
+{"text": "can i have some rice? ran out", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "rice", "category": "consumables", "transaction_type": "give"}}
+{"text": "does anyone have a mini fridge they're not using", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "mini fridge", "category": "dorm"}}
+{"text": "anyone have an extension cord overnight", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "extension cord", "category": "tech", "duration_days": 1}}
+{"text": "need a winter coat for a ski trip next week", "now": "2026-11-17", "gold": {"kind": "request", "item_name": "winter coat", "category": "clothing", "needed_from": "2026-11-23"}}
