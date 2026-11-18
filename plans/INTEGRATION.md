@@ -68,11 +68,8 @@
 
 ## After the hackathon (beyond the hackathon scope; good next steps)
 ### Online for real (A)
-1. **VM:** create a small Ubuntu VM (1 vCPU, 2 GB; e.g. DigitalOcean, about $6/month, often free with GitHub Student Pack credit). Install Docker, then `git clone`. This needs A5 (Dockerfiles) first.
-2. **Env:** fill `backend/.env` with production values: a new `JWT_SECRET`, `DEMO_MODE=false`, `PUBLIC_BASE_URL`, `AI_PROVIDER=harnessrouter`.
-3. **Run:** `make up` (Docker Compose `full` profile), with **Caddy** in front for automatic HTTPS, on a domain or a free subdomain (e.g. DuckDNS).
-4. **Backups:** a nightly `pg_dump` cron to a backup folder, kept for 7 days.
-5. **Done when:** the deployed app passes demo-script steps 1–6 on a phone.
+**Built:** follow `infra/deploy/OWNERACTIONS.md` (about 30 minutes). One command from your laptop, `./infra/deploy/deploy.sh` (or `make deploy`), sets up an Azure Ubuntu VM end to end: Docker, the full Compose stack, **Caddy** for automatic HTTPS on your own subdomain (one DNS A record) or a free **DuckDNS** name, the server's `.env` (your keys plus a server-only `JWT_SECRET`, `PUBLIC_BASE_URL`, and your `DEMO_MODE` choice), and nightly backups of the database and photos (7 days). How it works and day-to-day operations: `infra/deploy/PLAN.md`.
+- **Done when:** the deployed app passes demo-script steps 1–6 on a phone.
 
 ### A week of real feedback (B)
 - The in-app **Feedback** button records `feedback_submitted` events. Also share a 5-question form:

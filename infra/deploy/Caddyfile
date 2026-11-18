@@ -1,0 +1,18 @@
+# HTTPS in front of the DAHA web app (infra/deploy/PLAN.md). Caddy gets and renews the
+# certificate by itself; SITE_ADDRESS is the DuckDNS name, e.g. daha-stanford.duckdns.org.
+{
+	servers {
+		protocols h1 h2
+	}
+}
+
+{$SITE_ADDRESS} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+	# The web app serves the pages and proxies /api and /uploads to the API.
+	reverse_proxy web:3000
+}

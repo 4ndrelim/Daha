@@ -200,7 +200,7 @@ NEXT_PUBLIC_DEMO_MODE=true
 ```
 
 ### 5.5 Makefile targets (A)
-`env` (create `backend/.env` + `web/.env.local` from the examples; after a pull, append new variables without touching yours) · `db` (start Postgres and wait until healthy: `docker compose up -d --wait db`) · `migrate` · `seed` (`--reset`, deterministic) · `api` (uvicorn `--reload --host 0.0.0.0 --port 8000`) · `web` (`pnpm dev --hostname 0.0.0.0`) · `test` (backend pytest + ruff, web lint + typecheck) · `smoke` (A4) · `reindex` (C) · `lan` (print the LAN IP) · `up` (full stack in Docker: db + api + web; `DB_PORT`/`API_PORT`/`WEB_PORT` change the host ports) · `down` · `logs`.
+`deploy` (put DAHA online on the Azure VM: `infra/deploy/OWNERACTIONS.md`) · `env` (create `backend/.env` + `web/.env.local` from the examples; after a pull, append new variables without touching yours) · `db` (start Postgres and wait until healthy: `docker compose up -d --wait db`) · `migrate` · `seed` (`--reset`, deterministic) · `api` (uvicorn `--reload --host 0.0.0.0 --port 8000`) · `web` (`pnpm dev --hostname 0.0.0.0`) · `test` (backend pytest + ruff, web lint + typecheck) · `smoke` (A4) · `reindex` (C) · `lan` (print the LAN IP) · `up` (full stack in Docker: db + api + web; `DB_PORT`/`API_PORT`/`WEB_PORT` change the host ports) · `down` · `logs`.
 
 ### 5.6 Conventions (both sides)
 - JSON is **snake_case** both ways. TypeScript types use the same snake_case names, with no case conversion.

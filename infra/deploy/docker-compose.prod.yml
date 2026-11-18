@@ -1,0 +1,35 @@
+# Production overlay for the Azure VM, on top of docker-compose.yml (infra/deploy/PLAN.md).
+# - Caddy is the only public entrance: ports 80 and 443, with automatic HTTPS.
+# - The API and web ports are bound to localhost only (API_PORT / WEB_PORT in the server's
+#   compose .env), and Postgres already is, so nothing else is reachable from outside.
+# - The API gets a long start-up allowance: on first boot it migrates, seeds the demo campus
+#   and computes embeddings, which can take minutes on a small VM.
+services:
+  api:
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15m
+      retries: 30
+
+  caddy:
+    image: caddy:2
+    profiles: ["full"]
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?SITE_ADDRESS is not set}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data        # certificates: kept across deploys, so they aren't re-issued
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -214,6 +214,7 @@ Stuck scans (still processing after 10 minutes) are marked failed when someone n
 Dev:      laptop — docker (Postgres) + `make api` + `make web` → http://localhost:3000 (phone: http://<laptop-ip>:3000)
 Demo:     same laptop + `cloudflared tunnel --url http://localhost:3000` → temporary public HTTPS link
 Hosted:   one small Ubuntu VM — docker compose (db, api, web) + Caddy (HTTPS) + nightly pg_dump
+          → set up with one command: infra/deploy/deploy.sh (infra/deploy/OWNERACTIONS.md)
 ```
 
 ## 8. Security & privacy
