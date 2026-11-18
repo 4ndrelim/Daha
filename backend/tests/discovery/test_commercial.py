@@ -43,21 +43,36 @@ def test_search_words_drop_filler_and_personal_details():
     assert c.search_words("MacBook Air A1466 2017 charger")[0] == "MacBook Air A1466 2017 charger"
 
 
-def test_near_prefers_typed_place_then_browser_then_dorm_then_campus():
+def test_near_prefers_typed_place_then_device_then_campus():
     place = c.resolve_near(WILBUR, body(place=" Mountain View, CA <script> ", lat=1.0, lng=2.0))
     assert (place.source, place.label, place.lat) == ("place", "Mountain View, CA script", None)
     device = c.resolve_near(WILBUR, body(lat=37.386052, lng=-122.083851))
     assert (device.source, device.lat, device.lng) == ("device", 37.39, -122.08)  # ~1 km only
-    dorm = c.resolve_near(WILBUR, body())
-    assert (dorm.source, dorm.label, dorm.lat, dorm.lng) == ("dorm", "Wilbur Hall", 37.42, -122.16)
     campus = c.resolve_near(NO_DORM, body())
-    assert (campus.source, campus.label) == ("campus", "Stanford, CA")
+    assert (campus.source, campus.label) == ("campus", "Stanford campus")
+    assert (campus.lat, campus.lng) == (37.43, -122.17)
+
+
+def test_near_ignores_the_dorm_when_no_coordinates_are_sent():
+    near = c.resolve_near(WILBUR, body())  # has a dorm with coordinates, sends none
+    assert (near.source, near.label) == ("campus", "Stanford campus")
+    assert (near.lat, near.lng) == (37.43, -122.17)  # campus, not Wilbur's 37.42, -122.16
+    assert near == c.resolve_near(NO_DORM, body())
+    half = c.resolve_near(WILBUR, body(lat=37.386052))  # one coordinate alone is not a location
+    assert half.source == "campus"
 
 
 def test_exa_request_with_coordinates_asks_for_near_me():
     sent = c.exa_request("graphing calculator", "academic", c.resolve_near(WILBUR, body()))
     assert "near me" in sent["query"] and "graphing calculator" in sent["query"]
-    assert sent["userLocation"] == {"country": "US", "latitude": 37.42, "longitude": -122.16}
+    # no coordinates sent → campus, not the dorm (plans/LOCATION.md)
+    assert sent["userLocation"] == {"country": "US", "latitude": 37.43, "longitude": -122.17}
+    device = c.resolve_near(WILBUR, body(lat=37.386052, lng=-122.083851))
+    assert c.exa_request("graphing calculator", "academic", device)["userLocation"] == {
+        "country": "US",
+        "latitude": 37.39,
+        "longitude": -122.08,
+    }
     assert sent["numResults"] == 10 and sent["moderation"] is True
     assert "reddit.com" in sent["excludeDomains"]
     assert sent["contents"]["summary"]["schema"]["required"][0] == "is_offer"
@@ -231,7 +246,7 @@ def lookup_events(db) -> list[Event]:
     return list(db.scalars(select(Event).where(Event.type == c.EVENT_TYPE).order_by(Event.id)))
 
 
-def test_api_mock_offers_near_the_dorm(client, db, monkeypatch):
+def test_api_mock_offers_near_campus_for_a_user_with_a_dorm(client, db, monkeypatch):
     monkeypatch.setattr(settings, "commercial_provider", "mock")
     headers = wilbur_user(client, db)
     r = client.post("/api/search/commercial", headers=headers, json={"q": "desk lamp near me"})
@@ -239,8 +254,8 @@ def test_api_mock_offers_near_the_dorm(client, db, monkeypatch):
     data = r.json()
     assert (data["query"], data["near"], data["near_source"]) == (
         "desk lamp",
-        "Wilbur Hall",
-        "dorm",
+        "Stanford campus",
+        "campus",
     )
     assert data["provider"] == "mock" and data["cached"] is False
     prices = [o["price"] for o in data["offers"]]

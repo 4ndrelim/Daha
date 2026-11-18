@@ -3,16 +3,27 @@
 import Link from "next/link";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, Home, Loader2, LocateFixed, MapPin, ShoppingBag, Store } from "lucide-react";
+import { ExternalLink, GraduationCap, Loader2, LocateFixed, MapPin, ShoppingBag, Store } from "lucide-react";
 import { api, ApiError, track } from "@/lib/api";
 import type { CommercialOffer, CommercialSearchBody } from "@/lib/api/types";
-import { useMe } from "@/lib/queries/me";
-import { canUseDeviceLocation, roughDeviceLocation, useNearChoice, type NearChoice } from "@/lib/near";
+import {
+  canUseDeviceLocation, forgetLocationFailure, locationPermission, NoDeviceLocation, roughDeviceLocation, useNearChoice,
+  type NearChoice,
+} from "@/lib/near";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const TYPE_LABEL: Record<CommercialOffer["offer_type"], string | null> = { buy: null, rent: "Rent", service: "Service" };
+
+const WHY_LOCATION = "To show stores near you. Rough location only, never saved.";
+
+/**
+ * What happened with the phone's location for this answer (plans/LOCATION.md §4):
+ * `used` (sent, rounded to ~1 km) · `can_ask` (not asked yet and nobody tapped, so we didn't prompt) ·
+ * `blocked` (denied, off, or too slow) · `none` (plain http, or the person picked campus or a place).
+ */
+type LocationUse = "used" | "can_ask" | "blocked" | "none";
 
 /**
  * "Buy or rent nearby" (C6): store and rental alternatives for a search, cheapest first.
@@ -21,28 +32,48 @@ const TYPE_LABEL: Record<CommercialOffer["offer_type"], string | null> = { buy: 
 export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
   const [opened, setOpened] = useState(false);
   const open = auto || opened;
+  // How the panel opened: by itself (thin campus results) or by a tap. We only ever show the
+  // browser's location prompt right after a tap, never when the panel opens by itself.
+  const openedBy: "tap" | "auto" = opened ? "tap" : "auto";
   const [choice, choose] = useNearChoice();
   const [picking, setPicking] = useState(false);
-  const me = useMe();
-  const dormName = me.data?.dorm?.name ?? null;
+  const [howTo, setHowTo] = useState(false);
+  // Counts taps on "Use my location" / "Try again": each one may show the browser's prompt.
+  const [asked, setAsked] = useState(0);
+  const permissionTracked = useRef(false);
 
   const result = useQuery({
-    queryKey: ["commercial", q, choice],
+    queryKey: ["commercial", q, choice, openedBy, asked],
     enabled: open && q.trim().length > 0,
     staleTime: 10 * 60_000,
     retry: false,
     queryFn: async () => {
       const body: CommercialSearchBody = { q };
+      let location: LocationUse = "none";
       if (choice.mode === "place") body.place = choice.place;
-      let noLocation = false;
-      if (choice.mode === "device") {
-        try {
-          Object.assign(body, await roughDeviceLocation());
-        } catch {
-          noLocation = true; // refused or unavailable: the server falls back to the dorm
+      if (choice.mode === "auto") {
+        const state = await locationPermission();
+        if (!permissionTracked.current) {
+          permissionTracked.current = true;
+          track("location_permission", { state, opened_by: openedBy }); // kinds only, never coordinates
+        }
+        const mayPrompt = openedBy === "tap" || asked > 0;
+        if (state === "granted" || (state === "prompt" && mayPrompt)) {
+          try {
+            Object.assign(body, await roughDeviceLocation()); // rounded to ~1 km in the browser
+            location = "used";
+          } catch (err) {
+            location = "blocked"; // refused, off, or slower than 5 s: the server uses campus
+            // Answered the prompt after we stopped waiting: refresh once with the location.
+            if (err instanceof NoDeviceLocation) void err.late?.then(() => setAsked((n) => n + 1), () => undefined);
+          }
+        } else if (state === "prompt") {
+          location = "can_ask";
+        } else if (state === "denied") {
+          location = "blocked";
         }
       }
-      return { ...(await api.search.commercial(body)), noLocation };
+      return { ...(await api.search.commercial(body)), location };
     },
   });
 
@@ -51,7 +82,7 @@ export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
   useEffect(() => {
     const data = result.data;
     if (!data) return;
-    const key = `${q}|${JSON.stringify(choice)}`;
+    const key = `${q}|${JSON.stringify(choice)}|${asked}`;
     if (tracked.current === key) return;
     tracked.current = key;
     track("commercial_search_shown", {
@@ -76,7 +107,15 @@ export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
   }
 
   const data = result.data;
-  const nearLabel = data?.near ?? (choice.mode === "place" ? choice.place : choice.mode === "device" ? "your location" : dormName ?? "your dorm");
+  // "Near you" · "Near Stanford campus" · "Near <place>". Before the answer, `auto` isn't known yet.
+  const nearLabel = data
+    ? data.near_source === "device" ? "you" : data.near
+    : choice.mode === "place" ? choice.place : choice.mode === "campus" ? "Stanford campus" : null;
+  const askForLocation = () => {
+    forgetLocationFailure();
+    if (choice.mode !== "auto") choose({ mode: "auto" });
+    setAsked((n) => n + 1);
+  };
 
   return (
     <section aria-labelledby="buy-nearby-title" className="space-y-3 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border/60">
@@ -98,15 +137,18 @@ export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
         className="flex h-11 max-w-full items-center gap-1.5 rounded-full bg-muted px-3.5 text-[14px] font-semibold active:bg-muted/70"
       >
         <MapPin className="size-4 shrink-0" />
-        <span className="truncate">Near {nearLabel}</span>
+        <span className="truncate">{nearLabel ? `Near ${nearLabel}` : "Nearby"}</span>
         <span className="shrink-0 text-muted-foreground">· Change</span>
       </button>
 
       {result.isPending && result.fetchStatus !== "idle" && (
         <div aria-live="polite" className="space-y-3">
           <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Checking stores near {nearLabel}…
+            <Loader2 className="size-4 animate-spin" /> {nearLabel ? `Checking stores near ${nearLabel}…` : "Checking stores nearby…"}
           </p>
+          {choice.mode === "auto" && (openedBy === "tap" || asked > 0) && canUseDeviceLocation() && (
+            <p className="text-[13px] text-muted-foreground">{WHY_LOCATION}</p>
+          )}
           {[0, 1, 2].map((i) => (
             <div key={i} className="flex items-center gap-3">
               <Skeleton className="size-14 rounded-xl" />
@@ -116,10 +158,32 @@ export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
         </div>
       )}
 
-      {data?.noLocation && (
-        <p className="text-[13px] text-muted-foreground">
-          Couldn&apos;t get your location, so these are near {data.near}.
-        </p>
+      {data?.location === "can_ask" && (
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={askForLocation}
+            className="flex h-11 items-center gap-1.5 rounded-full bg-primary-soft px-3.5 text-[14px] font-semibold ring-1 ring-primary/40 active:bg-primary-soft/70"
+          >
+            <span aria-hidden>📍</span> Use my location
+          </button>
+          <p className="text-[13px] text-muted-foreground">{WHY_LOCATION}</p>
+        </div>
+      )}
+
+      {data?.location === "blocked" && (
+        <div className="space-y-1">
+          <p className="text-[13px] text-muted-foreground">
+            Couldn&apos;t use your location, so these are near {data.near}.
+          </p>
+          <button
+            type="button"
+            onClick={() => setHowTo(true)}
+            className="flex h-11 items-center gap-1.5 rounded-full bg-card px-3.5 text-[14px] font-semibold ring-1 ring-border active:bg-muted"
+          >
+            <LocateFixed className="size-4" /> Turn on location
+          </button>
+        </div>
       )}
 
       {result.isError && (
@@ -166,9 +230,12 @@ export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
         open={picking}
         onOpenChange={setPicking}
         choice={choice}
-        dormName={dormName}
+        blocked={data?.location === "blocked"}
         onChoose={(next) => { choose(next); setPicking(false); }}
+        onUseLocation={() => { setPicking(false); askForLocation(); }}
+        onHowTo={() => { setPicking(false); setHowTo(true); }}
       />
+      <LocationHowTo open={howTo} onOpenChange={setHowTo} onRetry={() => { setHowTo(false); askForLocation(); }} />
     </section>
   );
 }
@@ -220,12 +287,14 @@ function OfferRow({ offer, onOpen }: { offer: CommercialOffer; onOpen: () => voi
   );
 }
 
-function NearSheet({ open, onOpenChange, choice, dormName, onChoose }: {
-  open: boolean; onOpenChange: (open: boolean) => void; choice: NearChoice; dormName: string | null;
-  onChoose: (choice: NearChoice) => void;
+function NearSheet({ open, onOpenChange, choice, blocked, onChoose, onUseLocation, onHowTo }: {
+  open: boolean; onOpenChange: (open: boolean) => void; choice: NearChoice;
+  /** Location was refused, is off, or timed out: "Use my location" opens the how-to instead of asking again. */
+  blocked: boolean;
+  onChoose: (choice: NearChoice) => void; onUseLocation: () => void; onHowTo: () => void;
 }) {
   const [draft, setDraft] = useState(choice.mode === "place" ? choice.place : "");
-  const deviceOk = canUseDeviceLocation();
+  const deviceOk = canUseDeviceLocation(); // false on plain http: no location option there
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="mx-auto max-h-[85dvh] max-w-md overflow-y-auto rounded-t-3xl pb-[calc(1rem+env(safe-area-inset-bottom))]">
@@ -234,22 +303,24 @@ function NearSheet({ open, onOpenChange, choice, dormName, onChoose }: {
           <SheetDescription>Only a rough area is shared with the store search, never your name or exact spot.</SheetDescription>
         </SheetHeader>
         <div className="space-y-2 px-4">
-          <NearOption
-            active={choice.mode === "dorm"}
-            icon={<Home className="size-5" />}
-            title={`Near ${dormName ?? "my dorm"}`}
-            body="The default. No location permission needed."
-            onClick={() => onChoose({ mode: "dorm" })}
-          />
           {deviceOk && (
             <NearOption
-              active={choice.mode === "device"}
+              active={choice.mode === "auto" && !blocked}
               icon={<LocateFixed className="size-5" />}
-              title="Near me right now"
-              body="Your browser shares a rough location (about 1 km). Used for this search only, never saved."
-              onClick={() => onChoose({ mode: "device" })}
+              title="Use my location (recommended)"
+              body={blocked
+                ? "Location is off or blocked for DAHA. Tap to see how to turn it on."
+                : "A rough location (about 1 km), only for store search, never saved. Without it we use Stanford campus."}
+              onClick={blocked ? onHowTo : onUseLocation}
             />
           )}
+          <NearOption
+            active={choice.mode === "campus" || (choice.mode === "auto" && (blocked || !deviceOk))}
+            icon={<GraduationCap className="size-5" />}
+            title="Stanford campus"
+            body="No location permission needed."
+            onClick={() => onChoose({ mode: "campus" })}
+          />
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -303,5 +374,47 @@ function NearOption({ active, icon, title, body, onClick }: {
         <span className="block text-[13px] text-muted-foreground">{body}</span>
       </span>
     </button>
+  );
+}
+
+/** How to turn location on for DAHA (plans/LOCATION.md §5.2). Menus move between OS versions, so the steps stay short. */
+function LocationHowTo({ open, onOpenChange, onRetry }: {
+  open: boolean; onOpenChange: (open: boolean) => void; onRetry: () => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="mx-auto max-h-[85dvh] max-w-md overflow-y-auto rounded-t-3xl pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <SheetHeader>
+          <SheetTitle className="text-[17px]">Turn on location</SheetTitle>
+          <SheetDescription>{WHY_LOCATION} Until then we show stores near Stanford campus.</SheetDescription>
+        </SheetHeader>
+        <div className="space-y-4 px-4 text-[14px]">
+          <div className="space-y-1.5">
+            <h3 className="font-semibold">iPhone (Safari)</h3>
+            <ol className="list-decimal space-y-1 pl-5">
+              <li>Settings → Privacy &amp; Security → Location Services: turn it on.</li>
+              <li>In the same list, Safari Websites → While Using the App.</li>
+              <li>For this site: the page-settings button in Safari&apos;s address bar → Website Settings → Location → Allow.</li>
+            </ol>
+            <p className="text-[13px] text-muted-foreground">The DAHA app on your home screen asks by itself the first time.</p>
+          </div>
+          <div className="space-y-1.5">
+            <h3 className="font-semibold">Android (Chrome)</h3>
+            <ol className="list-decimal space-y-1 pl-5">
+              <li>Turn Location on in quick settings.</li>
+              <li>For this site: the icon left of the address → Permissions → Location → Allow.</li>
+              <li>If Chrome itself has no location access: Settings → Apps → Chrome → Permissions → Location.</li>
+            </ol>
+          </div>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground active:bg-primary-hover"
+          >
+            Try again
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -94,8 +94,8 @@ export const mockSearch = {
     const device = body.lat != null && body.lng != null;
     return {
       query: words,
-      near: place ?? (device ? "your location" : "your dorm"),
-      near_source: place ? "place" : device ? "device" : "dorm",
+      near: place ?? (device ? "your location" : "Stanford campus"),
+      near_source: place ? "place" : device ? "device" : "campus",
       offers, provider: "mock", cached: false, fetched_at: new Date().toISOString(),
     };
   },

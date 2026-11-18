@@ -58,7 +58,7 @@ Rules:
 9. Messaging: per-transaction and direct threads, polling.
 10. Notifications (in-app); points, levels, badges, reviews, transaction history.
 11. Share links for requests (`/r/{id}`).
-12. Privacy rules in `ARCHITECTURE.md` §8.
+12. Privacy rules in `ARCHITECTURE.md` §8. Locations are dorm-level, with one exception: store search ("Buy or rent nearby") may use the phone's current location, rounded to ~1 km, only when the person allows it, and never stored (`plans/LOCATION.md`).
 13. Logging for future ML: events, search logs, and scan detections with the user's edits.
 14. **Private "I have this"** (from user feedback): people tick things they own (bike pump, tool kit…) without posting a public listing. When someone asks for one, DAHA pings them anonymously, and the requester only sees "quietly asked N people nearby". Owner: C (C5), with small pieces in A2 and B3–B5.
 
@@ -184,7 +184,8 @@ COMMERCIAL_CACHE_HOURS=24
 COMMERCIAL_DAILY_LOOKUPS_PER_USER=25
 COMMERCIAL_BUDGET_USD=9              # per calendar month
 COMMERCIAL_EST_COST_USD=0.017
-COMMERCIAL_DEFAULT_PLACE=Stanford, CA
+COMMERCIAL_DEFAULT_PLACE=Stanford, CA   # campus: used when the phone's location isn't shared
+COMMERCIAL_DEFAULT_LABEL=Stanford campus # shown as "Near Stanford campus"
 COMMERCIAL_DEFAULT_LAT=37.4275
 COMMERCIAL_DEFAULT_LNG=-122.1697
 ```
@@ -442,7 +443,7 @@ export type FeedEntry =
 export interface CommercialSearchBody {
   q: string;                     // the campus search text
   place?: string | null;         // typed town or ZIP, e.g. "94040"
-  lat?: number | null;           // opt-in browser location; rounded to ~1 km, never stored
+  lat?: number | null;           // the phone's location when allowed; rounded to ~1 km, never stored
   lng?: number | null;
 }
 export interface CommercialOffer {
@@ -455,8 +456,8 @@ export interface CommercialOffer {
 }
 export interface CommercialSearchResponse {
   query: string;                 // the words that were searched
-  near: string;                  // e.g. "Wilbur Hall", "your location", "Mountain View, CA"
-  near_source: "place" | "device" | "dorm" | "campus";
+  near: string;                  // e.g. "Stanford campus", "your location", "Mountain View, CA"
+  near_source: "place" | "device" | "dorm" | "campus";  // "dorm" is no longer returned (plans/LOCATION.md)
   offers: CommercialOffer[];     // cheapest first; no price → last
   provider: string;              // "exa" | "mock" (sample data)
   cached: boolean; fetched_at: ISODateTime;
@@ -522,7 +523,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | A | `POST /notifications/read` | `MarkReadBody` | 204 | |
 | A | `POST /events` | `EventsBody` | 204 | Never fails the client |
 | C | `GET /search` | `q, kind=all\|items\|requests\|communities, category, community_id, scope=campus\|dorm, max_walk_min, transaction_type, condition, available_only=true, offset, limit` | `SearchResponse` | Explicit params override what was parsed from `q`; an empty `q` = browse |
-| C | `POST /search/commercial` | `CommercialSearchBody` | `CommercialSearchResponse` | Buy or rent nearby (C6). Only the cleaned words and a ~1 km area reach Exa. Cached per (words, area); 400 if no specific words; 429 at the daily cap or monthly budget; 503 when `off` or not set up |
+| C | `POST /search/commercial` | `CommercialSearchBody` | `CommercialSearchResponse` | Buy or rent nearby (C6). Only the cleaned words and a ~1 km area reach Exa. Area: typed place → the phone's location (when allowed) → Stanford campus (`plans/LOCATION.md`). Cached per (words, area); 400 if no specific words; 429 at the daily cap or monthly budget; 503 when `off` or not set up |
 | C | `GET /feed/home` | | `HomeFeed` | |
 | C | `GET /communities/{id}/feed` | `kind=all\|items\|requests, offset, limit` | `Page<FeedEntry>` | Newest first |
 | C | `GET /requests/{id}/matches` | | `MatchesResponse` | Only items visible to the viewer, plus `private_pinged_count` (a number only, never who) |
@@ -555,7 +556,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | `badge` | earner | a badge is awarded | `/profile` |
 
 ### 7.6 Standard event types (`POST /events`; B and C send them, A stores them)
-`page_view`, `search_performed`, `search_result_clicked`, `item_viewed`, `scan_started`, `scan_review_shown`, `scan_published`, `onboarding_skipped`, `request_composer_opened`, `request_posted`, `offer_sent`, `share_clicked`, `invite_copied`, `feedback_submitted`, `commercial_search_shown`, `commercial_offer_clicked`. The payload is a small JSON object (ids, counts, seconds) and never contains free text from other people.
+`page_view`, `search_performed`, `search_result_clicked`, `item_viewed`, `scan_started`, `scan_review_shown`, `scan_published`, `onboarding_skipped`, `request_composer_opened`, `request_posted`, `offer_sent`, `share_clicked`, `invite_copied`, `feedback_submitted`, `commercial_search_shown`, `commercial_offer_clicked`, `location_permission` (`{state, opened_by}`; never coordinates). The payload is a small JSON object (ids, counts, seconds) and never contains free text from other people.
 
 ### 7.7 Transaction rules (A's `services/transactions.py`: one `apply_action()` and one `allowed_actions()` from this table)
 | Status | Kind | Owner may | Borrower may |

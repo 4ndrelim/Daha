@@ -1,5 +1,6 @@
 # Local agent memory (one per person, never shared)
 .daha/
+CLAUDE.local.md
 
 # Secrets — only *.env.example files are committed
 .env

@@ -6,8 +6,8 @@ taps "Compare store prices nearby". Borrowing stays the first answer; this is th
 What leaves our server (one Exa web search):
 - the search words only. Filler ("anyone have", "near me", dates), emails, phone numbers and
   links are stripped first;
-- a coarse location: the dorm's public coordinates (DAHA is dorm-level everywhere), the
-  browser's location when the person opts in, both rounded to ~1 km, or a town/ZIP they typed;
+- a coarse location: the device's location when the person allowed it (rounded to ~1 km in the
+  browser and again here), else Stanford campus, or a town/ZIP they typed (plans/LOCATION.md);
 - never the person's name, id, email, or anything else stored about them. Coordinates are not
   stored or logged here; the cache key is a hash.
 
@@ -117,7 +117,7 @@ def search_words(q: str) -> tuple[str, str | None]:
 @dataclass(frozen=True)
 class Near:
     label: str  # shown to the person
-    source: str  # place | device | dorm | campus
+    source: str  # place | device | campus ("dorm" is no longer returned)
     lat: float | None
     lng: float | None
     place: str | None  # typed town/ZIP, used in the query text when there are no coordinates
@@ -137,16 +137,18 @@ def _geo(label: str, source: str, lat: float, lng: float) -> Near:
 
 
 def resolve_near(viewer: ViewerContext, body: schemas.CommercialSearchBody) -> Near:
-    """A typed place wins, then the opted-in browser location, then the dorm, then campus."""
+    """A typed place wins, then the device's location (when the person allowed it), then campus.
+
+    The dorm is deliberately not used (plans/LOCATION.md): the rule is "you, or campus". The viewer
+    stays in the signature so callers don't change.
+    """
     place = clean_place(body.place)
     if place:
         return Near(place, "place", None, None, place, f"place:{place.lower()}")
     if body.lat is not None and body.lng is not None:
         return _geo("your location", "device", body.lat, body.lng)
-    if viewer.lat is not None and viewer.lng is not None:
-        return _geo(viewer.dorm_name or "your dorm", "dorm", viewer.lat, viewer.lng)
     return _geo(
-        settings.commercial_default_place,
+        settings.commercial_default_label,
         "campus",
         settings.commercial_default_lat,
         settings.commercial_default_lng,
