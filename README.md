@@ -113,4 +113,4 @@ Claude may find APIs or services that would make DAHA a lot better, such as web 
 - Claude stops photo AI spending at $40 by default, keeping $10 for evals.
 
 ## Where things are
-`README.md` (you are here) · `docs/PRODUCT_BRIEF.md` (the full product idea) · `CONTRIBUTING.md` (how to work) · `ARCHITECTURE.md` (diagrams) · `PLAN.md` (technical plan) · `plans/` (per-person plans, integration, evals, roadmap) · `docs/proposals/` (ideas Claude found for you to review) · `AGENTS.md` (rules for Claude)
+`README.md` (you are here) · `docs/PRODUCT_BRIEF.md` (the full product idea) · `CONTRIBUTING.md` (how to work) · `ARCHITECTURE.md` (diagrams) · `PLAN.md` (technical plan) · `plans/` (per-person plans, integration, evals, roadmap) · `docs/proposals/` (ideas Claude found for you to review) · `docs/research/` (deeper research, e.g. more HarnessRouter workflows) · `AGENTS.md` (rules for Claude)
