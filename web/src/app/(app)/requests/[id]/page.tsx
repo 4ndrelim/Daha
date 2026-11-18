@@ -1,5 +1,10 @@
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { Suspense } from "react";
+import { RequestScreen } from "./request-screen";
 
-export default function Page() {
-  return <PagePlaceholder title="Request" note="B4." />;
+export default function RequestPage() {
+  return (
+    <Suspense>
+      <RequestScreen />
+    </Suspense>
+  );
 }
