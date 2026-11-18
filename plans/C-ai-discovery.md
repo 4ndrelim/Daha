@@ -43,7 +43,7 @@ Contract: `PLAN.md` §6–§7. Your paths: `backend/app/ai/**`, `backend/app/dis
 ## Research & proposals (async)
 Research these in small slices, after a milestone or while CI runs. **Never let research block a milestone.** Write each finding as a proposal (`AGENTS.md` §6, template in `docs/proposals/README.md`) and present it at the start of the next session.
 
-- **Web search.** Andre has a web search API key. When you need it, print a 🧑 TODO: *"Tag Andre in the group chat for the web search API key."* Promising uses:
+- **Web search.** Andre has a web search API key (Exa). **Accepted and built as C6, "Buy or rent nearby"** (below). When you need the key, print a 🧑 TODO: *"Tag Andre in the group chat for the Exa key."* Other promising uses:
   - pin down the exact product from a scan (e.g. "TI-84 Plus CE") and add its specs and typical retail price. That powers "you saved ~$X by borrowing" impact stats (`plans/ROADMAP.md` #9);
   - "nobody has it yet" fallback: find campus resources that lend the item (libraries, tool libraries, rentals nearby) and show them on the request;
   - autofill descriptions for manual listings.
@@ -338,3 +338,21 @@ These build on C5's private inventory. Start each one as a proposal (`AGENTS.md`
 
 ## After Phase 1 (C)
 Drive integration with `plans/INTEGRATION.md`, then evals with `plans/EVALS.md`.
+
+## C6 — Buy or rent nearby (Exa web search) · accepted proposal `docs/proposals/C-exa-buy-nearby.md`
+**Why:** when nobody on campus has something, or the person can't wait, show the closest commercial alternatives nearby, cheapest first. Borrowing stays the first answer: the panel always ends with "ask your dorm first".
+
+- **When it shows** (Explore, Items tab, a real search):
+  - campus found **≤ 2 items** → the panel opens by itself ("Can't wait? Buy or rent nearby");
+  - otherwise a **Compare store prices nearby** button under the results opens it.
+- **Backend:** `POST /api/search/commercial` (`CommercialSearchBody` → `CommercialSearchResponse`, `PLAN.md` §7.2–§7.3), in `app/discovery/commercial.py`:
+  - **Words:** the rule-based parser cleans the query (filler, "near me", dates), and emails, phone numbers and links are removed before anything leaves the server.
+  - **Where "nearby" is:** a typed town/ZIP wins, then the browser's location (opt-in, rounded to ~1 km in the browser and again on the server), then the dorm's coordinates (rounded to ~1 km), then campus (`COMMERCIAL_DEFAULT_*`). Exa gets `userLocation {country, latitude, longitude}` plus "near me", or "near <town>". Never a name, an id, or the dorm's name; coordinates are never stored (the cache key is a hash).
+  - **One Exa call:** `POST https://api.exa.ai/search` (`type: auto`, 10 results, `moderation: true`, forums and social sites excluded). Each page gets a per-page `summary` with a JSON schema (`is_offer`, `product`, `price`, `currency`, `price_unit`, `offer_type`, `seller`, `store_location`). Pages that don't actually sell, rent or offer the thing are dropped, duplicates removed, and the rest sorted **cheapest first** (no price, or a currency we can't compare, goes last). Up to 8 offers.
+  - **Cost control:** about $0.017 per uncached lookup (Exa `auto` + summaries). Cached in `ai_cache` per (words, ~1 km area) for `COMMERCIAL_CACHE_HOURS`; `COMMERCIAL_DAILY_LOOKUPS_PER_USER` uncached lookups per person per 24 h; `COMMERCIAL_BUDGET_USD` per calendar month (spend is summed from `commercial_lookup` events, which hold counts and kinds only). 429s say which limit was hit.
+  - **Providers:** `COMMERCIAL_PROVIDER=mock` (default; free sample offers on example.com, labeled "Sample data" in the UI) · `exa` · `off` (503, and the panel stays hidden).
+- **Web** (touches B's Explore screen; B's 👍 on the PR): `components/daha/buy-nearby.tsx` (panel, offer rows, "Where should we look?" sheet: my dorm · near me right now (https only) · a town or ZIP), `lib/near.ts` (choice remembered per browser; coordinates never saved), `api.search.commercial`, a mock in `mock/search.ts`. Offers open the store's site in a new tab (`noopener noreferrer nofollow`); product photos load with no referrer.
+- **Events:** `commercial_search_shown` (auto, results, provider, near kind, cached) and `commercial_offer_clicked` (rank, offer type, has price). No free text.
+- **Tests:** `backend/tests/discovery/test_commercial.py` (what leaves the server, location priority and rounding, parsing and ranking, Exa errors, cache, limits, nothing stored about location). No paid calls: Exa is mocked with respx.
+- **Try it:** put `EXA_API_KEY` in `backend/.env`, set `COMMERCIAL_PROVIDER=exa`, restart `make api`, then on Explore search for something nobody has listed (e.g. "kayak"), or tap **Compare store prices nearby** under any search.
+- **Next:** show the panel on a request page when matching finds nothing (the requester only), and "You saved ~$X by borrowing" from the cheapest price (`plans/ROADMAP.md` #9).

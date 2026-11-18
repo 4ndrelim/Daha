@@ -21,6 +21,7 @@ flowchart LR
   FILES[("backend/uploads/<br/>JPEGs, EXIF stripped")]
   HR["HarnessRouter API<br/>vision tasks · $50 credit"]
   ANT["Anthropic API<br/>optional fallback"]
+  EXA["Exa web search<br/>buy or rent nearby (C6)"]
 
   WEB -->|"same-origin /api/* + /uploads/* via Next.js rewrites"| API_A
   WEB -->|"/api/search, /api/feed, /api/scans"| DISC
@@ -39,6 +40,7 @@ flowchart LR
   BG --> DB
   AI -->|"HTTPS, server-side key only"| HR
   AI -.->|"if AI_PROVIDER=anthropic"| ANT
+  DISC -.->|"POST /api/search/commercial<br/>words + ~1 km area only"| EXA
 ```
 
 Plain-text version:
@@ -48,6 +50,7 @@ Browser ──/api/*──▶ Next.js rewrites ──▶ FastAPI :8000 ──▶
                                          │  C: discovery + AI ─────────────┘
                                          │  background: scans, embeddings, matching
                                          └──HTTPS──▶ HarnessRouter (vision)   [Anthropic optional]
+                                         └──HTTPS──▶ Exa web search (buy or rent nearby, C6)
 ```
 
 ## 2. Tech stack
@@ -221,3 +224,4 @@ Hosted:   one small Ubuntu VM — docker compose (db, api, web) + Caddy (HTTPS) 
 - AI detections are drafts until the user explicitly publishes them. New listings default to **dorm** visibility.
 - A resource the viewer isn't allowed to see returns **404**, never 403, so its existence isn't revealed.
 - Photo AI spend has hard limits: per-user daily scan limit and a total budget (`AI_BUDGET_USD`).
+- "Buy or rent nearby" (C6) sends Exa only the cleaned search words (no emails, phone numbers or links) and a ~1 km area: the dorm, an opted-in browser location, or a typed town. No names or ids; coordinates are never stored. It has its own daily cap and monthly budget (`COMMERCIAL_*`).

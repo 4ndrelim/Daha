@@ -103,7 +103,7 @@ In hands-off mode, keep working on anything that isn't blocked, and put the bloc
 | Resource | Who has it | How to get it |
 |---|---|---|
 | HarnessRouter API: $50 team credit, used for photo AI (Person C) | the team account holder | Ask in the group chat |
-| Web search API | **Andre** | Print a 🧑 TODO: *"Tag Andre in the group chat for the web search API key."* |
+| Web search API (Exa, for C6 "Buy or rent nearby") | **Andre** | Print a 🧑 TODO: *"Tag Andre in the group chat for the Exa key."* It goes in `backend/.env` as `EXA_API_KEY`, with `COMMERCIAL_PROVIDER=exa` |
 | Anthropic API (optional vision fallback) | nobody yet | Write a proposal first (§6) |
 
 Keys are never pasted into the group chat and never committed:

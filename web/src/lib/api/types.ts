@@ -164,6 +164,30 @@ export type FeedEntry =
   | { kind: "request"; created_at: ISODateTime; request: RequestCard }
   | { kind: "item"; created_at: ISODateTime; item: ItemCard };
 
+// ---------- buy or rent nearby (C6) ----------
+export interface CommercialSearchBody {
+  q: string;                     // the campus search text
+  place?: string | null;         // typed town or ZIP, e.g. "94040"
+  lat?: number | null;           // opt-in browser location; rounded to ~1 km, never stored
+  lng?: number | null;
+}
+export interface CommercialOffer {
+  title: string; price: number | null; currency: string | null;
+  price_text: string | null;     // e.g. "$12.99", "$25/day"
+  price_unit: "each" | "hour" | "day" | "week" | "month" | null;
+  offer_type: "buy" | "rent" | "service"; seller: string;
+  location: string | null;       // town of the store when the page names one
+  url: string; image_url: string | null;
+}
+export interface CommercialSearchResponse {
+  query: string;                 // the words that were searched
+  near: string;                  // e.g. "Wilbur Hall", "your location", "Mountain View, CA"
+  near_source: "place" | "device" | "dorm" | "campus";
+  offers: CommercialOffer[];     // cheapest first; no price → last
+  provider: string;              // "exa" | "mock" (sample data)
+  cached: boolean; fetched_at: ISODateTime;
+}
+
 // ---------- scans (C) ----------
 export interface ScanImage { upload_id: ID; url: string; status: "pending" | "processing" | "done" | "failed"; error: string | null }
 export interface Detection {

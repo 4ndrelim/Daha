@@ -1,6 +1,8 @@
 import { call, http } from "../client";
 import { mockSearch } from "../mock/search";
-import type { Category, Condition, ID, SearchResponse, TransactionType } from "../types";
+import type {
+  Category, CommercialSearchBody, CommercialSearchResponse, Condition, ID, SearchResponse, TransactionType,
+} from "../types";
 
 export interface SearchQuery {
   q?: string; kind?: "all" | "items" | "requests" | "communities"; category?: Category; community_id?: ID;
@@ -11,4 +13,11 @@ export interface SearchQuery {
 export const search = {
   search: (query: SearchQuery) =>
     call("search", () => http<SearchResponse>("GET", "/search", { query: { ...query } }), () => mockSearch.search(query)),
+  /** Buy or rent nearby (C6): store/rental alternatives, cheapest first. POST keeps a location out of URLs. */
+  commercial: (body: CommercialSearchBody) =>
+    call(
+      "search",
+      () => http<CommercialSearchResponse>("POST", "/search/commercial", { body }),
+      () => mockSearch.commercial(body),
+    ),
 };

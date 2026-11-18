@@ -1,6 +1,8 @@
 import { http } from "../client";
 import type { SearchQuery } from "../endpoints/search";
-import type { Community, ParsedQuery, SearchResponse } from "../types";
+import type {
+  CommercialOffer, CommercialSearchBody, CommercialSearchResponse, Community, ParsedQuery, SearchResponse,
+} from "../types";
 import { categoryInfo, TX_TYPE_LABEL } from "@/lib/categories";
 import { getPool, guessCategory, itemScore, latency, overlap, tokens } from "./pool";
 
@@ -67,5 +69,34 @@ export const mockSearch = {
     const pageRequests = wantRequests ? requests.slice(offset, offset + limit) : [];
     const more = (wantItems && offset + limit < items.length) || (wantRequests && offset + limit < requests.length);
     return { parsed, items: pageItems, requests: pageRequests, communities, next_offset: more ? offset + limit : null };
+  },
+
+  /** Sample store offers on example.com, cheapest first, like the backend's mock provider. */
+  async commercial(body: CommercialSearchBody): Promise<CommercialSearchResponse> {
+    await latency();
+    const words = tokens(body.q).join(" ") || body.q.trim();
+    const thing = words.charAt(0).toUpperCase() + words.slice(1);
+    const base = 8 + ([...words].reduce((n, ch) => n + ch.charCodeAt(0), 0) % 60);
+    const place = body.place?.trim() || null;
+    const dollars = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+    const offer = (title: string, price: number, seller: string, extra: Partial<CommercialOffer> = {}): CommercialOffer => ({
+      title, price, currency: "USD", price_text: dollars(price), price_unit: "each", offer_type: "buy", seller,
+      location: place ?? "Palo Alto", url: `https://example.com/search?q=${encodeURIComponent(words)}`,
+      image_url: null, ...extra,
+    });
+    const rent = Math.max(3, Math.round(base * 15) / 100);
+    const offers = [
+      offer(`${thing} rental`, rent, "Sample Rentals", { offer_type: "rent", price_unit: "day", price_text: `${dollars(rent)}/day` }),
+      offer(`${thing} (used, good)`, Math.round(base * 55) / 100, "Sample Marketplace"),
+      offer(`${thing} (new)`, base + 0.99, "Sample Store"),
+      offer(`${thing} (ships in 2 days)`, base + 6.49, "Sample Online Shop", { location: null }),
+    ].sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+    const device = body.lat != null && body.lng != null;
+    return {
+      query: words,
+      near: place ?? (device ? "your location" : "your dorm"),
+      near_source: place ? "place" : device ? "device" : "dorm",
+      offers, provider: "mock", cached: false, fetched_at: new Date().toISOString(),
+    };
   },
 };
