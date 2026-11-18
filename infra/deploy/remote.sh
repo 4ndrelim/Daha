@@ -15,7 +15,9 @@ log() { printf '\n==> %s\n' "$*"; }
 
 # shellcheck source=/dev/null
 . "$CONF/deploy.env"
-: "${SITE:?}" "${DEMO_MODE:?}"
+MODE="${MODE:-deploy}" # deploy = public with HTTPS; prepare = build and run privately, no Caddy yet
+: "${DEMO_MODE:?}"
+if [ "$MODE" = deploy ]; then : "${SITE:?}"; fi
 
 # 1. Swap: building the web app needs more memory than small VMs have.
 mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
@@ -48,7 +50,9 @@ sudo systemctl enable --now docker >/dev/null 2>&1 || true   # (a snap-installed
 
 # 3. The web address. DuckDNS: point the name at this VM (an empty ip= means "the address this
 #    request comes from"). Your own subdomain: its DNS A record already points here.
-if [ -n "${DUCKDNS_SUBDOMAIN:-}" ]; then
+if [ "$MODE" = prepare ]; then
+  log "Prepare mode: no web address yet (the real deploy adds it and HTTPS)"
+elif [ -n "${DUCKDNS_SUBDOMAIN:-}" ]; then
   log "Pointing $SITE at this VM"
   answer=$(curl -fsS --max-time 20 "https://www.duckdns.org/update?domains=${DUCKDNS_SUBDOMAIN}&token=${DUCKDNS_TOKEN:-}&ip=${PUBLIC_IP:-}" || true)
   if [ "$answer" != "OK" ]; then
@@ -81,7 +85,7 @@ cat > "$SRC/.env" <<EOF
 COMPOSE_PROJECT_NAME=daha
 COMPOSE_FILE=docker-compose.yml:infra/deploy/docker-compose.prod.yml
 COMPOSE_PROFILES=full
-SITE_ADDRESS=$SITE
+SITE_ADDRESS=${SITE:-localhost}
 NEXT_PUBLIC_DEMO_MODE=$DEMO_MODE
 API_PORT=127.0.0.1:8000
 WEB_PORT=127.0.0.1:3000
@@ -91,7 +95,9 @@ umask 022
 # 6. Build and start everything. Data lives in Docker volumes, so it survives every redeploy.
 log "Building and starting DAHA (first time: 10-20 minutes; later: a few)"
 cd "$SRC"
-if ! sudo docker compose up -d --build --remove-orphans --wait; then
+services=() # all of them; prepare mode leaves Caddy (HTTPS) for the real deploy
+if [ "$MODE" = prepare ]; then services=(db api web); fi
+if ! sudo docker compose up -d --build --remove-orphans --wait "${services[@]}"; then
   echo "Something didn't start. The last log lines:"
   sudo docker compose ps
   sudo docker compose logs --tail 60
@@ -105,3 +111,8 @@ job="30 3 * * * bash $SRC/infra/deploy/backup.sh >> $DAHA/backups/backup.log 2>&
 
 log "Running:"
 sudo docker compose ps --format 'table {{.Service}}\t{{.Status}}'
+if curl -fsS --max-time 10 http://127.0.0.1:8000/api/health | grep -q '"ok":true'; then
+  echo "backend health check: ok"
+else
+  echo "backend health check: not answering yet"
+fi
