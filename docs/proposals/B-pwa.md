@@ -1,0 +1,35 @@
+# Installable DAHA (PWA): "Add to Home Screen"
+- Status: new
+- Author: Person B · Date: 2026-11-17
+- Problem it solves: Today DAHA lives in a browser tab, so people lose it among their tabs and it never feels like "the dorm app". Installing it puts a DAHA icon on the home screen. It then opens full-screen without the browser bars, like a native app, which suits the demo ("borrow it from down the hall") and repeat use after the hackathon.
+- Proposal: split into two parts. **Only Part 1 is proposed now.**
+  - **Part 1: installable app (web only, ~1.5 h).** This is `PLAN.md` §2 P1 item 5, "PWA manifest (B)".
+    - `web/src/app/manifest.ts`, using Next.js 16's built-in [manifest file convention](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/manifest), so no library is needed:
+      - name "DAHA", short name "DAHA", `start_url: "/home"`, `display: "standalone"`
+      - theme and background colors from our tokens (`#059669`, `#fafaf9`)
+    - App icons drawn in code with Next's built-in icon routes (`app/icon.tsx`, `app/apple-icon.tsx`), so there are no image files to make:
+      - the green "daha" wordmark on a rounded square
+      - sizes 192, 512, a 512 "maskable" version, and the 180 px Apple icon
+    - iPhone: `appleWebApp` metadata (title, a status bar that blends with our background), so it opens full-screen when added from Safari. Safe-area padding is already done.
+    - A small "Install DAHA" card on Profile:
+      - Android/Chrome: a real **Install** button, via the browser's `beforeinstallprompt` event.
+      - iPhone: a 2-step hint ("Tap Share → Add to Home Screen"), because iOS has no install button.
+      - Hidden once the app is already installed.
+    - Back buttons on the detail screens (item, request, user, community). A full-screen app has no browser back button, and today only the chat screen has one.
+    - No service worker and no offline mode: the browsers we target can install it without them, and offline isn't useful for a live-inventory app.
+  - **Part 2: push notifications (later, not proposed now).** "Someone needs a bike pump" on your lock screen, even with the app closed.
+    - Needs A to store push subscriptions, a server push library, and a key pair (VAPID). It's more like half a day across A and B.
+    - `PLAN.md` §2 lists push notifications as **out of scope** for the MVP. Revisit after the hackathon, together with C's rate-limited "someone in your dorm needs X" idea (P1 item 4).
+- Cost: free. Part 1 adds no services, libraries or accounts.
+- Effort: Part 1 ~1.5 h, only in B's files:
+  - new `web/src/app/manifest.ts`, `icon.tsx`, `apple-icon.tsx`
+  - edits to `web/src/app/layout.tsx` (metadata) and `web/src/app/(app)/profile/page.tsx` (install card)
+  - a small `BackButton` component used by 4 detail pages
+
+  No contract change; it doesn't touch A's or C's files (C's scan pages are untouched).
+- Keys / accounts needed: none for Part 1. Part 2 would need a VAPID key pair, which we generate ourselves for free (no account), kept in `backend/.env`.
+- Risks / privacy:
+  - **Installing needs HTTPS.** On the laptop's Wi-Fi address (`http://10.x.x.x:3000`), Android Chrome won't offer Install. iPhone "Add to Home Screen" still adds the icon, but I need to check on a real phone whether it opens full-screen over plain `http`. The temporary demo link for Wednesday night is a Cloudflare tunnel (`https://….trycloudflare.com`, `plans/INTEGRATION.md`), so it is HTTPS and installing works there.
+  - **Login per installed copy.** On iPhone, an installed app keeps its own storage, separate from Safari. Someone already logged in through Safari must log in once more inside the installed app. One-tap demo login makes that a few seconds, but it's worth knowing for the demo.
+  - **Privacy:** no change. No new data leaves the device, and there's no service worker caching pages.
+- Recommendation: **do Part 1 now, while B6b waits for C**, because it's free, small and in my own files. It makes the demo video and the Wednesday-night friend test feel like a real app ("add DAHA to your home screen"). Per `PLAN.md` §2, I'd first post "B is taking P1 #5 (PWA manifest)" in the group chat so nobody duplicates it. Skip Part 2 until after the hackathon.
