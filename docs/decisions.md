@@ -49,3 +49,4 @@
 | 2026-11-17 | C | Reverse matching (P1 #1, without notifications): `on_item_saved` scores the item against open requests and upserts `request_matches`; `/me/fulfillable` and "You could help" read that table | At ~20k items the old item×request join made the home feed take 1.5–5 s; now it's an indexed lookup |
 | 2026-11-17 | C | Community feed shows open, in-progress and fulfilled requests (not cancelled/expired); private groups return 404 to non-members | It's a channel history; matches A's members-list rule |
 | 2026-11-17 | C | HarnessRouter concurrency is per API process (`HARNESSROUTER_MAX_CONCURRENCY`); run one API worker while on the free plan (2 tasks) | Each worker has its own semaphore |
+| 2026-11-17 | C | C1–C5, C4 scan UI, and evals pushed straight to `main` (no PR), on the C human's explicit request; rebased on B6a first, all backend + web checks passing | Hackathon deadline; gh CLI not logged in on this laptop |
