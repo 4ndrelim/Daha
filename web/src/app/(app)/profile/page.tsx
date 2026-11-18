@@ -13,6 +13,7 @@ import { meKey, useMe } from "@/lib/queries/me";
 import { invalidatePool } from "@/lib/api/mock/pool";
 import { fieldClass, PrimaryButton } from "@/components/daha/form";
 import { ItemThumb } from "@/components/daha/item-thumb";
+import { InstallCard } from "@/components/daha/install-card";
 import { LogoutButton } from "@/components/daha/logout-button";
 import { ProfileHeader } from "@/components/daha/profile-header";
 import { RequestCard } from "@/components/daha/request-card";
@@ -231,6 +232,7 @@ export default function ProfilePage() {
       {tab === "requests" && <Requests />}
       {tab === "activity" && <Activity />}
       {tab === "reviews" && <Reviews me={me.data} />}
+      <InstallCard />
       <Settings me={me.data} />
     </div>
   );

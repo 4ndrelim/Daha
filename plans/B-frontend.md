@@ -151,5 +151,8 @@ Implement `/communities`, `/communities/[slug]`, `/profile`, `/u/[id]`, `/notifi
 
 Checkpoint: *"B6 ✅ all screens done and running live (NEXT_PUBLIC_MOCK=none). Phase 1 done (B)."*
 
+## B7 — Installable app (accepted proposal `docs/proposals/B-pwa.md`, Part 1 only)
+Additive task, `PLAN.md` §2 P1 item 5. `web/src/app/manifest.ts` (standalone, `start_url=/home`, theme colors from §1); PNG icons in `web/public/icons/` (192, 512, maskable 512, Apple 180, favicon 48); `appleWebApp` metadata; an "Install DAHA" card on Profile (Install button via `beforeinstallprompt`, 2-step hint on iPhone, hidden when installed or dismissed); `BackButton` on item, request, user and community pages. No service worker, no push (Part 2 rejected for the hackathon).
+
 ## Phase 2 & 3 (B)
 Fix issues labeled `B` during integration. Then do UX iteration from feedback (`plans/INTEGRATION.md` §3.5) and the P1 items: the PWA manifest and the Playwright smoke test.

@@ -12,6 +12,7 @@ import { categoryInfo, TX_TYPE_LABEL } from "@/lib/categories";
 import { firstName, shortDate, timeAgo } from "@/lib/format";
 import { useTxAction } from "@/lib/queries/transactions";
 import { invalidatePool } from "@/lib/api/mock/pool";
+import { BackButton } from "@/components/daha/back-button";
 import { InfoChip, TxTypeChip } from "@/components/daha/chips";
 import { ItemThumb } from "@/components/daha/item-thumb";
 import { PrimaryButton } from "@/components/daha/form";
@@ -154,6 +155,7 @@ export function RequestScreen() {
 
   return (
     <div className="space-y-6 pb-24">
+      <BackButton className="-mt-2 -mb-3" />
       <div className="flex gap-2.5">
         <UserAvatar user={r.requester} className="mt-0.5 size-10 shrink-0" />
         <div className="min-w-0 flex-1">
