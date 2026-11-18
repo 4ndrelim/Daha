@@ -171,6 +171,18 @@ EMBEDDINGS_PROVIDER=fastembed        # fastembed | hash (tests/CI)
 EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
 MATCH_MIN_SCORE=0.55                 # calibrated by C on seed data
 AI_ENRICH_REQUESTS=false
+# --- buy or rent nearby (C6, accepted proposal docs/proposals/C-exa-buy-nearby.md) ---
+COMMERCIAL_PROVIDER=exa              # exa | mock | off (the code default is mock, so tests never call Exa)
+EXA_API_KEY=                         # human (Andre) — never commit
+EXA_BASE_URL=https://api.exa.ai
+EXA_SEARCH_TYPE=auto
+COMMERCIAL_CACHE_HOURS=24
+COMMERCIAL_DAILY_LOOKUPS_PER_USER=25
+COMMERCIAL_BUDGET_USD=9              # per calendar month
+COMMERCIAL_EST_COST_USD=0.017
+COMMERCIAL_DEFAULT_PLACE=Stanford, CA
+COMMERCIAL_DEFAULT_LAT=37.4275
+COMMERCIAL_DEFAULT_LNG=-122.1697
 ```
 
 ### 5.4 `web/.env.example` (B creates it in P0-B)
@@ -422,6 +434,30 @@ export type FeedEntry =
   | { kind: "request"; created_at: ISODateTime; request: RequestCard }
   | { kind: "item"; created_at: ISODateTime; item: ItemCard };
 
+// ---------- buy or rent nearby (C6) ----------
+export interface CommercialSearchBody {
+  q: string;                     // the campus search text
+  place?: string | null;         // typed town or ZIP, e.g. "94040"
+  lat?: number | null;           // opt-in browser location; rounded to ~1 km, never stored
+  lng?: number | null;
+}
+export interface CommercialOffer {
+  title: string; price: number | null; currency: string | null;
+  price_text: string | null;     // e.g. "$12.99", "$25/day"
+  price_unit: "each" | "hour" | "day" | "week" | "month" | null;
+  offer_type: "buy" | "rent" | "service"; seller: string;
+  location: string | null;       // town of the store when the page names one
+  url: string; image_url: string | null;
+}
+export interface CommercialSearchResponse {
+  query: string;                 // the words that were searched
+  near: string;                  // e.g. "Wilbur Hall", "your location", "Mountain View, CA"
+  near_source: "place" | "device" | "dorm" | "campus";
+  offers: CommercialOffer[];     // cheapest first; no price → last
+  provider: string;              // "exa" | "mock" (sample data)
+  cached: boolean; fetched_at: ISODateTime;
+}
+
 // ---------- scans (C) ----------
 export interface ScanImage { upload_id: ID; url: string; status: "pending" | "processing" | "done" | "failed"; error: string | null }
 export interface Detection {
@@ -482,6 +518,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | A | `POST /notifications/read` | `MarkReadBody` | 204 | |
 | A | `POST /events` | `EventsBody` | 204 | Never fails the client |
 | C | `GET /search` | `q, kind=all\|items\|requests\|communities, category, community_id, scope=campus\|dorm, max_walk_min, transaction_type, condition, available_only=true, offset, limit` | `SearchResponse` | Explicit params override what was parsed from `q`; an empty `q` = browse |
+| C | `POST /search/commercial` | `CommercialSearchBody` | `CommercialSearchResponse` | Buy or rent nearby (C6). Only the cleaned words and a ~1 km area reach Exa. Cached per (words, area); 400 if no specific words; 429 at the daily cap or monthly budget; 503 when `off` or not set up |
 | C | `GET /feed/home` | | `HomeFeed` | |
 | C | `GET /communities/{id}/feed` | `kind=all\|items\|requests, offset, limit` | `Page<FeedEntry>` | Newest first |
 | C | `GET /requests/{id}/matches` | | `MatchesResponse` | Only items visible to the viewer, plus `private_pinged_count` (a number only, never who) |
@@ -514,7 +551,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | `badge` | earner | a badge is awarded | `/profile` |
 
 ### 7.6 Standard event types (`POST /events`; B and C send them, A stores them)
-`page_view`, `search_performed`, `search_result_clicked`, `item_viewed`, `scan_started`, `scan_review_shown`, `scan_published`, `onboarding_skipped`, `request_composer_opened`, `request_posted`, `offer_sent`, `share_clicked`, `invite_copied`, `feedback_submitted`. The payload is a small JSON object (ids, counts, seconds) and never contains free text from other people.
+`page_view`, `search_performed`, `search_result_clicked`, `item_viewed`, `scan_started`, `scan_review_shown`, `scan_published`, `onboarding_skipped`, `request_composer_opened`, `request_posted`, `offer_sent`, `share_clicked`, `invite_copied`, `feedback_submitted`, `commercial_search_shown`, `commercial_offer_clicked`. The payload is a small JSON object (ids, counts, seconds) and never contains free text from other people.
 
 ### 7.7 Transaction rules (A's `services/transactions.py`: one `apply_action()` and one `allowed_actions()` from this table)
 | Status | Kind | Owner may | Borrower may |

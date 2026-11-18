@@ -30,6 +30,9 @@ from app.schemas.communities import (
     Upload,
 )
 from app.schemas.discovery import (
+    CommercialOffer,
+    CommercialSearchBody,
+    CommercialSearchResponse,
     FeedEntry,
     FeedEntryItem,
     FeedEntryRequest,
@@ -106,6 +109,9 @@ __all__ = [
     "Badge",
     "BorrowBody",
     "Category",
+    "CommercialOffer",
+    "CommercialSearchBody",
+    "CommercialSearchResponse",
     "Community",
     "CommunityCreate",
     "CommunityKind",

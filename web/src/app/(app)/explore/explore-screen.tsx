@@ -9,6 +9,7 @@ import { api, track } from "@/lib/api";
 import type { SearchQuery } from "@/lib/api/endpoints/search";
 import type { Category, Condition, TransactionType } from "@/lib/api/types";
 import { CATEGORIES } from "@/lib/categories";
+import { BuyNearby } from "@/components/daha/buy-nearby";
 import { CategoryChips } from "@/components/daha/category-chips";
 import { FilterSheet, type Filters } from "@/components/daha/filter-sheet";
 import { ItemCard } from "@/components/daha/item-card";
@@ -32,6 +33,8 @@ const TABS: { value: Tab; label: string }[] = [
   { value: "communities", label: "Groups" },
 ];
 const PAGE = 20;
+/** At most this many campus items for a search → show store options right away (C6). */
+const THIN_RESULTS = 2;
 
 const CATEGORY_VALUES = new Set<string>(CATEGORIES.map((c) => c.value));
 const TX_VALUES = new Set<string>(["lend", "give", "exchange"]);
@@ -236,6 +239,11 @@ export function ExploreScreen() {
         <div className="grid grid-cols-2 gap-3">
           {items.map((i, rank) => <ItemCard key={i.id} item={i} onClick={() => clickResult("item", i.id, rank)} />)}
         </div>
+      )}
+
+      {/* Buy or rent nearby: opens by itself when campus has little, else a button (C6). */}
+      {state.tab === "items" && state.q && results.isSuccess && (
+        <BuyNearby key={state.q} q={state.q} auto={items.length <= THIN_RESULTS} />
       )}
 
       {state.tab === "requests" && requests.length > 0 && (

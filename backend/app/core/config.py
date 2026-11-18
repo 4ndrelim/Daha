@@ -47,6 +47,20 @@ class Settings(BaseSettings):
     match_min_score: float = 0.55
     ai_enrich_requests: bool = False
 
+    # --- buy or rent nearby (C6): store/rental alternatives from Exa web search ---
+    commercial_provider: str = "mock"  # mock | exa | off
+    exa_api_key: str = Field(default="", repr=False)
+    exa_base_url: str = "https://api.exa.ai"
+    exa_search_type: str = "auto"  # auto | deep
+    exa_timeout_s: int = 30
+    commercial_cache_hours: int = 24
+    commercial_daily_lookups_per_user: int = 25
+    commercial_budget_usd: float = 9.0  # per calendar month (UTC)
+    commercial_est_cost_usd: float = 0.017  # per uncached lookup when Exa reports no cost
+    commercial_default_place: str = "Stanford, CA"
+    commercial_default_lat: float = 37.4275
+    commercial_default_lng: float = -122.1697
+
     @property
     def allowed_email_domain_list(self) -> list[str]:
         return [d.strip().lower() for d in self.allowed_email_domains.split(",") if d.strip()]

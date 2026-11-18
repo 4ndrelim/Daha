@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query
 
 from app import schemas
 from app.api.deps import DB, Viewer
-from app.discovery import embeddings, feeds, matching
+from app.discovery import commercial, embeddings, feeds, matching
 from app.discovery import search as search_service
 from app.services import serializers
 from app.services.requests import get_visible_request
@@ -45,6 +45,15 @@ def search(
     return search_service.search(
         db, viewer, q=q, kind=kind, filters=filters, offset=offset, limit=limit
     )
+
+
+@router.post("/search/commercial", response_model=schemas.CommercialSearchResponse)
+def commercial_search(body: schemas.CommercialSearchBody, viewer: Viewer, db: DB):
+    """Buy or rent nearby (C6): store/rental alternatives for a search, cheapest first.
+
+    POST so an opted-in browser location never ends up in URLs or access logs.
+    """
+    return commercial.commercial_search(db, viewer, body)
 
 
 @router.get("/feed/home", response_model=schemas.HomeFeed)

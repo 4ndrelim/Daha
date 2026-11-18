@@ -62,3 +62,34 @@ class FeedEntryItem(Schema):
 
 
 FeedEntry = Annotated[FeedEntryRequest | FeedEntryItem, Field(discriminator="kind")]
+
+
+# ---------- buy or rent nearby (C6) ----------
+class CommercialSearchBody(Schema):
+    q: str = Field(min_length=1, max_length=200)  # the campus search text
+    place: str | None = Field(default=None, max_length=80)  # typed town or ZIP, e.g. "94040"
+    lat: float | None = Field(default=None, ge=-90, le=90)  # opt-in browser location;
+    lng: float | None = Field(default=None, ge=-180, le=180)  # rounded to ~1 km, never stored
+
+
+class CommercialOffer(Schema):
+    title: str
+    price: float | None  # in `currency`; null when the page shows no clear price
+    currency: str | None  # ISO 4217, e.g. "USD"
+    price_text: str | None  # e.g. "$12.99", "$25/day"
+    price_unit: Literal["each", "hour", "day", "week", "month"] | None
+    offer_type: Literal["buy", "rent", "service"]
+    seller: str  # store, brand, or business name
+    location: str | None  # town of the store when the page names one
+    url: str
+    image_url: str | None
+
+
+class CommercialSearchResponse(Schema):
+    query: str  # the words that were searched (filler and personal details removed)
+    near: str  # e.g. "Wilbur Hall", "your location", "Mountain View, CA"
+    near_source: Literal["place", "device", "dorm", "campus"]
+    offers: list[CommercialOffer]  # cheapest first; no price → last
+    provider: str  # "exa" | "mock" (sample data)
+    cached: bool
+    fetched_at: ISODateTime
