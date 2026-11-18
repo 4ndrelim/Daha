@@ -4,6 +4,27 @@
 
 **⏰ Hackathon targets** (`PLAN.md` §0): P0-A Tue 11:00 · A1 Tue 15:00 · A2 Tue 21:00 · A3 Wed 10:00 · A4 Wed 15:00 · A5 after the hackathon.
 
+## ✅ Status (2026-11-17): every milestone is merged
+| Milestone | PR | Notes |
+|---|---|---|
+| P0-A skeleton, models, migration, 501 stubs | #1 | |
+| A1 auth, users, communities, places, uploads, visibility | #2 | |
+| A2 items + full demo seed | #3 | |
+| A3 requests, offers, transactions, chat, notifications, reviews, events | #4 | |
+| A4 end-to-end smoke script (`make smoke`) | #5 | also runs inside pytest, so it can't go stale |
+| A5 CI, Dockerfiles, `make up` | #16, #18 | done before the hackathon ended; Postgres is published on 127.0.0.1 only |
+
+**Behaviour that differs from, or adds to, the text below** (each line is in `docs/decisions.md`):
+- **Errors:** bad signup input (bad email, wrong domain, password < 8) → 400. Demo login for a non-demo user → 404.
+- **Items:** `create_item()` / `update_item()` never commit; the caller does, so `POST /items/batch` and scan publish are one DB transaction, and `on_item_saved` runs after the response. `DELETE /items/{id}` → 409 while the item is reserved or borrowed. Archived items → 404 for everyone, owner included. Removing an item auto-declines the borrow requests and offers waiting on it. Private items can be offered on a request but not borrowed from their page.
+- **Requests:** can't be `private` (400). A fulfilled or cancelled request can't be edited (409). Cancelling or fulfilling one auto-declines its pending offers. A request with only `needed_from` expires the day after it. `requests` also has GIN and HNSW indexes.
+- **Transactions:** completing a give or swap of a `services` item leaves it `available`. On completion each party gets one `tx_update` ("All done — leave a review"). Acting in a thread (a message or an action) marks it read for you.
+- **Communities:** private groups are listed by name (no join code); their member list is 404 to non-members.
+- **Events:** `POST /events` also accepts logged-out and bad-token calls (stored with no user) and swallows DB errors.
+- **Seed:** the visibility mix is 53% dorm / 39% campus / 9% groups. After seeding it reindexes and matches every open seeded request. `make seed` follows `DEMO_MODE`.
+- **Tests and smoke:** tests rebuild `daha_test` from the real migration. `make smoke` leaves its "Smoke…" users and items behind; `make seed` clears them.
+- **A5:** `web/Dockerfile` runs `next start` on a full build (standalone output needs a `next.config.ts` change), with `API_PROXY_TARGET` and `NEXT_PUBLIC_*` as build args. The API container migrates on start and seeds only an empty database (`seed --if-empty`). `ItemCard.match_score` / `match_reason` are required-nullable.
+
 **If behind, cut** (in this order):
 1. A5 (it's already after the hackathon)
 2. `/users/{id}/reviews` and the reviews list (keep leaving a review)
@@ -36,7 +57,7 @@ Research these in small slices, after a milestone or while CI runs. **Never let 
 - Stanford single sign-on: what it would take and who approves it.
 - Managed hosting vs. a VM: monthly cost and setup effort.
 
-## P0-A — Repo + backend skeleton + contract in code (target ≤ 2 h)
+## ✅ P0-A — Repo + backend skeleton + contract in code (target ≤ 2 h)
 B builds `web/` in parallel and C runs the HarnessRouter spike. Don't touch `web/`.
 1. **Repo root:**
    - the docs from the plan package (already present)
@@ -65,7 +86,7 @@ B builds `web/` in parallel and C runs the HarnessRouter spike. Don't touch `web
 
 Checkpoint message: *"Phase 0 backend merged ✅ — `make db migrate seed api` works; every endpoint exists as a 501 stub. C: start C1 in backend/app/ai + backend/app/discovery."*
 
-## A1 — Auth, users, communities, places, uploads, visibility
+## ✅ A1 — Auth, users, communities, places, uploads, visibility
 - **Signup:**
   - Lowercase the email and check its domain against `ALLOWED_EMAIL_DOMAINS`. Password ≥ 8 characters.
   - Create memberships in campus plus the dorm (if `dorm_id`). Store `ref_user_id` as `referred_by`.
@@ -94,7 +115,7 @@ Checkpoint message: *"Phase 0 backend merged ✅ — `make db migrate seed api` 
 
 Checkpoint: *"A1 ✅ live: auth, me, users, communities, places, uploads. B: remove auth,users,communities,places,uploads from NEXT_PUBLIC_MOCK."*
 
-## A2 — Items + full seed
+## ✅ A2 — Items + full seed
 - **`services/items.create_item`:**
   - Validation: `services` can't be `lend`; `groups` needs `group_ids` the owner belongs to; ≤ 6 images, all owned by the user.
   - Write audiences and images.
@@ -116,7 +137,7 @@ Checkpoint: *"A1 ✅ live: auth, me, users, communities, places, uploads. B: rem
 
 Checkpoint: *"A2 ✅ items live + seed (`make seed`). Demo logins: maya@demo.daha, jordan@demo.daha, sam@demo.daha / daha-demo. B: unmock items. C: real data for search & matching."*
 
-## A3 — Requests, offers, transactions, chat, notifications, reviews, events
+## ✅ A3 — Requests, offers, transactions, chat, notifications, reviews, events
 - **Requests:**
   - Create: audiences like items, `matching_status='pending'`, schedule `on_request_created`.
   - Get with offers: the requester sees all offers; others see only their own.
@@ -142,7 +163,7 @@ Checkpoint: *"A2 ✅ items live + seed (`make seed`). Demo logins: maya@demo.dah
 
 Checkpoint: *"A3 ✅ requests/offers/transactions/chat/notifications/reviews/events live. B: unmock requests,transactions,conversations,notifications,events."*
 
-## A4 — End-to-end API smoke script
+## ✅ A4 — End-to-end API smoke script
 `backend/scripts/smoke_api.py` (httpx, `API_URL` default `http://localhost:8000`), run with `make smoke`. Steps:
 1. Sign up two fresh users in different dorms (random emails `@stanford.edu`).
 2. User 1 uploads a generated JPEG with EXIF data and checks it was stripped.
@@ -152,9 +173,9 @@ Checkpoint: *"A3 ✅ requests/offers/transactions/chat/notifications/reviews/eve
 
 Print ✅/❌ per step; exit non-zero on any failure.
 
-## A5 — Infra (after the hackathon; before Thursday only if you're ahead)
+## ✅ A5 — Infra (done before the hackathon ended)
 - **`backend/Dockerfile`:** uv sync with frozen deps, a non-root user, uvicorn on 8000.
-- **`web/Dockerfile`:** multi-stage Next.js standalone build. A owns this one file inside `web/`.
+- **`web/Dockerfile`:** multi-stage build that runs `next start` on the full Next.js build (standalone output would need a `next.config.ts` change, which is B's file). A owns this one file inside `web/`.
 - **`docker-compose.yml` profile `full`:** db + api + web, with volumes for `uploads` and the fastembed cache (`FASTEMBED_CACHE_PATH`). `make up`.
 - **`.github/workflows/ci.yml`:**
   - backend: ruff + pytest against a Postgres service, with `AI_PROVIDER=mock` and `EMBEDDINGS_PROVIDER=hash`

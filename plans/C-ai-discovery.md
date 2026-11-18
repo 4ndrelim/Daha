@@ -11,6 +11,30 @@ Contract: `PLAN.md` §6–§7. Your paths: `backend/app/ai/**`, `backend/app/dis
 
 **⏰ Hackathon targets** (`PLAN.md` §0): C0 Tue 11:00 · C1 Tue 15:00 · C4 Tue 21:00 · C2 Wed 10:00 · C3 Wed 15:00 · C5 Wed 18:00 · integration Wed 18:00–22:00 · mini-eval and submission Thu.
 
+## Status (2026-11-17): C1–C5 and the evals are merged; C0 is waiting for the key
+| Milestone | Where | Notes |
+|---|---|---|
+| ⏸ C0 HarnessRouter spike | `docs/ai-spike.md` | the provider, setup and spike scripts are built and tested against a mocked stream. The latency/cost table needs one real run with the key (≈ $0.30) |
+| ✅ C1 AI provider layer + scan API | `596372b` | mock / harnessrouter / anthropic |
+| ✅ C4 scan flow UI (+ C5's web parts: Private option, "Tick what you have") | `baf1983` | |
+| ✅ C2 embeddings, indexing, hybrid search | `2fe6978` | |
+| ✅ C3 parsing, matching, fulfillable, feeds | `57908fc`, `a5bccfa`, `b361925` | |
+| ✅ C5 private haves + anonymous pings | `57908fc`, `cd24366` | |
+| ✅ Evals: parse, search, match suites + reports | `8f9e15b`, `evals/reports/` | parse: every field 1.00 · search: demo queries 5/5 in the top 3, nDCG@10 0.94, p95 66 ms · match: recall@5 1.00, precision@5 0.96. The scan suite waits for labeled eval photos |
+
+C's work went straight to `main` without PRs, at the C human's explicit request (logged in `docs/decisions.md`).
+
+**Behaviour that differs from, or adds to, the text below** (each line is in `docs/decisions.md`):
+- **Vision output is re-validated on the server** (`app/ai/normalize.py`): IDs, cards, keys, cash, documents, meds, and "person"/"pet" names are dropped; hygiene items, underwear, cosmetics, and valuables are force-unticked with a reason; every field is clamped to the contract.
+- **Scan publish** locks the scan row: a second publish → 409, and a failed publish rolls back fully. With no photo given, it crops to the bbox (which covers P1 #10).
+- **Search:** a parsed category or borrow/swap is a soft boost. Only an explicit filter, "in my dorm", dates, and "free" filter hard. A semantic-only hit is kept only if it's ≥ 0.62 and within 0.07 of the best hit; trigram needs `word_similarity` ≥ 0.6.
+- **Matching:** relevance = (0.65·semantic + 0.15·keyword) / 0.8 must reach 0.60 before proximity counts; `MATCH_MIN_SCORE` stays 0.55. Notifications go to the top 5 owners per request, at most 10 `match` notifications per owner per 24 h. Seeded requests get matches but no notifications.
+- **Reverse matching** (P1 #1, without notifications): `on_item_saved` scores the item against open requests, and "You could help" reads `request_matches`.
+- **`private_pinged_count`** is shown only to the requester, and counts the `private_match` notifications actually sent.
+- **Community feed** shows open, in-progress, and fulfilled requests. Private groups → 404 to non-members.
+- **HarnessRouter concurrency** is per API process, so run one API worker on the free plan.
+- **Not done:** `AI_ENRICH_REQUESTS` (P1 #3) is only a flag; no code uses it yet.
+
 **If behind, cut** (in this order):
 1. C5 as a whole, if it hasn't started by Wed 14:00 (defer it to after the hackathon)
 2. `on_request_updated` re-matching
@@ -53,7 +77,7 @@ Research these in small slices, after a milestone or while CI runs. **Never let 
 - An image and text moderation API for inappropriate photos or posts.
 - LLM request enrichment (P1): which model, and the cost per request.
 
-## C0 — HarnessRouter spike (do this now: no repo needed, ≤ 1 h)
+## ⏸ C0 — HarnessRouter spike (do this now: no repo needed, ≤ 1 h)
 **What HarnessRouter is.** It runs full **agent harnesses** (Claude Code, Codex, Pi, …) behind one API. It does **not** give plain single-shot model calls. A "task" is: upload files → run the harness → get the final answer text, or files the agent wrote. Tasks can take tens of seconds to minutes.
 
 What we know from the docs (re-check https://harnessrouter.ai/docs first, especially its quickstart prompt for coding agents):
@@ -97,7 +121,7 @@ What we know from the docs (re-check https://harnessrouter.ai/docs first, especi
 
 Checkpoint: *"C0 ✅ HarnessRouter vision works: <base>/<model>, ~<s>s and ~$<x> per photo. $50 ≈ <n> photos. Need team OK on model."*
 
-## C1 — AI provider layer + scan API (after P0-A is merged)
+## ✅ C1 — AI provider layer + scan API (after P0-A is merged)
 ### C1.1 Files
 `app/ai/schemas.py` (`DetectedItemRaw`, `DetectionPayload {items: list[DetectedItemRaw]}`) · `app/ai/prompts.py` (`PROMPT_VERSION="vision-v1"`, `VISION_SYSTEM`, `VISION_TASK`) · `app/ai/providers/{base,mock,harnessrouter,anthropic}.py` · `app/ai/vision.py` · `app/ai/scans.py` · `app/ai/router.py` (replaces A's 501 stubs for `/scans*`; `/ai/parse-request` comes in C3) · `scripts/setup_harnessrouter.py` (creates the harness and prints `HARNESSROUTER_VISION_HARNESS_ID`).
 
@@ -177,7 +201,7 @@ Rules:
 
 Checkpoint: *"C1 ✅ scan API live (mock + harnessrouter). Scans + publish create real items."*
 
-## C4 — Scan flow UI (`/onboarding` and `/add/scan`)
+## ✅ C4 — Scan flow UI (`/onboarding` and `/add/scan`)
 - Files:
   - `web/src/lib/api/endpoints/scans.ts`
   - `web/src/lib/api/mock/scans.ts`: progressive. Images finish one by one about every 1.5 s with 3–7 detections each
@@ -210,7 +234,7 @@ Checkpoint: *"C1 ✅ scan API live (mock + harnessrouter). Scans + publish creat
 
 Checkpoint: *"C4 ✅ scan flow live at /onboarding and /add/scan."*
 
-## C2 — Embeddings, indexing, search
+## ✅ C2 — Embeddings, indexing, search
 - **`app/discovery/embeddings.py`:**
   - `embed_passages(texts)`, `embed_query(text)`
   - `fastembed`: `TextEmbedding(EMBEDDING_MODEL)` as a lazy singleton; use `passage_embed` and `query_embed`
@@ -250,7 +274,7 @@ Checkpoint: *"C4 ✅ scan flow live at /onboarding and /add/scan."*
 
 Checkpoint: *"C2 ✅ search live. B: unmock search."*
 
-## C3 — Request parsing, matching, feeds
+## ✅ C3 — Request parsing, matching, feeds
 - **`app/ai/request_parser.py` → `POST /api/ai/parse-request`** (rules; < 300 ms):
   - `kind`:
     - request: "anyone have", "can I borrow", "looking for", "need", "?"
@@ -294,7 +318,7 @@ Checkpoint: *"C2 ✅ search live. B: unmock search."*
 
 Checkpoint: *"C3 ✅ parse-request, matches, fulfillable, home + community feeds live. B: NEXT_PUBLIC_MOCK=none."*
 
-## C5 — Private "I have this" + anonymous pings (from user feedback)
+## ✅ C5 — Private "I have this" + anonymous pings (from user feedback)
 **Why:** many people won't post a public listing, but they're happy to help when asked. They tick what they own ("bike pump", "tool kit"). Nobody sees the list, and DAHA quietly pings them when someone nearby needs one.
 
 - **Matching** (`on_request_created` / `on_request_updated`):

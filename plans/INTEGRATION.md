@@ -1,5 +1,7 @@
 # Integration (Phase 2) and the hackathon finish (Phase 3)
 
+> **Status (2026-11-17):** the demo script (`PLAN.md` §10, steps 1–9) passed headless on fresh seed data with `NEXT_PUBLIC_MOCK=none` (B6b, PR #15), and `make up` + CI exist (A5). Not done yet: a run with `AI_PROVIDER=harnessrouter` (needs the key; `docs/ai-spike.md`), the two-phone pass, and the `v0.1-mvp` tag.
+
 **Integration lead: Person C.** C's laptop holds the HarnessRouter key, and C's work spans backend and frontend. A and B join the session, live or on a call, and their Claudes fix issues in their own areas.
 
 ## 🧑 Human TODOs

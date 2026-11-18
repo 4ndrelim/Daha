@@ -177,12 +177,12 @@ stateDiagram-v2
   declined --> [*]
   cancelled --> [*]
 ```
-The full rules (who may do what, plus side effects on items, requests, points, and notifications) are in `PLAN.md` §7.7. They live in a single module: `backend/app/services/transactions.py`.
+A `services` item stays `available` after a give or swap completes: helping one person doesn't use it up. The full rules (who may do what, plus side effects on items, requests, points, and notifications) are in `PLAN.md` §7.7. They live in a single module: `backend/app/services/transactions.py`.
 
 ### 4.4 Search
 1. Rules (no LLM, so it's instant) parse the query into: cleaned text, category, "near me", "my dorm", dates like "this weekend", and type like "free".
 2. Candidates are gathered from three places: vector similarity (pgvector), full-text search, and fuzzy name match (pg_trgm). All three are filtered by the visibility rule and the user's filters.
-3. Each candidate gets a score = semantic + keyword + proximity (same dorm, walking minutes) + freshness, multiplied by an availability factor.
+3. Each candidate gets a score = semantic + keyword + proximity (same dorm, walking minutes) + freshness, multiplied by an availability factor. A parsed category is a soft boost, never a filter, and a candidate with no keyword overlap must be semantically close to the best hit (`app/discovery/config.py`).
 4. Every search is logged to `search_logs`, which later feeds learning-to-rank.
 
 ## 5. The AI provider layer
@@ -200,7 +200,7 @@ app/ai/vision.py ── cache (image sha256 + prompt version + model) ──▶ 
 | Job | Trigger | Owner |
 |---|---|---|
 | `process_scan(scan_id)` | `POST /api/scans` | C |
-| `on_item_saved(item_id)`: compute the embedding | item create/update, scan publish | C (called by A) |
+| `on_item_saved(item_id)`: compute the embedding, then score the item against open requests (reverse matching for "You could help") | item create/update, scan publish | C (called by A) |
 | `on_request_created` / `on_request_updated`: embed, match, notify | request create/update | C (called by A) |
 | `reindex_all()` | `make seed`, `make reindex` | C |
 
