@@ -14,10 +14,12 @@ import statistics
 import sys
 from pathlib import Path
 
-from app.ai.providers import ProviderError
-from app.ai.providers.harnessrouter import HarnessRouterVisionProvider
-from app.ai.vision import downscale
-from app.core.config import settings
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # `python scripts/x.py` finds `app`
+
+from app.ai.providers import ProviderError  # noqa: E402
+from app.ai.providers.harnessrouter import HarnessRouterVisionProvider  # noqa: E402
+from app.ai.vision import downscale  # noqa: E402
+from app.core.config import settings  # noqa: E402
 
 OUT = Path.home() / "daha-spike" / "out"
 

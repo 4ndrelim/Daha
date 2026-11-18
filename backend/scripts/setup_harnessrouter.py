@@ -14,11 +14,14 @@ import argparse
 import json
 import re
 import sys
+from pathlib import Path
 
 import httpx
 
-from app.ai.prompts import PROMPT_VERSION, VISION_SYSTEM
-from app.core.config import BACKEND_DIR, settings
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # `python scripts/x.py` finds `app`
+
+from app.ai.prompts import PROMPT_VERSION, VISION_SYSTEM  # noqa: E402
+from app.core.config import BACKEND_DIR, settings  # noqa: E402
 
 ENV_FILE = BACKEND_DIR / ".env"
 HARNESS_VAR = "HARNESSROUTER_VISION_HARNESS_ID"
