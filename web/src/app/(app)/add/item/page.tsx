@@ -1,5 +1,10 @@
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { Suspense } from "react";
+import { ItemForm } from "./item-form";
 
-export default function Page() {
-  return <PagePlaceholder title="List an item" note="B3." />;
+export default function AddItemPage() {
+  return (
+    <Suspense>
+      <ItemForm />
+    </Suspense>
+  );
 }
