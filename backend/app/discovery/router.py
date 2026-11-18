@@ -3,12 +3,14 @@
 import threading
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 
 from app import schemas
 from app.api.deps import DB, Viewer
-from app.discovery import embeddings
+from app.discovery import embeddings, feeds, matching
 from app.discovery import search as search_service
+from app.services import serializers
+from app.services.requests import get_visible_request
 
 router = APIRouter(tags=["discovery"])
 # Load the embedding model in the background so the first search isn't slow.
@@ -46,25 +48,51 @@ def search(
 
 
 @router.get("/feed/home", response_model=schemas.HomeFeed)
-def home_feed():
-    raise HTTPException(501, "not implemented")
+def home_feed(viewer: Viewer, db: DB):
+    return feeds.home_feed(db, viewer)
 
 
 @router.get("/communities/{community_id}/feed", response_model=schemas.Page[schemas.FeedEntry])
 def community_feed(
     community_id: int,
+    viewer: Viewer,
+    db: DB,
     kind: Literal["all", "items", "requests"] = "all",
-    offset: int = 0,
-    limit: int = 20,
+    offset: int = Query(0, ge=0, le=5000),
+    limit: int = Query(20, ge=1, le=50),
 ):
-    raise HTTPException(501, "not implemented")
+    return feeds.community_feed(db, viewer, community_id, kind, offset, limit)
 
 
 @router.get("/requests/{request_id}/matches", response_model=schemas.MatchesResponse)
-def request_matches(request_id: int):
-    raise HTTPException(501, "not implemented")
+def request_matches(request_id: int, viewer: Viewer, db: DB):
+    req = get_visible_request(db, request_id, viewer)
+    rows = matching.visible_matches(db, req, viewer)
+    items = [i for i, _ in rows]
+    dorms, places = matching.locations(
+        db, {i.owner_id for i in items}, {i.pickup_place_id for i in items}
+    )
+    scores = {
+        i.id: (
+            s,
+            matching.reason(
+                viewer,
+                matching.loc_for(viewer, i.owner_id, i.pickup_place_id, dorms, places),
+                i.status,
+            ),
+        )
+        for i, s in rows
+    }
+    return schemas.MatchesResponse(
+        matching_status=req.matching_status,
+        items=serializers.item_cards(db, items, viewer, scores),
+        # A number only, never who — and only for the person who asked.
+        private_pinged_count=(
+            matching.private_pinged_count(db, req.id) if req.requester_id == viewer.user_id else 0
+        ),
+    )
 
 
 @router.get("/me/fulfillable", response_model=list[schemas.FulfillableRequest])
-def my_fulfillable():
-    raise HTTPException(501, "not implemented")
+def my_fulfillable(viewer: Viewer, db: DB):
+    return feeds.fulfillable_out(db, viewer, 20)

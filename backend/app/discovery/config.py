@@ -24,6 +24,9 @@ BROWSE_POOL = 400
 
 # --- request ↔ item matching (C3)
 MATCH_WEIGHTS = {"semantic": 0.65, "keyword": 0.15, "proximity": 0.20}
+# Relevance = (0.65·semantic + 0.15·keyword) / 0.80 must clear this before proximity counts,
+# so a same-dorm item never "matches" just for being close. Calibrated on seed (see decisions).
+MATCH_MIN_RELEVANCE = {"fastembed": 0.60, "hash": 0.35}
 MATCH_TOP_N = 10
 MATCH_NOTIFY_OWNERS = 5
 PRIVATE_PINGS_PER_DAY = 3
