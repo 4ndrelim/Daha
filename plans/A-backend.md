@@ -4,7 +4,7 @@
 
 **⏰ Hackathon targets** (`PLAN.md` §0): P0-A Tue 11:00 · A1 Tue 15:00 · A2 Tue 21:00 · A3 Wed 10:00 · A4 Wed 15:00 · A5 after the hackathon.
 
-## ✅ Status (2026-11-17): every milestone is merged
+## Status (2026-11-17): the planned milestones are merged; next comes improving and iterating
 | Milestone | PR | Notes |
 |---|---|---|
 | P0-A skeleton, models, migration, 501 stubs | #1 | |
@@ -24,6 +24,12 @@
 - **Seed:** the visibility mix is 53% dorm / 39% campus / 9% groups. After seeding it reindexes and matches every open seeded request. `make seed` follows `DEMO_MODE`.
 - **Tests and smoke:** tests rebuild `daha_test` from the real migration. `make smoke` leaves its "Smoke…" users and items behind; `make seed` clears them.
 - **A5:** `web/Dockerfile` runs `next start` on a full build (standalone output needs a `next.config.ts` change), with `API_PROXY_TARGET` and `NEXT_PUBLIC_*` as build args. The API container migrates on start and seeds only an empty database (`seed --if-empty`). `ItemCard.match_score` / `match_reason` are required-nullable.
+
+**Next phase: improve and iterate** (this list is the start, not the end; reorder it from real feedback):
+1. Fix what the first real users hit: `feedback` issues labeled `A` (`plans/INTEGRATION.md` → "Iterate").
+2. Put DAHA online for real: VM + Docker Compose + Caddy (`plans/INTEGRATION.md` → "Online for real"). Its HTTPS is also what lets phones share their location (`plans/LOCATION.md`).
+3. A's P1 items (`PLAN.md` §2): overdue reminders, the opt-in dorm leaderboard, group-owned inventory.
+4. From the research list above: error monitoring and uptime alerts, object storage for photos, real walking times.
 
 **If behind, cut** (in this order):
 1. A5 (it's already after the hackathon)

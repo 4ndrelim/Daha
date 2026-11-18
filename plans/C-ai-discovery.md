@@ -11,10 +11,10 @@ Contract: `PLAN.md` §6–§7. Your paths: `backend/app/ai/**`, `backend/app/dis
 
 **⏰ Hackathon targets** (`PLAN.md` §0): C0 Tue 11:00 · C1 Tue 15:00 · C4 Tue 21:00 · C2 Wed 10:00 · C3 Wed 15:00 · C5 Wed 18:00 · integration Wed 18:00–22:00 · mini-eval and submission Thu.
 
-## Status (2026-11-17): C1–C5 and the evals are merged; C0 is waiting for the key
+## Status (2026-11-17): C1–C5 and the evals are merged; next comes improving and iterating
 | Milestone | Where | Notes |
 |---|---|---|
-| ⏸ C0 HarnessRouter spike | `docs/ai-spike.md` | the provider, setup and spike scripts are built and tested against a mocked stream. The latency/cost table needs one real run with the key (≈ $0.30) |
+| ⏸ C0 HarnessRouter spike | `docs/ai-spike.md` | keys verified (2 keys in 2 organizations) and a live smoke test passed (2 drawn photos, ~17.5 s each, valid JSON). The real run with 3 real photos is still to do (≈ $0.30) |
 | ✅ C1 AI provider layer + scan API | `596372b` | mock / harnessrouter / anthropic |
 | ✅ C4 scan flow UI (+ C5's web parts: Private option, "Tick what you have") | `baf1983` | |
 | ✅ C2 embeddings, indexing, hybrid search | `2fe6978` | |
@@ -34,6 +34,13 @@ C's work went straight to `main` without PRs, at the C human's explicit request 
 - **Community feed** shows open, in-progress, and fulfilled requests. Private groups → 404 to non-members.
 - **HarnessRouter concurrency** is per API process, so run one API worker on the free plan.
 - **Not done:** `AI_ENRICH_REQUESTS` (P1 #3) is only a flag; no code uses it yet.
+
+**Next phase: improve and iterate** (the evals tell us where; nothing here is final):
+1. The real C0 run: 3 real photos through `scripts/hr_spike.py`, then pick the base/model with the team.
+2. The evals loop (`plans/EVALS.md`): label the eval photos, prompt v2 from users' edits, tune ranking weights and the match threshold.
+3. P1: autofill from photo (#2), request enrichment (#3), rate-limited "someone in your dorm needs X" (#4).
+4. Store search (C6): the server part of `plans/LOCATION.md` (the phone's location, else campus), then real store distances with a places API, and buy vs rent ranked separately.
+5. The follow-ups F1–F3 below.
 
 **If behind, cut** (in this order):
 1. C5 as a whole, if it hasn't started by Wed 14:00 (defer it to after the hackathon)

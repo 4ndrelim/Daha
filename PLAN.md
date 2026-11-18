@@ -3,7 +3,9 @@
 Read this together with `AGENTS.md` (rules), `CONTRIBUTING.md` (git), `ARCHITECTURE.md` (diagrams), and your sub-plan in `plans/`. **§6 and §7 are the contract**: implement them exactly.
 
 ## 0. Hackathon mode: submit by **Thu Nov 19, 12:00**
-> **Status (2026-11-17): Phase 1 is done.** Every A, B and C milestone is merged, and the web runs live (`NEXT_PUBLIC_MOCK=none`); see the status table at the top of each sub-plan. Still open: the C0 spike numbers (they need the HarnessRouter key), the `v0.1-mvp` tag and a phone pass with `AI_PROVIDER=harnessrouter` (`plans/INTEGRATION.md`), and the mini-eval scan numbers.
+> **Status (2026-11-17): the bulk of the MVP is built.** Every planned A, B and C milestone is merged, and the web runs live (`NEXT_PUBLIC_MOCK=none`); see the status table at the top of each sub-plan.
+>
+> **This isn't the end.** The next phase is improving and iterating on real use: weekly fixes from feedback (`plans/INTEGRATION.md` → "Iterate"), the evals loop (`plans/EVALS.md`), each sub-plan's **Next phase** list, and phone location for store search (`plans/LOCATION.md`, since most students will use DAHA on their phones). Still open from Phase 1: the C0 spike with 3 real photos (the HarnessRouter keys are verified), the `v0.1-mvp` tag, a two-phone pass with `AI_PROVIDER=harnessrouter`, and the mini-eval scan numbers.
 
 This is a 5-day hackathon. Everything here serves one goal: a working, demo-able MVP (the demo script in §10), submitted by Thursday noon. Times are local campus time, starting Tuesday morning.
 

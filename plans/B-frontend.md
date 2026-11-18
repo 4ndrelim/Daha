@@ -4,7 +4,7 @@
 
 **⏰ Hackathon targets** (`PLAN.md` §0): B0 Tue 11:00 · B1 Tue 15:00 · B2 + B3 Tue 21:00 · B4 Wed 10:00 · B5 Wed 15:00 · B6 Wed 18:00 (feature freeze) · demo video Thu 08:00–10:30.
 
-## ✅ Status (2026-11-17): every milestone is merged, and the web runs live (`NEXT_PUBLIC_MOCK=none`)
+## Status (2026-11-17): the planned milestones are merged and the web runs live; next comes improving and iterating
 | Milestone | PR | Notes |
 |---|---|---|
 | B0 skeleton, contract types, API client, app shell | #6 | |
@@ -29,6 +29,12 @@
 - **PWA:** icons are committed PNGs in `web/public/icons/`. Two extra events: `install_prompt_shown`, `app_installed`.
 - **Demo:** in step 4 Jordan must pick **Who sees it → Campus**. The composer defaults to My dorm, so Wilbur's Maya isn't pinged for a FloMo-only request.
 - **Not done (optional):** the `docs/ux-references/` screenshots (a human TODO), and the `page_view` event from `PLAN.md` §7.6, which is never sent.
+
+**Next phase: improve and iterate** (most students will use DAHA on their phones, so phone UX comes first):
+1. The weekly top 5 UX fixes from feedback (`plans/INTEGRATION.md` → "Iterate").
+2. Phone location for "Buy or rent nearby": use where the person is when location is on, otherwise Stanford campus (`plans/LOCATION.md`, web part).
+3. The Playwright smoke test (P1 #6) and the missing `page_view` event.
+4. From the research list above: an accessibility audit, messaging-style motion, a map view for "near me".
 
 **If behind, cut** (in this order):
 1. invite links
