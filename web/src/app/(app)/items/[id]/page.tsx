@@ -11,6 +11,7 @@ import type { ItemDetail, TransactionType } from "@/lib/api/types";
 import { categoryInfo, CONDITION_LABEL } from "@/lib/categories";
 import { firstName, shortDate } from "@/lib/format";
 import { invalidatePool } from "@/lib/api/mock/pool";
+import { BackButton } from "@/components/daha/back-button";
 import { CategoryChip, DistanceChip, StatusBadge, TxTypeChip } from "@/components/daha/chips";
 import { Field, fieldClass, PrimaryButton } from "@/components/daha/form";
 import { ItemThumb } from "@/components/daha/item-thumb";
@@ -198,7 +199,10 @@ export default function ItemPage() {
 
   return (
     <div className="-mt-4 space-y-5 pb-20">
-      <Carousel item={i} />
+      <div className="relative">
+        <BackButton floating className="absolute top-3 left-0 z-10" />
+        <Carousel item={i} />
+      </div>
 
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-1.5">

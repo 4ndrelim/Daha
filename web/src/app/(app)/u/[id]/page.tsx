@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import { firstName } from "@/lib/format";
 import { useMe } from "@/lib/queries/me";
+import { BackButton } from "@/components/daha/back-button";
 import { ItemCard } from "@/components/daha/item-card";
 import { ProfileHeader } from "@/components/daha/profile-header";
 import { ReviewList } from "@/components/daha/review-list";
@@ -39,6 +40,7 @@ export default function PublicProfilePage() {
   const u = user.data;
   return (
     <div className="space-y-6">
+      <BackButton className="-mt-2 -mb-3" />
       <ProfileHeader user={u} />
       <button type="button" onClick={() => message.mutate()} disabled={message.isPending}
         className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-60">

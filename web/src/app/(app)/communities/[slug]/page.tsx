@@ -12,6 +12,7 @@ import { firstName, plural, timeAgo } from "@/lib/format";
 import { copyInvite, inviteUrl } from "@/lib/invite";
 import { useJoin, useLeave } from "@/lib/queries/communities";
 import { useMe } from "@/lib/queries/me";
+import { BackButton } from "@/components/daha/back-button";
 import { ItemCard } from "@/components/daha/item-card";
 import { ItemThumb } from "@/components/daha/item-thumb";
 import { RequestCard } from "@/components/daha/request-card";
@@ -147,6 +148,7 @@ export default function CommunityPage() {
 
   return (
     <div className={cn("space-y-4", c.is_member && "pb-20")}>
+      <BackButton fallback="/communities" className="-mt-2 -mb-2" />
       <header className="rounded-3xl bg-card p-4 shadow-sm ring-1 ring-border/60">
         <div className="flex items-start gap-3">
           <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-3xl" aria-hidden>{c.emoji ?? "👥"}</span>

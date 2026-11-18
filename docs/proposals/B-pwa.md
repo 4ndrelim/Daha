@@ -1,5 +1,5 @@
 # Installable DAHA (PWA): "Add to Home Screen"
-- Status: new
+- Status: accepted (Part 1 only) · Part 2 (push notifications) rejected for the hackathon — Person B, 2026-11-17
 - Author: Person B · Date: 2026-11-17
 - Problem it solves: Today DAHA lives in a browser tab, so people lose it among their tabs and it never feels like "the dorm app". Installing it puts a DAHA icon on the home screen. It then opens full-screen without the browser bars, like a native app, which suits the demo ("borrow it from down the hall") and repeat use after the hackathon.
 - Proposal: split into two parts. **Only Part 1 is proposed now.**

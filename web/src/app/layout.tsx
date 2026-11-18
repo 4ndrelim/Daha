@@ -9,6 +9,17 @@ const inter = Inter({ variable: "--font-sans", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "DAHA · share stuff across campus",
   description: "Lend, borrow, give away and swap everyday things with people in your dorm.",
+  applicationName: "DAHA",
+  icons: {
+    icon: [
+      { url: "/icons/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  // iPhone "Add to Home Screen": open full-screen with a status bar that matches our background.
+  appleWebApp: { capable: true, title: "DAHA", statusBarStyle: "default" },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
