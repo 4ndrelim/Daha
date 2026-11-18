@@ -90,7 +90,7 @@ Settings and secret keys live in two local files that git ignores. Only the `*.e
 
   Any other key (for example web search) is listed in `AGENTS.md` §7 and explained in `backend/.env.example`.
 - **Check your HarnessRouter keys for free:** `cd backend && uv run python scripts/setup_harnessrouter.py --check` prints `key 1/3: OK · organization …` for each key (never the key itself) and points out keys that share an organization.
-- **Real AI costs credit, so it's opt-in:** set `AI_PROVIDER=harnessrouter` in `backend/.env` only when you mean to spend. The default, `mock`, is free.
+- **The template turns the real AI on** (`AI_PROVIDER=harnessrouter`, and `COMMERCIAL_PROVIDER=exa` for store search), so everything works once the shared keys are in. Each photo (≈ $0.10) and each new store search (≈ $0.02) spends team credit, capped by `AI_BUDGET_USD` and `COMMERCIAL_BUDGET_USD`. No keys yet, or working offline? Set both to `mock`: free sample data. Tests always use `mock`.
 - **After editing `backend/.env`,** restart `make api`: settings are read once at startup.
 - **Agents adding a variable:** add it to the right `.env.example` in the same PR, with a comment and a safe default (empty for keys), and mention it in the PR description. Teammates pick it up with `make env`.
 

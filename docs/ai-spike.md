@@ -22,7 +22,7 @@
 ## Configs tried
 | Config (base / model) | p50 s | max s | JSON valid (n/3) | items found | est. $ per photo | notes |
 |---|---|---|---|---|---|---|
-| _pending key_ | | | | | | |
+| claude-code / claude-sonnet-5.5 (base default), **smoke test**: 2 drawn desk photos, 2 keys in parallel (2026-11-17) | 17.5 | 17.7 | 2/2 | 5 each (lamp, 3 books, mug) | 0.10 (estimate: the stream reported no cost; check the dashboards) | both keys OK, one photo per key; the real spike still needs 3 real photos |
 
 ## Decision
 - Chosen base / model: _pending_ (default in `.env.example`: `claude-code`)

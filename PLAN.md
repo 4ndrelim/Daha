@@ -150,7 +150,7 @@ UPLOAD_DIR=./uploads
 CAMPUS_TZ=America/Los_Angeles
 CORS_ORIGINS=http://localhost:3000
 # --- AI & discovery (C) ---
-AI_PROVIDER=mock                     # mock | harnessrouter | anthropic
+AI_PROVIDER=harnessrouter            # harnessrouter | mock | anthropic (tests and CI always force mock)
 AI_MOCK_LATENCY_MS=2500
 AI_MAX_IMAGES_PER_SCAN=6
 AI_DAILY_SCANS_PER_USER=20
@@ -160,7 +160,7 @@ HARNESSROUTER_BASE_URL=https://api.harnessrouter.ai
 HARNESSROUTER_VISION_HARNESS_ID=     # setup_harnessrouter.py --write-env: one id per key, same order
 HARNESSROUTER_BASE=claude-code       # harness base chosen in the C0 spike
 HARNESSROUTER_MODEL=                 # model id chosen in the C0 spike (from GET /v1/models)
-HARNESSROUTER_MAX_CONCURRENCY=2      # total across keys (free trial: 2 per organization)
+HARNESSROUTER_MAX_CONCURRENCY=4      # total across keys (free trial: 2 per organization; 2 keys in 2 orgs)
 HARNESSROUTER_TIMEOUT_S=180
 HARNESSROUTER_EST_COST_PER_IMAGE=0.10   # from the spike; used when the API reports no cost
 ANTHROPIC_API_KEY=                   # optional fallback provider

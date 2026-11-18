@@ -253,10 +253,11 @@ async def test_harness_ids_must_be_one_or_one_per_key(monkeypatch):
     assert "manually" in exc.value.user_message
 
 
+@pytest.mark.parametrize("cap", [2, 4])  # 2 = one org's free-trial limit; 4 = two keys in two orgs
 @respx.mock
-async def test_concurrency_is_a_total_cap_spread_across_keys(monkeypatch):
+async def test_concurrency_is_a_total_cap_spread_across_keys(monkeypatch, cap):
     use_keys(monkeypatch, "sk-hr-a,sk-hr-b")
-    monkeypatch.setattr(settings, "harnessrouter_max_concurrency", 2)  # one org's free-trial limit
+    monkeypatch.setattr(settings, "harnessrouter_max_concurrency", cap)
     running: dict[str, int] = {}
     peak = {"total": 0}
 
@@ -272,9 +273,12 @@ async def test_concurrency_is_a_total_cap_spread_across_keys(monkeypatch):
     respx.post(f"{BASE}/v1/files").mock(side_effect=files)
     respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=lambda req: sse(GOOD))
     provider = hr.HarnessRouterVisionProvider()
-    results = await asyncio.gather(*(provider.detect(b"jpeg", f"p{i}.jpg") for i in range(6)))
-    assert sorted(r.raw["key"] for r in results) == [1, 1, 1, 2, 2, 2]  # spread evenly
-    assert peak == {"total": 2, "Bearer sk-hr-a": 1, "Bearer sk-hr-b": 1}  # never over the cap
+    photos = 3 * cap
+    results = await asyncio.gather(*(provider.detect(b"jpeg", f"p{i}.jpg") for i in range(photos)))
+    keys = [r.raw["key"] for r in results]
+    assert keys.count(1) == keys.count(2) == photos // 2  # spread evenly
+    half = cap // 2  # never over the cap, and never more than half of it on one key
+    assert peak == {"total": cap, "Bearer sk-hr-a": half, "Bearer sk-hr-b": half}
 
 
 @respx.mock
