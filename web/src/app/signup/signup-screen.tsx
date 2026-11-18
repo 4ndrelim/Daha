@@ -78,7 +78,7 @@ function AccountStep() {
         <PrimaryButton type="submit" loading={signup.isPending}>Next: pick your dorm</PrimaryButton>
       </form>
       <p className="mt-4 text-center text-[15px] text-muted-foreground">
-        Already on DAHA? <Link href="/login" className="font-semibold text-primary">Log in</Link>
+        Already on DAHA? <Link href="/login" className="inline-flex min-h-11 items-center px-1 font-semibold text-primary">Log in</Link>
       </p>
     </main>
   );

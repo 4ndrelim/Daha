@@ -158,7 +158,7 @@ export function RequestScreen() {
         <UserAvatar user={r.requester} className="mt-0.5 size-10 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="flex items-baseline gap-1.5 text-[13px]">
-            <Link href={`/u/${r.requester.id}`} className="truncate font-semibold">{r.is_mine ? "You" : r.requester.name}</Link>
+            <Link href={`/u/${r.requester.id}`} className="-my-3 inline-flex min-h-11 items-center truncate font-semibold">{r.is_mine ? "You" : r.requester.name}</Link>
             <span className="truncate text-muted-foreground">{r.requester.dorm_name ?? r.community_label} · {timeAgo(r.created_at)}</span>
           </p>
           <div className="mt-1 rounded-2xl rounded-tl-md bg-card px-4 py-3 text-[17px] leading-snug shadow-sm ring-1 ring-border/60">
@@ -174,7 +174,7 @@ export function RequestScreen() {
           <div className="mt-2 flex items-center gap-2 px-1">
             <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-semibold", st.cls)}>{st.label}</span>
             <span className="text-[12px] text-muted-foreground">{r.community_label}{r.distance_min !== null && !r.is_mine ? ` · ${r.distance_min} min away` : ""}</span>
-            <button type="button" onClick={() => share(r)} className="ml-auto flex h-9 items-center gap-1 rounded-full px-3 text-[13px] font-semibold text-primary active:bg-muted">
+            <button type="button" onClick={() => share(r)} className="ml-auto flex h-11 items-center gap-1 rounded-full px-3 text-[13px] font-semibold text-primary active:bg-muted">
               <Share2 className="size-4" /> Share
             </button>
           </div>

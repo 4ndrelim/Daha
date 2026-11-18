@@ -43,7 +43,7 @@ export function RequestCard({ request, className, showHelp = true }: {
           {showHelp && request.status === "open" && (
             <Link
               href={`/requests/${request.id}?help=1`}
-              className="flex h-9 items-center rounded-full bg-primary-soft px-3 font-semibold text-accent-foreground active:bg-emerald-100"
+              className="flex h-11 items-center rounded-full bg-primary-soft px-3.5 font-semibold text-accent-foreground active:bg-emerald-100"
             >
               I have this
             </Link>

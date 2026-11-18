@@ -22,13 +22,13 @@ export function TopBar() {
   return (
     <header className="pt-safe sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-md items-center gap-2 px-4">
-        <Link href="/home" className="text-[22px] font-extrabold tracking-tight text-primary">
+        <Link href="/home" className="flex h-11 items-center text-[22px] font-extrabold tracking-tight text-primary">
           daha
         </Link>
         {me?.dorm && (
           <Link
             href={`/communities/${me.dorm.slug}`}
-            className="ml-1 truncate rounded-full bg-primary-soft px-3 py-1 text-[13px] font-medium text-accent-foreground"
+            className="ml-1 flex h-10 min-w-0 items-center truncate rounded-full bg-primary-soft px-3 text-[13px] font-medium text-accent-foreground"
           >
             {me.dorm.emoji ?? "🏠"} {me.dorm.name}
           </Link>

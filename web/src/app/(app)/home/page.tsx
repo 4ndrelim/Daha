@@ -114,7 +114,7 @@ export default function HomePage() {
       <section>
         <SectionHeader
           title="Requests near you"
-          action={<Link href="/add/request" className="text-[13px] font-semibold text-primary">Ask for something</Link>}
+          action={<Link href="/add/request" className="-my-2 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary">Ask for something</Link>}
         />
         {feed.isPending && <RequestListSkeleton />}
         {feed.data && feed.data.requests_nearby.length === 0 && (
@@ -126,7 +126,7 @@ export default function HomePage() {
       </section>
 
       <section>
-        <SectionHeader title="New near you" action={<Link href="/explore" className="text-[13px] font-semibold text-primary">See all</Link>} />
+        <SectionHeader title="New near you" action={<Link href="/explore" className="-my-2 inline-flex min-h-11 items-center px-1 text-[13px] font-semibold text-primary">See all</Link>} />
         {feed.isPending && <ItemGridSkeleton />}
         {feed.data && feed.data.new_nearby.length === 0 && (
           <EmptyState emoji="📦" title="Nothing shared nearby yet" body="Be the first. Snap your desk and we'll list it." actionLabel="Snap your stuff" actionHref="/add/scan" />
