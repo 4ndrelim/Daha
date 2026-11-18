@@ -41,7 +41,7 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.3  # this action publishes no moving major tag
         with:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
@@ -68,6 +68,7 @@ jobs:
           cache-dependency-path: web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm exec next typegen   # generates LayoutProps/PageProps, which tsc needs on a fresh clone
       - run: pnpm typecheck
       - run: pnpm build
         env:
