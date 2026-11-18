@@ -169,7 +169,7 @@ export function ExploreScreen() {
       </form>
 
       <div className="flex items-center gap-2">
-        <div className="flex h-10 rounded-full bg-muted p-1" role="group" aria-label="Where to look">
+        <div className="flex h-12 rounded-full bg-muted p-1" role="group" aria-label="Where to look">
           {([["dorm", "My dorm"], [null, "Campus"]] as const).map(([v, label]) => (
             <button
               key={label}

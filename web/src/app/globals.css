@@ -140,6 +140,11 @@
     font-size: 15px;
     line-height: 1.45;
   }
+  /* Visible focus for keyboard users (taps don't trigger :focus-visible). */
+  :where(a, button, [role="tab"], [role="radio"], [role="switch"], summary):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
   /* iPhone Safari zooms into inputs under 16px. */
   input,
   textarea,

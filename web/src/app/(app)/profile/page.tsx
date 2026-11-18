@@ -93,13 +93,13 @@ function Inventory() {
         <ChevronRight className="size-5 text-accent-foreground" />
       </Link>
       <section>
-        <SectionHeader title={`Shared (${shared.length})`} action={<Link href="/add/item" className="text-[13px] font-semibold text-primary">+ List one</Link>} />
+        <SectionHeader title={`Shared (${shared.length})`} action={<Link href="/add/item" className="-my-2 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary">+ List one</Link>} />
         {shared.length === 0
           ? <EmptyState emoji="📦" title="Nothing shared yet" body="Snap your desk and we'll list it in seconds." actionLabel="Snap your stuff" actionHref="/add/scan" />
           : <ul className="divide-y divide-border/60">{shared.map((i) => <InventoryRow key={i.id} item={i} />)}</ul>}
       </section>
       <section>
-        <SectionHeader title={`Private (${priv.length})`} action={<Link href="/add/item?visibility=private" className="text-[13px] font-semibold text-primary">+ Add</Link>} />
+        <SectionHeader title={`Private (${priv.length})`} action={<Link href="/add/item?visibility=private" className="-my-2 inline-flex min-h-11 items-center px-1 text-[13px] font-semibold text-primary">+ Add</Link>} />
         <p className="mb-2 flex items-start gap-1.5 text-[13px] text-muted-foreground">
           <Lock className="mt-0.5 size-3.5 shrink-0" /> Only you see these. When someone nearby needs one, we ping you, and they never see who.
         </p>

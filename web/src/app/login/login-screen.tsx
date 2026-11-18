@@ -67,7 +67,7 @@ export function LoginScreen() {
 
       <p className="mt-4 text-center text-[15px] text-muted-foreground">
         New here?{" "}
-        <Link href={`/signup${next !== "/home" ? `?next=${encodeURIComponent(next)}` : ""}`} className="font-semibold text-primary">
+        <Link href={`/signup${next !== "/home" ? `?next=${encodeURIComponent(next)}` : ""}`} className="inline-flex min-h-11 items-center font-semibold text-primary">
           Make an account
         </Link>
       </p>

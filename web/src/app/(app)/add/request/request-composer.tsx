@@ -156,13 +156,13 @@ export function RequestComposer() {
               We understood {parse.isFetching && <Loader2 className="size-3.5 animate-spin" />}
             </p>
             {eff && (
-              <button type="button" onClick={() => setEditing((v) => !v)} className="flex h-9 items-center gap-1 rounded-full px-3 text-[13px] font-semibold text-primary active:bg-muted">
+              <button type="button" onClick={() => setEditing((v) => !v)} className="-my-1 flex h-11 items-center gap-1 rounded-full px-3 text-[13px] font-semibold text-primary active:bg-muted">
                 <Pencil className="size-3.5" /> {editing ? "Done" : "Edit"}
               </button>
             )}
           </div>
           {eff && (
-            <button type="button" onClick={() => setEditing(true)} className="flex flex-wrap gap-1.5 text-left">
+            <button type="button" onClick={() => setEditing(true)} aria-label="Edit what we understood" className="flex min-h-11 flex-wrap items-center gap-1.5 text-left">
               <InfoChip>{eff.item_name ? eff.item_name : "Something"}</InfoChip>
               {eff.category && <InfoChip>{categoryInfo(eff.category).emoji} {categoryInfo(eff.category).label}</InfoChip>}
               {eff.needed_from && <InfoChip>📅 {shortDate(eff.needed_from)}</InfoChip>}

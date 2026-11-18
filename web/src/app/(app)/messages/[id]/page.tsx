@@ -127,7 +127,7 @@ export default function ChatPage() {
         <div className="flex items-center gap-2">
           <Link href="/messages" aria-label="Back to messages" className="-ml-2 flex size-11 items-center justify-center rounded-full active:bg-muted"><ArrowLeft className="size-5" /></Link>
           {other ? (
-            <Link href={`/u/${other.id}`} className="flex min-w-0 items-center gap-2">
+            <Link href={`/u/${other.id}`} className="flex min-h-11 min-w-0 items-center gap-2">
               <UserAvatar user={other} className="size-8" />
               <span className="min-w-0">
                 <span className="block truncate font-semibold">{other.name}</span>
