@@ -35,7 +35,13 @@ from sqlalchemy.orm import Session
 
 from app import schemas
 from app.core.config import settings
-from app.discovery.countries import country_for, local_currency, place_country
+from app.discovery.countries import (
+    country_for,
+    local_currency,
+    parse_coordinates,
+    place_country,
+    us_zip_point,
+)
 from app.discovery.query_parser import parse_query
 from app.models import AICache, Event
 from app.services.viewer import ViewerContext
@@ -123,7 +129,7 @@ def search_words(q: str) -> tuple[str, str | None]:
 @dataclass(frozen=True)
 class Near:
     label: str  # shown to the person
-    source: str  # place | device | campus ("dorm" is no longer returned)
+    source: str  # place | device | pin | campus ("dorm" is no longer returned)
     lat: float | None
     lng: float | None
     place: str | None  # typed town/ZIP, used in the query text when there are no coordinates
@@ -151,10 +157,16 @@ def resolve_near(viewer: ViewerContext, body: schemas.CommercialSearchBody) -> N
     """
     place = clean_place(body.place)
     if place:
+        if coords := parse_coordinates(place):  # typed coordinates count as a pin
+            return _geo(f"{coords[0]:.2f}, {coords[1]:.2f}", "pin", *coords)
+        if zip_point := us_zip_point(place):  # a US ZIP becomes a real location
+            return _geo(place, "place", *zip_point)
         return Near(
             place, "place", None, None, place, f"place:{place.lower()}", place_country(place)
         )
     if body.lat is not None and body.lng is not None:
+        if body.pinned:  # a spot the person put on the map
+            return _geo("the pin", "pin", body.lat, body.lng)
         return _geo("your location", "device", body.lat, body.lng)
     return _geo(
         settings.commercial_default_label,

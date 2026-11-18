@@ -70,6 +70,7 @@ class CommercialSearchBody(Schema):
     place: str | None = Field(default=None, max_length=80)  # typed town or ZIP, e.g. "94040"
     lat: float | None = Field(default=None, ge=-90, le=90)  # opt-in browser location;
     lng: float | None = Field(default=None, ge=-180, le=180)  # rounded to ~1 km, never stored
+    pinned: bool = False  # True: lat/lng is a spot the person put on the map, not the device
 
 
 class CommercialOffer(Schema):
@@ -89,7 +90,7 @@ class CommercialSearchResponse(Schema):
     query: str  # the words that were searched (filler and personal details removed)
     near: str  # e.g. "Wilbur Hall", "your location", "Mountain View, CA"
     # "dorm" is kept in the type so nothing breaks, but it is no longer returned (plans/LOCATION.md)
-    near_source: Literal["place", "device", "dorm", "campus"]
+    near_source: Literal["place", "device", "pin", "dorm", "campus"]  # "dorm" is no longer used
     offers: list[CommercialOffer]  # cheapest first; no price → last
     provider: str  # "exa" | "mock" (sample data)
     cached: bool

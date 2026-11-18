@@ -442,9 +442,10 @@ export type FeedEntry =
 // ---------- buy or rent nearby (C6) ----------
 export interface CommercialSearchBody {
   q: string;                     // the campus search text
-  place?: string | null;         // typed town or ZIP, e.g. "94040"
-  lat?: number | null;           // the phone's location when allowed; rounded to ~1 km, never stored
+  place?: string | null;         // typed town, ZIP, or coordinates, e.g. "94040", "Kyoto, Japan", "1.30, 103.85"
+  lat?: number | null;           // the phone's location when allowed, or a map pin; rounded to ~1 km, never stored
   lng?: number | null;
+  pinned?: boolean;              // true: lat/lng is a spot the person put on the map, not the phone's location
 }
 export interface CommercialOffer {
   title: string; price: number | null; currency: string | null;
@@ -457,7 +458,7 @@ export interface CommercialOffer {
 export interface CommercialSearchResponse {
   query: string;                 // the words that were searched
   near: string;                  // e.g. "Stanford campus", "your location", "Mountain View, CA"
-  near_source: "place" | "device" | "dorm" | "campus";  // "dorm" is no longer returned (plans/LOCATION.md)
+  near_source: "place" | "device" | "pin" | "dorm" | "campus";  // "dorm" is no longer returned (plans/LOCATION.md)
   offers: CommercialOffer[];     // cheapest first; no price → last
   provider: string;              // "exa" | "mock" (sample data)
   cached: boolean; fetched_at: ISODateTime;

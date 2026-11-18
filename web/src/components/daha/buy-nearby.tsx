@@ -10,6 +10,7 @@ import {
   canUseDeviceLocation, forgetLocationFailure, locationPermission, NoDeviceLocation, roughDeviceLocation, useNearChoice,
   type NearChoice,
 } from "@/lib/near";
+import { MapPickerSheet } from "@/components/daha/map-picker";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,8 @@ export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
   const [choice, choose] = useNearChoice();
   const [picking, setPicking] = useState(false);
   const [howTo, setHowTo] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapKey, setMapKey] = useState(0); // a fresh map (starting at the current pin) each time it opens
   // Counts taps on "Use my location" / "Try again": each one may show the browser's prompt.
   const [asked, setAsked] = useState(0);
   const permissionTracked = useRef(false);
@@ -51,6 +54,7 @@ export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
       const body: CommercialSearchBody = { q };
       let location: LocationUse = "none";
       if (choice.mode === "place") body.place = choice.place;
+      if (choice.mode === "pin") Object.assign(body, { lat: choice.lat, lng: choice.lng, pinned: true });
       if (choice.mode === "auto") {
         const state = await locationPermission();
         if (!permissionTracked.current) {
@@ -110,7 +114,13 @@ export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
   // "Near you" · "Near Stanford campus" · "Near <place>". Before the answer, `auto` isn't known yet.
   const nearLabel = data
     ? data.near_source === "device" ? "you" : data.near
-    : choice.mode === "place" ? choice.place : choice.mode === "campus" ? "Stanford campus" : null;
+    : choice.mode === "place" ? choice.place : choice.mode === "campus" ? "Stanford campus"
+    : choice.mode === "pin" ? "the pin" : null;
+  const openMap = () => {
+    setPicking(false);
+    setMapKey((k) => k + 1);
+    setMapOpen(true);
+  };
   const askForLocation = () => {
     forgetLocationFailure();
     if (choice.mode !== "auto") choose({ mode: "auto" });
@@ -176,13 +186,22 @@ export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
           <p className="text-[13px] text-muted-foreground">
             Couldn&apos;t use your location, so these are near {data.near}.
           </p>
-          <button
-            type="button"
-            onClick={() => setHowTo(true)}
-            className="flex h-11 items-center gap-1.5 rounded-full bg-card px-3.5 text-[14px] font-semibold ring-1 ring-border active:bg-muted"
-          >
-            <LocateFixed className="size-4" /> Turn on location
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setHowTo(true)}
+              className="flex h-11 items-center gap-1.5 rounded-full bg-card px-3.5 text-[14px] font-semibold ring-1 ring-border active:bg-muted"
+            >
+              <LocateFixed className="size-4" /> Turn on location
+            </button>
+            <button
+              type="button"
+              onClick={openMap}
+              className="flex h-11 items-center gap-1.5 rounded-full bg-card px-3.5 text-[14px] font-semibold ring-1 ring-border active:bg-muted"
+            >
+              <MapPin className="size-4" /> Pick a spot on the map
+            </button>
+          </div>
         </div>
       )}
 
@@ -234,6 +253,14 @@ export function BuyNearby({ q, auto }: { q: string; auto: boolean }) {
         onChoose={(next) => { choose(next); setPicking(false); }}
         onUseLocation={() => { setPicking(false); askForLocation(); }}
         onHowTo={() => { setPicking(false); setHowTo(true); }}
+        onPickMap={openMap}
+      />
+      <MapPickerSheet
+        key={mapKey}
+        open={mapOpen}
+        onOpenChange={setMapOpen}
+        start={choice.mode === "pin" ? { lat: choice.lat, lng: choice.lng } : null}
+        onUse={(spot) => { choose({ mode: "pin", ...spot }); setMapOpen(false); }}
       />
       <LocationHowTo open={howTo} onOpenChange={setHowTo} onRetry={() => { setHowTo(false); askForLocation(); }} />
     </section>
@@ -287,11 +314,11 @@ function OfferRow({ offer, onOpen }: { offer: CommercialOffer; onOpen: () => voi
   );
 }
 
-function NearSheet({ open, onOpenChange, choice, blocked, onChoose, onUseLocation, onHowTo }: {
+function NearSheet({ open, onOpenChange, choice, blocked, onChoose, onUseLocation, onHowTo, onPickMap }: {
   open: boolean; onOpenChange: (open: boolean) => void; choice: NearChoice;
   /** Location was refused, is off, or timed out: "Use my location" opens the how-to instead of asking again. */
   blocked: boolean;
-  onChoose: (choice: NearChoice) => void; onUseLocation: () => void; onHowTo: () => void;
+  onChoose: (choice: NearChoice) => void; onUseLocation: () => void; onHowTo: () => void; onPickMap: () => void;
 }) {
   const [draft, setDraft] = useState(choice.mode === "place" ? choice.place : "");
   const deviceOk = canUseDeviceLocation(); // false on plain http: no location option there
@@ -310,10 +337,19 @@ function NearSheet({ open, onOpenChange, choice, blocked, onChoose, onUseLocatio
               title="Use my location (recommended)"
               body={blocked
                 ? "Location is off or blocked for DAHA. Tap to see how to turn it on."
-                : "A rough location (about 1 km), only for store search, never saved. Without it we use Stanford campus."}
+                : "A rough location (about 1 km), only for store search, never saved. Without it, pick a spot below."}
               onClick={blocked ? onHowTo : onUseLocation}
             />
           )}
+          <NearOption
+            active={choice.mode === "pin"}
+            icon={<MapPin className="size-5" />}
+            title="Pick a spot on the map"
+            body={choice.mode === "pin"
+              ? `Pin at ${choice.lat.toFixed(2)}, ${choice.lng.toFixed(2)}. Tap to move it.`
+              : "Drag a pin to where you are. No location permission needed."}
+            onClick={onPickMap}
+          />
           <NearOption
             active={choice.mode === "campus" || (choice.mode === "auto" && (blocked || !deviceOk))}
             icon={<GraduationCap className="size-5" />}
@@ -337,7 +373,7 @@ function NearSheet({ open, onOpenChange, choice, blocked, onChoose, onUseLocatio
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={60}
                 autoComplete="address-level2"
-                placeholder="Town or ZIP, e.g. Mountain View"
+                placeholder="Town, ZIP, or coordinates"
                 className="h-12 min-w-0 flex-1 rounded-full bg-card px-4 text-base ring-1 ring-border outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               <button
@@ -348,6 +384,7 @@ function NearSheet({ open, onOpenChange, choice, blocked, onChoose, onUseLocatio
                 Use
               </button>
             </div>
+            <p className="text-[13px] text-muted-foreground">For example 94305, Kyoto, Japan, or 1.30, 103.85</p>
           </form>
         </div>
       </SheetContent>
@@ -386,7 +423,9 @@ function LocationHowTo({ open, onOpenChange, onRetry }: {
       <SheetContent side="bottom" className="mx-auto max-h-[85dvh] max-w-md overflow-y-auto rounded-t-3xl pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <SheetHeader>
           <SheetTitle className="text-[17px]">Turn on location</SheetTitle>
-          <SheetDescription>{WHY_LOCATION} Until then we show stores near Stanford campus.</SheetDescription>
+          <SheetDescription>
+            {WHY_LOCATION} Until then we show stores near Stanford campus, or you can pick a spot on the map.
+          </SheetDescription>
         </SheetHeader>
         <div className="space-y-4 px-4 text-[14px]">
           <div className="space-y-1.5">

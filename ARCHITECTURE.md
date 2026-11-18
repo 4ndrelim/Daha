@@ -226,4 +226,4 @@ Hosted:   one small Ubuntu VM — docker compose (db, api, web) + Caddy (HTTPS) 
 - AI detections are drafts until the user explicitly publishes them. New listings default to **dorm** visibility.
 - A resource the viewer isn't allowed to see returns **404**, never 403, so its existence isn't revealed.
 - Photo AI spend has hard limits: per-user daily scan limit and a total budget (`AI_BUDGET_USD`).
-- "Buy or rent nearby" (C6) sends Exa only the cleaned search words (no emails, phone numbers or links) and a ~1 km area: the dorm, an opted-in browser location, or a typed town. No names or ids; coordinates are never stored. It has its own daily cap and monthly budget (`COMMERCIAL_*`).
+- "Buy or rent nearby" (C6) sends Exa only the cleaned search words (no emails, phone numbers or links) and a ~1 km area: an opted-in phone location, a spot picked on the map, a typed ZIP, town, or coordinates, or Stanford campus, plus that area's country (worked out offline). No names or ids; coordinates are never stored. It has its own daily cap and monthly budget (`COMMERCIAL_*`).

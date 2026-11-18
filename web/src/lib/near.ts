@@ -1,23 +1,41 @@
 "use client";
 
 // Where "Buy or rent nearby" looks (plans/LOCATION.md): the phone's location when DAHA is allowed
-// to use it (rounded to ~1 km before it leaves the browser), else Stanford campus, or a town/ZIP
-// the person types. Only the mode is remembered in this browser; coordinates are never saved.
+// to use it (rounded to ~1 km before it leaves the browser), else Stanford campus, or a spot the
+// person picks themselves: a pin on the map, or a town, ZIP or coordinates they type. The phone's
+// own location is never saved; a picked pin is remembered in this browser, rounded to ~1 km, like
+// a typed place.
 
 import { useCallback, useState } from "react";
 
-/** `auto` = use my location if allowed, else campus. */
-export type NearChoice = { mode: "auto" } | { mode: "campus" } | { mode: "place"; place: string };
+/** `auto` = use my location if allowed, else campus. `pin` = a spot picked on the map. */
+export type NearChoice =
+  | { mode: "auto" }
+  | { mode: "campus" }
+  | { mode: "place"; place: string }
+  | { mode: "pin"; lat: number; lng: number };
 
 export type LocationPermission = "granted" | "prompt" | "denied" | "unavailable";
 
 const KEY = "daha_buy_near";
+
+/** Two decimals, about 1 km: as precise as any location DAHA keeps or sends. */
+export const roughly = (n: number) => Math.round(n * 100) / 100;
+
+/** Where the map opens when there's no pin yet: Stanford campus (the server's COMMERCIAL_DEFAULT_*). */
+export const CAMPUS = { lat: 37.4275, lng: -122.1697 };
 const WAIT_MS = 5_000; // never keep someone waiting longer than this for a location
 
 function readChoice(): NearChoice {
   try {
-    const saved = JSON.parse(window.localStorage.getItem(KEY) ?? "null") as { mode?: string; place?: unknown } | null;
+    const saved = JSON.parse(window.localStorage.getItem(KEY) ?? "null") as {
+      mode?: string; place?: unknown; lat?: unknown; lng?: unknown;
+    } | null;
     if (saved?.mode === "campus") return { mode: "campus" };
+    if (saved?.mode === "pin" && typeof saved.lat === "number" && typeof saved.lng === "number"
+      && Math.abs(saved.lat) <= 90 && Math.abs(saved.lng) <= 180) {
+      return { mode: "pin", lat: roughly(saved.lat), lng: roughly(saved.lng) };
+    }
     if (saved?.mode === "place" && typeof saved.place === "string" && saved.place.trim()) {
       return { mode: "place", place: saved.place.trim().slice(0, 60) };
     }
@@ -86,7 +104,7 @@ export function roughDeviceLocation(): Promise<{ lat: number; lng: number }> {
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         failedThisVisit = false;
-        resolve({ lat: Math.round(coords.latitude * 100) / 100, lng: Math.round(coords.longitude * 100) / 100 });
+        resolve({ lat: roughly(coords.latitude), lng: roughly(coords.longitude) });
       },
       (err) => {
         failedThisVisit = true;

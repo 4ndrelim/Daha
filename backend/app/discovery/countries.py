@@ -1,10 +1,12 @@
 """Which country a store search is in, worked out on our server (C6, plans/LOCATION.md).
 
 - From coordinates: the country of the nearest town with 15,000+ people (GeoNames data in
-  data/country_points.csv.gz, CC BY 4.0, rebuilt by scripts/build_country_points.py). It runs
+  data/country_points.csv.gz, CC BY 4.0, rebuilt by scripts/build_location_data.py). It runs
   offline, so a location never goes anywhere extra for this.
 - From a typed place: US ZIP codes and states first (DAHA is for US colleges first), then common
   country names. Anything else stays unknown, and the place's words do the work in the query.
+- Typed coordinates ("1.30, 103.85") and US ZIPs (data/us_zip_points.csv.gz, same source) become
+  a real location, so people who keep location services off can still say where they are.
 - The local currency, so prices rank and show the way people there read them.
 """
 
@@ -16,6 +18,7 @@ from pathlib import Path
 import numpy as np
 
 DATA = Path(__file__).parent / "data" / "country_points.csv.gz"
+ZIPS = Path(__file__).parent / "data" / "us_zip_points.csv.gz"
 EARTH_KM = 6371.0
 MAX_KM = 300.0  # farther than this from any town counts as "at sea": no country
 
@@ -55,6 +58,8 @@ CURRENCY_BY_COUNTRY = {
 }
 # fmt: on
 _US_ZIP = re.compile(r"^\d{5}(?:-\d{4})?$")
+_TRAILING_ZIP = re.compile(r"(\d{5})(?:-\d{4})?$")
+_COORDS = re.compile(r"^\s*(-?\d{1,2}(?:\.\d+)?)\s*[,\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*$")
 
 
 @lru_cache(maxsize=1)
@@ -99,6 +104,41 @@ def place_country(place: str) -> str | None:
         return "US"  # "Austin TX", without a comma ("in" is a word, not Indiana)
     if text in COUNTRY_NAMES:
         return COUNTRY_NAMES[text]
+    return None
+
+
+def parse_coordinates(text: str) -> tuple[float, float] | None:
+    """ "1.30, 103.85" or "37.43 -122.17" → (lat, lng); anything else → None."""
+    m = _COORDS.match(text)
+    if not m:
+        return None
+    lat, lng = float(m.group(1)), float(m.group(2))
+    return (lat, lng) if -90 <= lat <= 90 and -180 <= lng <= 180 else None
+
+
+@lru_cache(maxsize=1)
+def _zips() -> dict[str, tuple[float, float]]:
+    zips: dict[str, tuple[float, float]] = {}
+    with gzip.open(ZIPS, "rt", encoding="utf-8") as f:
+        for line in f:
+            if not line.startswith("#"):
+                code, lat, lng = line.rstrip("\n").split(",")
+                zips[code] = (float(lat), float(lng))
+    return zips
+
+
+def us_zip_point(place: str) -> tuple[float, float] | None:
+    """Where a typed US ZIP is: "94305", "94305-1234", or "Stanford, CA 94305".
+
+    A ZIP after other words only counts when the words say US (a state, "USA"), so a French
+    "Paris 75001" isn't taken for Texas's 75001.
+    """
+    text = place.strip()
+    if _US_ZIP.match(text):
+        return _zips().get(text[:5])
+    m = _TRAILING_ZIP.search(text)
+    if m and place_country(text[: m.start()].strip(" ,")) == "US":
+        return _zips().get(m.group(1))
     return None
 
 
