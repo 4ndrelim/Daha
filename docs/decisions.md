@@ -53,3 +53,6 @@
 | 2026-11-17 | B | Accepted `docs/proposals/B-pwa.md` Part 1 (installable app, B7); Part 2 (push) rejected for the hackathon | Human's decision; push is out of MVP scope (`PLAN.md` §2) |
 | 2026-11-17 | B | App icons are committed PNGs in `web/public/icons/` (rendered once from HTML), not Next's generated `icon.tsx` routes | Generated icon URLs carry a hash, which the manifest can't reference reliably |
 | 2026-11-17 | B | Two extra event types: `install_prompt_shown`, `app_installed` | `POST /events` takes any `type` string; additive to the §7.6 list |
+| 2026-11-17 | B | Web is fully live: `NEXT_PUBLIC_MOCK=none` (local + `web/.env.example`). The `search/feed/matches/ai` stand-ins stay in `web/src/lib/api/mock/` for working without a backend | C1–C3 are on `main`; full demo script (`PLAN.md` §10, steps 1–9) passed headless on fresh seed data |
+| 2026-11-17 | B | Demo note: in step 4 Jordan must pick **Who sees it → Campus**. The composer defaults to My dorm (plan §2), and matching only notifies owners who can see the request, so Wilbur's Maya isn't pinged for a FloMo-only request | Privacy working as designed; avoids a confusing live demo |
+| 2026-11-17 | B | Top-bar dorm chip shows the nickname when a dorm has one ("FloMo") | "Florence Moore Hall (FloMo)" was cut off mid-word at phone width |

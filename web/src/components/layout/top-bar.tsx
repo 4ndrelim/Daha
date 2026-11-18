@@ -5,6 +5,7 @@ import { Bell, MessageCircle } from "lucide-react";
 import { useMe } from "@/lib/queries/me";
 import { useUnread } from "@/lib/queries/unread";
 import { cn } from "@/lib/utils";
+import { shortCommunityName } from "@/lib/format";
 
 function CountBadge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -30,7 +31,7 @@ export function TopBar() {
             href={`/communities/${me.dorm.slug}`}
             className="ml-1 flex h-10 min-w-0 items-center truncate rounded-full bg-primary-soft px-3 text-[13px] font-medium text-accent-foreground"
           >
-            {me.dorm.emoji ?? "🏠"} {me.dorm.name}
+            {me.dorm.emoji ?? "🏠"} {shortCommunityName(me.dorm.name)}
           </Link>
         )}
         <div className="ml-auto flex items-center">
