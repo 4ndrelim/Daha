@@ -29,8 +29,18 @@ if [ "$mem_kb" -lt 3800000 ] && [ -z "$(swapon --noheadings 2>/dev/null)" ]; the
 fi
 
 # 2. Docker (the official install script; includes Docker Compose).
+wait_for_apt() { # a fresh VM (or someone's own `apt install`) may be holding the package lock
+  local waited=0
+  while sudo fuser /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock >/dev/null 2>&1; do
+    [ "$waited" -eq 0 ] && echo "   waiting for another package install on the VM to finish…"
+    [ "$waited" -ge 600 ] && { echo "Another package install has been running for 10 minutes; try again later."; exit 1; }
+    sleep 5
+    waited=$((waited + 5))
+  done
+}
 if ! command -v docker >/dev/null 2>&1; then
   log "Installing Docker (about 2 minutes)"
+  wait_for_apt
   curl -fsSL https://get.docker.com | sudo sh
   sudo usermod -aG docker "$USER"   # lets you run docker without sudo after your next login
 fi
