@@ -35,6 +35,7 @@ Rules:
 | `plans/INTEGRATION.md` | Phase 2 (integration, driven by C) and Phase 3 (demo, feedback, deploy) |
 | `plans/EVALS.md` | Phase 3 evals (C) |
 | `plans/ROADMAP.md` | Phase 4: future ML, RL, and agent work |
+| `docs/research/harnessrouter-workflows.md` | Research: more HarnessRouter workflows for DAHA (ranked, with costs and a phased plan) |
 
 ## 2. MVP scope
 **P0: must work in the demo**
