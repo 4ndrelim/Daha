@@ -87,3 +87,25 @@ def test_offer_with_private_item_reveals_owner_only_through_offer(client, db):
     detail = client.get(f"/api/requests/{req['id']}", headers=w.flomo).json()
     assert [o["owner"]["id"] for o in detail["offers"]] == [w.wilbur2_me["id"]]
     assert matches(client, w.flomo, req["id"])["items"] == []  # still not in the match list
+
+
+def test_pinged_count_survives_item_and_request_edits(client, db):
+    w = world(client, db)
+    pump = item(client, w.wilbur2, "Bike pump", "private", category="sports")
+    req = request(client, w.flomo, PUMP_Q, title="Bike pump", item_name="bike pump")
+    assert matches(client, w.flomo, req["id"])["private_pinged_count"] == 1
+    client.patch(f"/api/items/{pump['id']}", headers=w.wilbur2, json={"name": "Floor bike pump"})
+    client.patch(f"/api/requests/{req['id']}", headers=w.flomo, json={"title": "Bike pump?"})
+    assert matches(client, w.flomo, req["id"])["private_pinged_count"] == 1
+    assert len(notes(db, w.wilbur2_me["id"], "private_match")) == 1
+
+
+def test_private_item_added_later_shows_only_to_its_owner(client, db):
+    w = world(client, db)
+    req = request(client, w.flomo, PUMP_Q, title="Bike pump", item_name="bike pump")
+    item(client, w.wilbur2, "Bike pump", "private", category="sports")
+    assert [
+        f["request"]["id"] for f in client.get("/api/me/fulfillable", headers=w.wilbur2).json()
+    ] == [req["id"]]
+    m = matches(client, w.flomo, req["id"])
+    assert m["items"] == [] and m["private_pinged_count"] == 0  # stored, but no ping was sent

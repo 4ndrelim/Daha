@@ -11,10 +11,11 @@ pings only new people.
 """
 
 import logging
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import and_, case, delete, exists, func, literal, or_, select
+from sqlalchemy import case, delete, exists, func, literal, literal_column, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -25,6 +26,7 @@ from app.discovery.scoring import loc_for, locations, proximity, reason
 from app.discovery.texts import request_text
 from app.models import (
     Item,
+    ItemAudience,
     ItemRequest,
     Membership,
     Notification,
@@ -102,6 +104,20 @@ def score_items(
     return out
 
 
+def _diverse(scored: list[Scored]) -> list[Scored]:
+    """At most MATCH_PER_OWNER rows per owner, MATCH_STORE_N in total (already score-sorted)."""
+    per_owner: dict[int, int] = {}
+    out = []
+    for s in scored:
+        n = per_owner.get(s.item.owner_id, 0)
+        if n < cfg.MATCH_PER_OWNER:
+            per_owner[s.item.owner_id] = n + 1
+            out.append(s)
+        if len(out) >= cfg.MATCH_STORE_N:
+            break
+    return out
+
+
 def _already_notified(db: Session, request_id: int, types: tuple[str, ...]) -> set[int]:
     return set(
         db.scalars(
@@ -127,6 +143,14 @@ def _recent_count(db: Session, user_id: int, ntype: str) -> int:
         )
         or 0
     )
+
+
+def short_dorm(name: str | None) -> str:
+    """'Florence Moore Hall (FloMo)' → 'FloMo'; None → 'your area'."""
+    if not name:
+        return "your area"
+    m = re.search(r"\(([^)]+)\)", name)
+    return m.group(1) if m else name
 
 
 def _a(thing: str) -> str:
@@ -165,12 +189,14 @@ def _match(db: Session, req: ItemRequest) -> None:
         Item.owner_id != req.requester_id,
         _owner_can_view(aud_ids),
     ]
-    public = score_items(
-        db, rv, req, [*base, Item.visibility != "private", item_visible_clause(rv)]
-    )[: cfg.MATCH_TOP_N]
-    private = score_items(
-        db, rv, req, [*base, Item.visibility == "private", Item.pings_enabled.is_(True)]
-    )[: cfg.MATCH_TOP_N]
+    public = _diverse(
+        score_items(db, rv, req, [*base, Item.visibility != "private", item_visible_clause(rv)])
+    )
+    private = _diverse(
+        score_items(
+            db, rv, req, [*base, Item.visibility == "private", Item.pings_enabled.is_(True)]
+        )
+    )
 
     # Replace this request's match rows (notification history lives in `notifications`).
     db.execute(delete(RequestMatch).where(RequestMatch.request_id == req.id))
@@ -188,7 +214,7 @@ def _match(db: Session, req: ItemRequest) -> None:
 
     if req.seed_key is not None:
         return  # seeded history gets matches but no notifications (keeps demo inboxes clean)
-    dorm_name = rv.dorm_name or "your area"
+    dorm_name = short_dorm(rv.dorm_name)
     thing = (req.item_name or req.title).strip().rstrip("?.!").lower()[:60] or "something"
     notified = _already_notified(db, req.id, ("match", "private_match"))
 
@@ -263,82 +289,160 @@ def visible_matches(
             item_visible_clause(viewer),
         )
         .order_by(RequestMatch.score.desc(), Item.id)
+        .limit(cfg.MATCH_TOP_N)
     ).all()
     return [(i, s) for i, s in rows]
 
 
 def private_pinged_count(db: Session, request_id: int) -> int:
+    """How many people were quietly pinged for this request (from the notifications sent)."""
     return (
         db.scalar(
-            select(func.count())
-            .select_from(RequestMatch)
-            .where(
-                RequestMatch.request_id == request_id,
-                RequestMatch.anonymous.is_(True),
-                RequestMatch.notified.is_(True),
+            select(func.count(func.distinct(Notification.user_id))).where(
+                Notification.type == "private_match",
+                Notification.data["request_id"].astext == str(request_id),
             )
         )
         or 0
     )
 
 
+def reverse_match_item(item_id: int) -> None:
+    """Score one saved item against open requests and upsert request_matches (no notifications).
+
+    Keeps "You could help" fresh for items added after a request was posted, without scoring
+    every item × request pair on each home-feed load.
+    """
+    from sqlalchemy.dialects.postgresql import insert
+
+    from app.services.visibility import request_not_expired_clause
+
+    with SessionLocal() as db:
+        item = db.get(Item, item_id)
+        if item is None:
+            return
+        # Keep rows that already produced a notification (history); refresh the rest.
+        db.execute(
+            delete(RequestMatch).where(
+                RequestMatch.item_id == item.id, RequestMatch.notified.is_(False)
+            )
+        )
+        live = (
+            not item.archived
+            and item.status in MATCH_STATUSES
+            and (item.visibility != "private" or item.pings_enabled)
+        )
+        if not live:
+            db.commit()
+            return
+        owner_can_view = exists().where(
+            RequestAudience.request_id == ItemRequest.id,
+            RequestAudience.community_id.in_(
+                select(Membership.community_id).where(Membership.user_id == item.owner_id)
+            ),
+        )
+        conds = [
+            ItemRequest.status == "open",
+            request_not_expired_clause(),
+            ItemRequest.requester_id != item.owner_id,
+            owner_can_view,
+        ]
+        if item.visibility != "private":
+            item_aud = select(ItemAudience.community_id).where(ItemAudience.item_id == item.id)
+            conds.append(
+                exists().where(
+                    Membership.user_id == ItemRequest.requester_id,
+                    Membership.community_id.in_(item_aud),
+                )
+            )
+        req_name = func.coalesce(ItemRequest.item_name, ItemRequest.title)
+        tsq = func.plainto_tsquery("english", req_name)
+        ws = func.word_similarity(req_name, item.name)
+        item_tsv = func.setweight(
+            func.to_tsvector("english", literal(item.name)), literal_column("'A'")
+        ).op("||")(
+            func.setweight(
+                func.to_tsvector("english", literal(item.description or "")), literal_column("'B'")
+            )
+        )
+        kw = func.greatest(
+            case((ws >= 0.6, ws), else_=0.0),
+            func.least(func.ts_rank_cd(item_tsv, tsq) * 5.0, 1.0),
+        )
+        if item.embedding is not None:
+            sem = 1 - ItemRequest.embedding.cosine_distance(item.embedding)
+            q = (
+                select(ItemRequest, sem, kw)
+                .where(*conds, ItemRequest.embedding.is_not(None))
+                .order_by(ItemRequest.embedding.cosine_distance(item.embedding))
+            )
+        else:
+            q = select(ItemRequest, literal(0.0), kw).where(*conds)
+        rows = db.execute(q.limit(100)).all()
+        dorms, places = locations(db, {item.owner_id}, {item.pickup_place_id})
+        viewers: dict[int, ViewerContext] = {}
+        values = []
+        for req, s, k in rows:
+            if req.requester_id not in viewers:
+                viewers[req.requester_id] = build_viewer(db, db.get(User, req.requester_id))
+            rviewer = viewers[req.requester_id]
+            loc = loc_for(rviewer, item.owner_id, item.pickup_place_id, dorms, places)
+            score = pair_score(float(s or 0), float(k or 0), proximity(rviewer, loc))
+            if score is not None:
+                values.append(
+                    {
+                        "request_id": req.id,
+                        "item_id": item.id,
+                        "score": score,
+                        "reason": reason(rviewer, loc, item.status),
+                        "anonymous": item.visibility == "private",
+                    }
+                )
+        if values:
+            stmt = insert(RequestMatch).values(values)
+            db.execute(
+                stmt.on_conflict_do_update(
+                    index_elements=["request_id", "item_id"],
+                    set_={
+                        "score": stmt.excluded.score,
+                        "reason": stmt.excluded.reason,
+                        "anonymous": stmt.excluded.anonymous,
+                    },
+                )
+            )
+        db.commit()
+
+
 def fulfillable(db: Session, viewer: ViewerContext, limit: int = cfg.FULFILLABLE_MAX):
-    """Open requests by others (last 21 days) that my available items (public or private) match."""
+    """Open requests by others (last 21 days) that my available items (public or private) match.
+
+    Reads request_matches, which is written both when a request is posted (match_request) and
+    when an item is saved (reverse_match_item) — so this is an indexed lookup, not a big join.
+    """
     from app.services.visibility import request_not_expired_clause, request_visible_clause
 
     since = datetime.now(UTC) - timedelta(days=cfg.FULFILLABLE_DAYS)
-    my_items = db.scalars(
-        select(Item).where(
-            Item.owner_id == viewer.user_id, Item.archived.is_(False), Item.status == "available"
-        )
-    ).all()
-    if not my_items:
-        return []
-    reqs = db.scalars(
-        select(ItemRequest)
+    rows = db.execute(
+        select(ItemRequest, Item, RequestMatch.score)
+        .join(RequestMatch, RequestMatch.request_id == ItemRequest.id)
+        .join(Item, Item.id == RequestMatch.item_id)
         .where(
+            Item.owner_id == viewer.user_id,
+            Item.archived.is_(False),
+            Item.status == "available",
             request_visible_clause(viewer),
             ItemRequest.requester_id != viewer.user_id,
             ItemRequest.status == "open",
             request_not_expired_clause(),
             ItemRequest.created_at >= since,
         )
-        .order_by(ItemRequest.created_at.desc())
-        .limit(300)
+        .order_by(RequestMatch.score.desc())
+        .limit(500)
     ).all()
-    if not reqs:
-        return []
-    req_ids = [r.id for r in reqs]
-    pairs = db.execute(
-        select(
-            ItemRequest.id,
-            Item.id,
-            func.coalesce(1 - Item.embedding.cosine_distance(ItemRequest.embedding), 0.0),
-            _keyword_expr(func.coalesce(ItemRequest.item_name, ItemRequest.title)),
-        )
-        .select_from(ItemRequest)
-        .join(
-            Item,
-            and_(
-                Item.owner_id == viewer.user_id,
-                Item.archived.is_(False),
-                Item.status == "available",
-            ),
-        )
-        .where(ItemRequest.id.in_(req_ids))
-    ).all()
-    by_id = {r.id: r for r in reqs}
-    items_by_id = {i.id: i for i in my_items}
-    dorms, places = locations(db, {r.requester_id for r in reqs}, {r.pickup_place_id for r in reqs})
     per_req: dict[int, list[tuple[Item, float]]] = {}
-    best: dict[int, float] = {}
-    for rid, iid, sem, kw in pairs:
-        r = by_id[rid]
-        loc = loc_for(viewer, r.requester_id, r.pickup_place_id, dorms, places)
-        score = pair_score(float(sem or 0), float(kw or 0), proximity(viewer, loc))
-        if score is None:
-            continue
-        per_req.setdefault(rid, []).append((items_by_id[iid], score))
-        best[rid] = max(best.get(rid, 0), score)
-    ranked = sorted(best, key=lambda rid: (-best[rid], -rid))[:limit]
-    return [(by_id[rid], sorted(per_req[rid], key=lambda t: -t[1])) for rid in ranked]
+    by_id: dict[int, ItemRequest] = {}
+    for req, item, score in rows:
+        by_id[req.id] = req
+        per_req.setdefault(req.id, []).append((item, score))
+    ranked = sorted(per_req, key=lambda rid: (-per_req[rid][0][1], -rid))[:limit]
+    return [(by_id[rid], per_req[rid][:5]) for rid in ranked]

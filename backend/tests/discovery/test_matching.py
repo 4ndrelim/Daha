@@ -195,3 +195,18 @@ def test_community_feed_visibility(client, db):
     assert client.get(f"/api/communities/{secret['id']}/feed", headers=w.flomo).status_code == 404
     assert client.get(f"/api/communities/{secret['id']}/feed", headers=w.wilbur).status_code == 200
     assert client.get("/api/communities/99999/feed", headers=w.wilbur).status_code == 404
+
+
+def test_item_added_after_request_shows_in_fulfillable(client, db):
+    """Reverse matching: an item saved after the request still surfaces in "You could help"."""
+    w = world(client, db)
+    req = request(client, w.flomo, BINDER_Q, title="Black binder", item_name="black binder")
+    assert client.get("/api/me/fulfillable", headers=w.wilbur).json() == []
+    binder = item(client, w.wilbur, "Black binder", category="academic")
+    body = client.get("/api/me/fulfillable", headers=w.wilbur).json()
+    assert [f["request"]["id"] for f in body] == [req["id"]]
+    # Marking it unavailable takes it out again; it never notifies anyone by itself.
+    r = client.patch(f"/api/items/{binder['id']}", headers=w.wilbur, json={"status": "unavailable"})
+    assert r.status_code == 200
+    assert client.get("/api/me/fulfillable", headers=w.wilbur).json() == []
+    assert notes(db, w.wilbur_me["id"], "match") == []

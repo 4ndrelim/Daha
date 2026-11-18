@@ -119,10 +119,12 @@ def _candidates(db, model, conds, text: str, vec, name_col) -> set[int]:
                 .limit(cfg.CANDIDATES_FTS)
             )
         )
+    # `<%` is word_similarity ≥ pg_trgm.word_similarity_threshold (0.6 = TRGM_MIN) and can use
+    # the trigram GIN index on name, unlike calling word_similarity() on every row.
     ids |= set(
         db.scalars(
             select(model.id)
-            .where(*conds, func.word_similarity(text, name_col) >= cfg.TRGM_MIN)
+            .where(*conds, literal(text).op("<%")(name_col))
             .order_by(func.word_similarity(text, name_col).desc())
             .limit(cfg.CANDIDATES_TRGM)
         )

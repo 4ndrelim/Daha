@@ -24,7 +24,13 @@ def on_item_saved(item_id: int) -> None:
             item.embedding = embed_passages([item_text(item)])[0]
             db.commit()
     except Exception:  # noqa: BLE001
-        log.exception("on_item_saved(%s) failed", item_id)
+        log.exception("on_item_saved(%s): embedding failed", item_id)
+    try:
+        from app.discovery.matching import reverse_match_item
+
+        reverse_match_item(item_id)
+    except Exception:  # noqa: BLE001
+        log.exception("on_item_saved(%s): reverse matching failed", item_id)
 
 
 def on_request_created(request_id: int) -> None:
