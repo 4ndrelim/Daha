@@ -40,6 +40,7 @@ DAHA is a Stanford-wide app for lending, borrowing, giving away, and swapping ev
 - **Backend** (`backend/`): stores everything, enforces privacy rules, runs search and matching.
 - **AI**: photos go to **HarnessRouter**, where our $50 credit lives, and the AI returns a list of items. Search uses a free AI model that runs on our own machine.
 - Everything runs on a laptop first (`localhost`). We put it online later.
+- **Everything in one command:** `make up` runs the database, backend, and web app in Docker (open http://localhost:3000); `make down` stops it. Every pull request is checked automatically (GitHub Actions).
 
 For the technical version, see `ARCHITECTURE.md`.
 

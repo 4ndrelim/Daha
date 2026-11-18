@@ -1,3 +1,5 @@
+# Dev:   `make db`  → only Postgres; run the API and web on your laptop (make api / make web).
+# Full:  `make up`  → Postgres + API + web, all in Docker (profile "full").
 services:
   db:
     image: pgvector/pgvector:pg16
@@ -6,7 +8,7 @@ services:
       POSTGRES_PASSWORD: daha
       POSTGRES_DB: daha
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - daha_pgdata:/var/lib/postgresql/data
       - ./infra/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -15,6 +17,41 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+    restart: unless-stopped
+
+  api:
+    profiles: ["full"]
+    build: ./backend
+    env_file: ./backend/.env          # secrets stay in this file; it is never copied into the image
+    environment:
+      DATABASE_URL: postgresql+psycopg://daha:daha@db:5432/daha
+      UPLOAD_DIR: /app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - daha_uploads:/app/uploads
+      - daha_fastembed:/app/.fastembed_cache
+    restart: unless-stopped
+
+  web:
+    profiles: ["full"]
+    build:
+      context: ./web
+      args:
+        API_PROXY_TARGET: http://api:8000
+        NEXT_PUBLIC_MOCK: none
+        NEXT_PUBLIC_DEMO_MODE: "${NEXT_PUBLIC_DEMO_MODE:-true}"
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    restart: unless-stopped
 
 volumes:
   daha_pgdata:
+  daha_uploads:
+  daha_fastembed:

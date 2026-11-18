@@ -40,8 +40,8 @@ class ItemCard(Schema):
     distance_min: int | None
     same_dorm: bool
     created_at: ISODateTime
-    match_score: float | None = None  # only in search/match/fulfillable responses
-    match_reason: str | None = None
+    match_score: float | None  # only in search/match/fulfillable responses, else null
+    match_reason: str | None
 
 
 class ItemDetail(ItemCard):
