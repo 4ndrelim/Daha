@@ -62,14 +62,20 @@ def test_creates_one_harness_per_key_in_order(setup_script, monkeypatch, capsys)
 
 @respx.mock
 def test_check_reports_each_key_without_printing_it(setup_script, monkeypatch, capsys):
-    respx.get(f"{BASE}/v1/models").mock(
-        side_effect=lambda req: httpx.Response(
-            200 if req.headers["authorization"] == "Bearer sk-hr-a" else 401
-        )
-    )
+    monkeypatch.setattr(settings, "harnessrouter_api_key", "sk-hr-a,sk-hr-b,sk-hr-c")
+    me = {"org": "org_1", "org_name": "Daha", "workspace": "org_1__hr_default"}
+
+    def who(request):
+        if request.headers["authorization"] == "Bearer sk-hr-c":
+            return httpx.Response(401)
+        return httpx.Response(200, json=me)
+
+    respx.get(f"{BASE}/v1/me").mock(side_effect=who)
     monkeypatch.setattr(sys, "argv", ["setup_harnessrouter.py", "--check"])
     with pytest.raises(SystemExit) as exit_info:
         setup_script.main()
     assert exit_info.value.code == 1
     out = capsys.readouterr().out
-    assert "key 1/2: OK" in out and "key 2/2: HTTP 401" in out and "sk-hr" not in out
+    assert "key 1/3: OK · organization Daha" in out and "key 3/3: HTTP 401" in out
+    assert "keys 1, 2 are in the same organization" in out
+    assert "sk-hr" not in out

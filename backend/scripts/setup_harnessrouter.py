@@ -1,6 +1,6 @@
 """Create DAHA's vision harness on HarnessRouter and set HARNESSROUTER_VISION_HARNESS_ID.
 
-    cd backend && uv run python scripts/setup_harnessrouter.py --check       # every key valid?
+    cd backend && uv run python scripts/setup_harnessrouter.py --check       # keys OK? which org?
     cd backend && uv run python scripts/setup_harnessrouter.py --list        # bases + models only
     cd backend && uv run python scripts/setup_harnessrouter.py --write-env   # create + save ids
 
@@ -40,17 +40,35 @@ def client(key: str) -> httpx.Client:
 
 
 def check(keys: list[str]) -> None:
-    """GET /v1/models with every key (free). Exits non-zero if any key fails."""
+    """GET /v1/me with every key (free): which organization and workspace each key acts in.
+
+    Exits non-zero if any key fails. Keys in one organization share its balance and its
+    concurrency limit, so the script points that out.
+    """
     failed = 0
+    orgs: dict[str, list[int]] = {}
     for n, key in enumerate(keys, 1):
         try:
             with client(key) as c:
-                code = c.get("/v1/models").status_code
-            status = "OK" if code < 400 else f"HTTP {code}"
+                r = c.get("/v1/me")
+            if r.status_code < 400:
+                me = r.json() or {}
+                org = str(me.get("org") or "?")
+                orgs.setdefault(org, []).append(n)
+                where = me.get("workspace_name") or me.get("workspace") or "?"
+                status = f"OK · organization {me.get('org_name') or org} · workspace {where}"
+            else:
+                status = f"HTTP {r.status_code}"
         except httpx.HTTPError as exc:
             status = type(exc).__name__
-        failed += status != "OK"
+        failed += not status.startswith("OK")
         print(f"key {n}/{len(keys)}: {status}")
+    for numbers in (nums for nums in orgs.values() if len(nums) > 1):
+        listed = ", ".join(map(str, numbers))
+        print(
+            f"note: keys {listed} are in the same organization, so they share one balance and one "
+            "concurrency limit (HARNESSROUTER_MAX_CONCURRENCY counts all keys together)."
+        )
     sys.exit(1 if failed else 0)
 
 

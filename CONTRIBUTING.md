@@ -84,12 +84,12 @@ Settings and secret keys live in two local files that git ignores. Only the `*.e
   | Variable | What it's for | Format | Who has it |
   |---|---|---|---|
   | `JWT_SECRET` | signs login tokens | the output of `openssl rand -hex 32` | make your own |
-  | `HARNESSROUTER_API_KEY` | photo AI (HarnessRouter) | one key, or several comma-separated with no spaces: `sk-hr-aaa,sk-hr-bbb`. Photos are load-balanced across them | the team account holder (`AGENTS.md` §7) |
+  | `HARNESSROUTER_API_KEY` | photo AI (HarnessRouter) | one key, or several comma-separated with no spaces: `sk-hr-aaa,sk-hr-bbb`. Photos are load-balanced across them. Keys in one organization share its credit and its task limit | the team account holder (`AGENTS.md` §7) |
   | `HARNESSROUTER_VISION_HARNESS_ID` | the harness each key runs | don't type it: after setting the keys, run `cd backend && uv run python scripts/setup_harnessrouter.py --write-env` (free; one harness per key, saved in key order) | generated |
   | `ANTHROPIC_API_KEY` | optional vision fallback | `sk-ant-…` | nobody yet (proposal first) |
 
   Any other key (for example web search) is listed in `AGENTS.md` §7 and explained in `backend/.env.example`.
-- **Check your HarnessRouter keys for free:** `cd backend && uv run python scripts/setup_harnessrouter.py --check` prints `key 1/3: OK` and so on, never the keys themselves.
+- **Check your HarnessRouter keys for free:** `cd backend && uv run python scripts/setup_harnessrouter.py --check` prints `key 1/3: OK · organization …` for each key (never the key itself) and points out keys that share an organization.
 - **Real AI costs credit, so it's opt-in:** set `AI_PROVIDER=harnessrouter` in `backend/.env` only when you mean to spend. The default, `mock`, is free.
 - **After editing `backend/.env`,** restart `make api`: settings are read once at startup.
 - **Agents adding a variable:** add it to the right `.env.example` in the same PR, with a comment and a safe default (empty for keys), and mention it in the PR description. Teammates pick it up with `make env`.

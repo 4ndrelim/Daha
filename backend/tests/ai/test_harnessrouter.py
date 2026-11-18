@@ -23,7 +23,9 @@ def _config(monkeypatch):
     monkeypatch.setattr(hr, "_pool", None)
 
 
-def sse(text: str, rid="resp_1", terminal="response.completed", usage=None) -> httpx.Response:
+def sse(
+    text: str, rid="resp_1", terminal="response.completed", usage=None, **extra
+) -> httpx.Response:
     frames = [
         {"type": "response.created", "response": {"id": rid, "metadata": {"session_id": "s1"}}},
         {"type": "response.output_item.added"},
@@ -35,7 +37,12 @@ def sse(text: str, rid="resp_1", terminal="response.completed", usage=None) -> h
     frames.append(
         {
             "type": terminal,
-            "response": {"id": rid, "status": terminal.split(".")[1], "usage": usage or {}},
+            "response": {
+                "id": rid,
+                "status": terminal.split(".")[1],
+                "usage": usage or {},
+                **extra,
+            },
         }
     )
     body = "".join(f"data: {json.dumps(f)}\n\n" for f in frames)
@@ -247,15 +254,16 @@ async def test_harness_ids_must_be_one_or_one_per_key(monkeypatch):
 
 
 @respx.mock
-async def test_concurrency_limit_is_per_key(monkeypatch):
+async def test_concurrency_is_a_total_cap_spread_across_keys(monkeypatch):
     use_keys(monkeypatch, "sk-hr-a,sk-hr-b")
-    monkeypatch.setattr(settings, "harnessrouter_max_concurrency", 1)
+    monkeypatch.setattr(settings, "harnessrouter_max_concurrency", 2)  # one org's free-trial limit
     running: dict[str, int] = {}
-    peak: dict[str, int] = {}
+    peak = {"total": 0}
 
     async def files(request):
         key = auth_header(request)
         running[key] = running.get(key, 0) + 1
+        peak["total"] = max(peak["total"], sum(running.values()))
         peak[key] = max(peak.get(key, 0), running[key])
         await asyncio.sleep(0.05)
         running[key] -= 1
@@ -264,6 +272,44 @@ async def test_concurrency_limit_is_per_key(monkeypatch):
     respx.post(f"{BASE}/v1/files").mock(side_effect=files)
     respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=lambda req: sse(GOOD))
     provider = hr.HarnessRouterVisionProvider()
-    results = await asyncio.gather(*(provider.detect(b"jpeg", f"p{i}.jpg") for i in range(4)))
-    assert sorted(r.raw["key"] for r in results) == [1, 1, 2, 2]  # spread evenly
-    assert peak == {"Bearer sk-hr-a": 1, "Bearer sk-hr-b": 1}  # never 2 at once on one key
+    results = await asyncio.gather(*(provider.detect(b"jpeg", f"p{i}.jpg") for i in range(6)))
+    assert sorted(r.raw["key"] for r in results) == [1, 1, 1, 2, 2, 2]  # spread evenly
+    assert peak == {"total": 2, "Bearer sk-hr-a": 1, "Bearer sk-hr-b": 1}  # never over the cap
+
+
+@respx.mock
+async def test_retry_reuses_the_idempotency_key():
+    respx.post(f"{BASE}/v1/files").mock(return_value=httpx.Response(200, json={"id": "f"}))
+    run = respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(
+        side_effect=[httpx.Response(503), sse(GOOD)]
+    )
+    await hr.HarnessRouterVisionProvider().detect(b"jpeg", "p.jpg")
+    first, retry = (c.request.headers["idempotency-key"] for c in run.calls)
+    assert first == retry  # the server replays a task it already ran instead of billing twice
+
+
+@respx.mock
+async def test_http_500_is_not_retried():
+    up = respx.post(f"{BASE}/v1/files").mock(return_value=httpx.Response(500))
+    with pytest.raises(ProviderError):
+        await hr.HarnessRouterVisionProvider().detect(b"jpeg", "p.jpg")
+    assert len(up.calls) == 1  # docs: retry only network errors, 429, 502, 503, 504
+
+
+@respx.mock
+async def test_balance_exhausted_mid_task_moves_to_the_next_key(monkeypatch):
+    use_keys(monkeypatch, "sk-hr-a,sk-hr-b")
+    respx.post(f"{BASE}/v1/files").mock(return_value=httpx.Response(200, json={"id": "f"}))
+
+    def run(request):
+        if auth_header(request) == "Bearer sk-hr-a":
+            return sse(
+                "",
+                terminal="response.incomplete",
+                incomplete_details={"reason": "balance_exhausted"},
+            )
+        return sse(GOOD)
+
+    respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=run)
+    result = await hr.HarnessRouterVisionProvider().detect(b"jpeg", "p.jpg")
+    assert result.raw["key"] == 2

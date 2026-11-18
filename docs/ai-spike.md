@@ -41,12 +41,23 @@
   `stream` and returns JSON, `output[].content[].text` is used. JSON is extracted (fences and prose
   stripped, outermost `{…}`), then **re-validated server-side** (`app/ai/normalize.py`).
 - **Repair:** one extra turn with `previous_response_id` + "Return only the JSON object."
-- **Limits:** a semaphore per key (`HARNESSROUTER_MAX_CONCURRENCY` each, free plan = 2), overall
+- **Limits:** at most `HARNESSROUTER_MAX_CONCURRENCY` tasks at once across all keys (free trial = 2 per
+  organization), overall
   timeout per photo (`HARNESSROUTER_TIMEOUT_S`), one retry on network errors / 5xx / 429.
 - **Several keys:** `HARNESSROUTER_API_KEY=a,b,c` is load-balanced. Each photo goes to the least-busy
-  key and stays on it for upload → run → repair (a file id or response id is only used with the key
-  that created it). A key that is refused (401/403), out of credit (402), or still rate-limited after
-  one retry (429) rests (15 min / 10 min / `Retry-After` or 30 s) and the photo moves to the next key.
+  key and stays on it for upload → run → repair. That's required: "A file id belongs to the Workspace
+  key that uploaded it. Any other key that names it gets 404" (harnessrouter.ai/docs/upload-files).
+  A key that is refused (401/403), out of credit (402, or a task ending `balance_exhausted`), or still
+  rate-limited after one retry (429) rests (15 min / 10 min / `Retry-After` or 30 s) and the photo moves
+  to the next key. Retries reuse the Idempotency-Key, and only network errors, 429, 502, 503 and 504
+  are retried (the documented policy).
+  - **Credit and concurrency are per organization**, not per key. Keys in one organization share one
+    balance and one limit, so there load-balancing buys failover, not capacity. `setup_harnessrouter.py
+    --check` prints each key's organization and flags shared ones.
+  - HarnessRouter's Terms (4.4(g)) forbid duplicate accounts made to stretch free credit, trials, or
+    limits. Use keys from accounts that are legitimately separate (e.g. each teammate's own).
+  - Hackathon: the event counts usage per Harness ID, so register every id in
+    `HARNESSROUTER_VISION_HARNESS_ID` (one per key) with the organizers.
   `HARNESSROUTER_VISION_HARNESS_ID` is one shared id, or one id per key in the same order.
   `scan_images.raw_response.key` records which key (by number, never the key) paid for each photo.
 - **Cost:** `cost_usd` / `total_cost_usd` / `cost` from the final response or its `usage`, else
@@ -56,7 +67,7 @@
 
 ## Gotchas to watch for in the first real run
 - The per-image cost may not be reported in the stream; check the dashboard and set the estimate.
-- One API worker only while on the free plan (each worker has its own per-key semaphores).
+- One API worker only while on the free plan (each worker has its own concurrency cap).
 - Same photo → `ai_cache` hit (free); changing the prompt text requires bumping `PROMPT_VERSION`.
 
 ## Fallbacks
