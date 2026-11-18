@@ -44,7 +44,8 @@ _LEAD_RES = [re.compile(p, re.I) for p in _LEADS]
 _CUT = re.compile(
     r"\s(i|i'?d|i'?m|that|which|so|because|cause|cuz|for|to|this|next|tonight|today|tomorrow|on|by|"
     r"until|till|before|after|in|from|at|near|asap|please|pls|if|anyone|when|while|going|my|we|"
-    r"you|thanks|thank|lmk|dm|ty|starting|beginning|around|during|or so)\b|[,.?!;:—–]|\s-\s|\(",
+    r"you|thanks|thank|lmk|dm|ty|starting|beginning|around|during|or so|they|they'?re|"
+    r"not|anymore)\b|[,.?!;:—–]|\s-\s|\(",
     re.I,
 )
 _NUM_WORDS = {
@@ -138,6 +139,7 @@ def _noun_phrase(text: str, spans: list[tuple[int, int]]) -> tuple[str, int]:
             new = rx.sub("", s, count=1).strip()
             if new != s:
                 s, changed = new, True
+    s = _DET.sub("", s)  # "giving away my old lamp": drop "my" before cutting at it
     m = _CUT.search(" " + s)
     if m:
         s = (" " + s)[: m.start()].strip()
