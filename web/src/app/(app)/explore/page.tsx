@@ -1,5 +1,10 @@
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { Suspense } from "react";
+import { ExploreScreen } from "./explore-screen";
 
-export default function Page() {
-  return <PagePlaceholder title="Explore" note="B2: search and browse." />;
+export default function ExplorePage() {
+  return (
+    <Suspense>
+      <ExploreScreen />
+    </Suspense>
+  );
 }
