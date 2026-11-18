@@ -38,7 +38,10 @@ fi
 DEMO_MODE="${DEMO_MODE:-true}"
 case "$DEMO_MODE" in true | false) ;; *) die "DEMO_MODE must be true or false" ;; esac
 
-SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 -o ConnectTimeout=15)
+# The VM's fingerprint is kept in the project (.daha/ is gitignored), not in ~/.ssh/known_hosts.
+mkdir -p "$ROOT/.daha"
+SSH_OPTS=(-o UserKnownHostsFile="$ROOT/.daha/known_hosts" -o StrictHostKeyChecking=accept-new
+  -o ServerAliveInterval=30 -o ConnectTimeout=15)
 if [ -n "${SSH_KEY:-}" ]; then
   SSH_KEY="${SSH_KEY/#\~/$HOME}"
   [ -f "$SSH_KEY" ] || die "SSH_KEY file not found: $SSH_KEY"
