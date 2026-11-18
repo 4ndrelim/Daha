@@ -4,6 +4,38 @@
 
 **⏰ Hackathon targets** (`PLAN.md` §0): B0 Tue 11:00 · B1 Tue 15:00 · B2 + B3 Tue 21:00 · B4 Wed 10:00 · B5 Wed 15:00 · B6 Wed 18:00 (feature freeze) · demo video Thu 08:00–10:30.
 
+## Status (2026-11-17): the planned milestones are merged and the web runs live; next comes improving and iterating
+| Milestone | PR | Notes |
+|---|---|---|
+| B0 skeleton, contract types, API client, app shell | #6 | |
+| B1 login, signup, home, shared components | #7 | A-domain mocks skipped: A1–A4 had already merged |
+| B2 explore & search | #8 | |
+| B3 add menu, item form, request composer, item page | #9 | |
+| B4 request page, offers, chat, transaction card, reviews | #10 | |
+| B5 communities, profile, public profile, notifications, invites | #11 | |
+| B6a polish, QA, contract check | #12 | no response mismatches; 8 request-body fields are nullable in the API but omit-only in TS |
+| B6b go live on every domain + full demo-script pass | #15 | `PLAN.md` §10 steps 1–9 passed headless on fresh seed data |
+| B7 installable app (accepted `docs/proposals/B-pwa.md`, part 1) | #13, #14 | push (part 2) rejected for the hackathon |
+| fix: `pnpm typecheck` runs `next typegen` first | #19 | passes on a fresh clone |
+
+**Behaviour that differs from, or adds to, the text below** (each line is in `docs/decisions.md`):
+- **Mocks:** `web/.env.example` now defaults to `NEXT_PUBLIC_MOCK=none`. The stand-ins for `search, feed, matches, ai` stay in `web/src/lib/api/mock/` for working without a backend.
+- **Rendering:** Next.js 16 with `cacheComponents`. The logged-in app renders in the browser only (`AuthGate` uses `use(browser())`), because the token lives in `localStorage`.
+- **Signup is two steps:** the account first (`POST /auth/signup` without `dorm_id`), then a dorm picker (`GET /communities?kind=dorm` + `PATCH /me {dorm_id}`), since `GET /communities` needs auth. Invite links preselect `?dorm=<slug>`. The picker shows member counts only.
+- **Home:** the big scan card shows while `show_scan_cta` is true; after that, a slim "Snap more" banner.
+- **Join with code** lives on each private group's card in Discover groups, because the join call needs the group id.
+- **Top bar:** the dorm chip shows the dorm's nickname when it has one ("FloMo").
+- **`downscaleImage`** lives in `web/src/lib/image.ts` (C's `components/scan/downscale.ts` exists too).
+- **PWA:** icons are committed PNGs in `web/public/icons/`. Two extra events: `install_prompt_shown`, `app_installed`.
+- **Demo:** in step 4 Jordan must pick **Who sees it → Campus**. The composer defaults to My dorm, so Wilbur's Maya isn't pinged for a FloMo-only request.
+- **Not done (optional):** the `docs/ux-references/` screenshots (a human TODO), and the `page_view` event from `PLAN.md` §7.6, which is never sent.
+
+**Next phase: improve and iterate** (most students will use DAHA on their phones, so phone UX comes first):
+1. The weekly top 5 UX fixes from feedback (`plans/INTEGRATION.md` → "Iterate").
+2. Phone location for "Buy or rent nearby": use where the person is when location is on, otherwise Stanford campus (`plans/LOCATION.md`, web part).
+3. The Playwright smoke test (P1 #6) and the missing `page_view` event.
+4. From the research list above: an accessibility audit, messaging-style motion, a map view for "near me".
+
 **If behind, cut** (in this order):
 1. invite links
 2. the `/u/[id]` public profile
@@ -36,7 +68,7 @@ Research these in small slices, after a milestone or while CI runs. **Never let 
 - Motion and micro-interactions that make DAHA feel like a messaging app.
 - Accessibility audit tooling.
 
-## B0 — Web skeleton (Phase 0; start right away; touch only `web/`)
+## ✅ B0 — Web skeleton (Phase 0; start right away; touch only `web/`)
 1. **Scaffold:** `pnpm create next-app@latest web` with TypeScript, App Router, Tailwind, ESLint, a `src/` directory, and the alias `@/*`. Add `"typecheck": "tsc --noEmit"`.
 2. **Dependencies:** @tanstack/react-query, react-hook-form, zod, @hookform/resolvers, date-fns, lucide-react, sonner, clsx, tailwind-merge.
 3. **shadcn/ui:** run `init`, then add: button card input textarea label badge avatar tabs sheet dialog dropdown-menu select checkbox switch slider skeleton separator toggle-group scroll-area popover calendar progress sonner.
@@ -98,9 +130,9 @@ Checkpoint: *"Phase 0 web merged ✅ — `make web` shows the app shell. C: your
 | Route | Owner | Data | Must-haves |
 |---|---|---|---|
 | `/login` | B | `auth.login`, `auth.demoUsers`, `auth.demoLogin` | email + password; a "Try a demo account" list with one-tap login (when `NEXT_PUBLIC_DEMO_MODE`); link to signup; honors `?next=` |
-| `/signup` | B | `auth.signup`, `communities.list({kind:'dorm'})` | name, `@stanford.edu` email (inline hint), password, searchable dorm picker; reads `?dorm=<slug>&ref=<id>` from invite links; then goes to `/onboarding` |
+| `/signup` | B | `auth.signup`, `communities.list({kind:'dorm'})`, `me.update` | two steps: name, `@stanford.edu` email (inline hint), password → then a searchable dorm picker (`PATCH /me {dorm_id}`); reads `?dorm=<slug>&ref=<id>` from invite links (the dorm is preselected); then goes to `/onboarding` |
 | `/onboarding` | **C** | | (C's scan flow in first-run mode) |
-| `/home` | B | `feed.home` | greeting; a big gradient scan card when `show_scan_cta` ("Show us what you have — snap your desk, we'll list it") → `/add/scan`; **You could help** (horizontal cards: request + your matching item + Offer); **Requests near you** (`RequestCard` list); **New near you** (2-column `ItemCard` grid); a stats line ("Wilbur has 124 things to share") |
+| `/home` | B | `feed.home` | greeting; a big gradient scan card when `show_scan_cta` ("Show us what you have — snap your desk, we'll list it") → `/add/scan`, and a slim "Snap more" banner after that; **You could help** (horizontal cards: request + your matching item + Offer); **Requests near you** (`RequestCard` list); **New near you** (2-column `ItemCard` grid); a stats line ("Wilbur has 124 things to share") |
 | `/explore` | B | `search.search` | search bar with rotating example placeholders (the 5 demo queries); category chips; a My dorm / Campus toggle; `FilterSheet` (walking 5/10/15/30/any, type, condition, available only); "Understood:" chips from `parsed.chips`; tabs Items / Requests / Communities; "Load more"; the empty state offers **Ask for it** → `/add/request?text=<q>` |
 | `/add` | B | | three big options: 📸 Snap your stuff (AI lists it) → `/add/scan` · 📝 List one item → `/add/item` · 🙋 Ask for something → `/add/request` |
 | `/add/scan` | **C** | | (C's scan flow) |
@@ -117,7 +149,7 @@ Checkpoint: *"Phase 0 web merged ✅ — `make web` shows the app shell. C: your
 | `/u/[id]` | B | `users.get`, `users.items`, `users.reviews` | public header + their shared items + reviews + Message |
 | `/notifications` | B | `notifications.list`, `notifications.markRead` | list with icons per type; tapping follows `link`. A `private_match` shows **Help anonymously**, which opens the request with the offer sheet and that item preselected (`?offer_item=<id>`); "Mark all read". The bell badge polls `unread-count` every 20 s |
 
-## B1 — Mock layer + auth + home + shared components
+## ✅ B1 — Mock layer + auth + home + shared components
 - **`src/lib/api/mock/db.ts`:**
   - in-memory fixtures: ≥ 4 dorms, 2 groups, 10 users, 30 items across categories, 10 requests in casual phrasing, 3 transactions with conversations
   - persisted to `localStorage["daha_mock_db"]`
@@ -130,19 +162,19 @@ Checkpoint: *"Phase 0 web merged ✅ — `make web` shows the app shell. C: your
 
 Checkpoint: *"B1 ✅ app runs fully on mock data: login (demo users), signup, home."*
 
-## B2 — Explore & search UI
+## ✅ B2 — Explore & search UI
 Implement `/explore` per §2. Sync the URL with the query and filters (`?q=&category=&scope=`) so results are shareable. Fire `search_performed` and `search_result_clicked` events.
 
-## B3 — Add menu, manual listing, request composer, item page + borrow
+## ✅ B3 — Add menu, manual listing, request composer, item page + borrow
 Implement `/add`, `/add/item`, `/add/request`, and `/items/[id]` per §2. Downscale photos in the browser before uploading (canvas, longest side ≤ 1600 px, JPEG 0.85). C writes a shared helper `downscaleImage` in `src/components/scan/downscale.ts`; import it if it exists, otherwise write it in `src/lib/image.ts`. Fire `request_composer_opened` and `request_posted`.
 
-## B4 — Request page, offers, chat, transaction card, reviews
+## ✅ B4 — Request page, offers, chat, transaction card, reviews
 Implement `/requests/[id]`, `/r/[id]`, `/messages`, `/messages/[id]`, `TransactionCard`, and the review sheet. Use optimistic UI for sending messages. Fire `offer_sent` and `share_clicked`.
 
-## B5 — Communities, profile, public profile, notifications, invites
+## ✅ B5 — Communities, profile, public profile, notifications, invites
 Implement `/communities`, `/communities/[slug]`, `/profile`, `/u/[id]`, `/notifications`, and the bell and chat badges. The invite link is `${origin}/signup?dorm=<slug>&ref=<me.id>`. Fire `invite_copied` and `feedback_submitted`.
 
-## B6 — Polish + go live
+## ✅ B6 — Polish + go live (shipped as B6a #12 and B6b #15)
 - **States:** loading, empty, and error states everywhere; toasts; skeletons.
 - **Accessibility:** labels, focus rings, 44 px tap targets, contrast.
 - **Phone QA:** at 360, 390, and 430 px widths, and in Safari and Chrome on a real phone.
@@ -151,7 +183,7 @@ Implement `/communities`, `/communities/[slug]`, `/profile`, `/u/[id]`, `/notifi
 
 Checkpoint: *"B6 ✅ all screens done and running live (NEXT_PUBLIC_MOCK=none). Phase 1 done (B)."*
 
-## B7 — Installable app (accepted proposal `docs/proposals/B-pwa.md`, Part 1 only)
+## ✅ B7 — Installable app (accepted proposal `docs/proposals/B-pwa.md`, Part 1 only)
 Additive task, `PLAN.md` §2 P1 item 5. `web/src/app/manifest.ts` (standalone, `start_url=/home`, theme colors from §1); PNG icons in `web/public/icons/` (192, 512, maskable 512, Apple 180, favicon 48); `appleWebApp` metadata; an "Install DAHA" card on Profile (Install button via `beforeinstallprompt`, 2-step hint on iPhone, hidden when installed or dismissed); `BackButton` on item, request, user and community pages. No service worker, no push (Part 2 rejected for the hackathon).
 
 ## Phase 2 & 3 (B)

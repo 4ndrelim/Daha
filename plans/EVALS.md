@@ -1,5 +1,7 @@
 # Evals (Person C): a quick version for the hackathon, the full version after it
 
+> **Status (2026-11-17):** the parse, search and match suites run on the seed, with reports in `evals/reports/`: parse 1.00 on every field; search 5/5 demo queries in the top 3 (nDCG@10 0.94, p95 66 ms); match recall@5 1.00, precision@5 0.96. The scan suite is built but gated: it needs labeled eval photos (the HarnessRouter keys are verified). These numbers are a baseline for the improvement loop below, not a finish line.
+
 **Goal:** measure, with numbers, how good the AI parts are. Then improve them, and prove each change helped.
 
 ## Hackathon mini-eval (Thu 08:00–09:00, ≤ $3 of HarnessRouter credit)

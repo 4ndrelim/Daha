@@ -3,6 +3,10 @@
 Read this together with `AGENTS.md` (rules), `CONTRIBUTING.md` (git), `ARCHITECTURE.md` (diagrams), and your sub-plan in `plans/`. **§6 and §7 are the contract**: implement them exactly.
 
 ## 0. Hackathon mode: submit by **Thu Nov 19, 12:00**
+> **Status (2026-11-17): the bulk of the MVP is built.** Every planned A, B and C milestone is merged, and the web runs live (`NEXT_PUBLIC_MOCK=none`); see the status table at the top of each sub-plan.
+>
+> **This isn't the end.** The next phase is improving and iterating on real use: weekly fixes from feedback (`plans/INTEGRATION.md` → "Iterate"), the evals loop (`plans/EVALS.md`), each sub-plan's **Next phase** list, and phone location for store search (`plans/LOCATION.md`, since most students will use DAHA on their phones). Still open from Phase 1: the C0 spike with 3 real photos (the HarnessRouter keys are verified), the `v0.1-mvp` tag, a two-phone pass with `AI_PROVIDER=harnessrouter`, and the mini-eval scan numbers.
+
 This is a 5-day hackathon. Everything here serves one goal: a working, demo-able MVP (the demo script in §10), submitted by Thursday noon. Times are local campus time, starting Tuesday morning.
 
 | When | Person A | Person B | Person C |
@@ -59,16 +63,16 @@ Rules:
 14. **Private "I have this"** (from user feedback): people tick things they own (bike pump, tool kit…) without posting a public listing. When someone asks for one, DAHA pings them anonymously, and the requester only sees "quietly asked N people nearby". Owner: C (C5), with small pieces in A2 and B3–B5.
 
 **P1: stretch, after the hackathon unless you're ahead of schedule.** Claim an item in the group chat first. The list is ordered from most to least valuable.
-1. Reverse matching: notify an item's owner about open requests the item matches (C).
+1. Reverse matching: notify an item's owner about open requests the item matches (C). ✅ Matching is done (C3: it feeds "You could help"); the notification part is not.
 2. "Autofill from photo" on the manual listing form (C backend, B UI).
 3. Background AI enrichment of requests (C).
 4. Rate-limited "someone in your dorm needs X" notifications (C).
-5. PWA manifest (B).
+5. PWA manifest (B). ✅ Done (B7).
 6. Playwright end-to-end smoke test (B).
 7. Opt-in dorm leaderboard (A + B).
 8. Overdue reminders (A + B).
 9. Group-owned inventory (A + B).
-10. Thumbnails cropped from bounding boxes (C).
+10. Thumbnails cropped from bounding boxes (C). ✅ Done (C1: scan publish crops to the bbox).
 
 **Out of scope.** Payments or selling, SSO, push or email notifications, websockets, native apps, moderation tools, multi-campus.
 
@@ -188,7 +192,7 @@ COMMERCIAL_DEFAULT_LNG=-122.1697
 ### 5.4 `web/.env.example` (B creates it in P0-B)
 ```bash
 API_PROXY_TARGET=http://localhost:8000
-NEXT_PUBLIC_MOCK=all    # all | none | comma list of mocked domains:
+NEXT_PUBLIC_MOCK=none   # all | none | comma list of mocked domains (default none: everything is live):
                         # auth,users,communities,places,uploads,items,requests,transactions,
                         # conversations,notifications,events,search,feed,matches,ai,scans
 NEXT_PUBLIC_DEMO_MODE=true
@@ -704,7 +708,7 @@ Run this on two phones plus a laptop, with `AI_PROVIDER=harnessrouter`, `NEXT_PU
 1. **Sam** signs up with a new `@stanford.edu` email in Wilbur → lands on "Show us what you have".
 2. Sam takes 2 photos of a real desk or shelf. Items appear photo by photo, and the review screen shows at least 5 sensible items. Sam unticks one, renames one, chooses "My dorm · Lend", and taps **Share**. Under 60 s from the first photo, excluding AI wait time beyond 45 s per photo. Points appear.
 3. Home shows "You could help", including at least one request that matches Sam's items.
-4. **Jordan** (FloMo) posts "anyone have a black binder I can borrow next Wednesday?" The chips show *black binder · Academic · Wed <date> · Borrow*. Within about 10 s the request lists matching binders, and their owners get a `match` notification.
+4. **Jordan** (FloMo) posts "anyone have a black binder I can borrow next Wednesday?" with **Who sees it → Campus** (the composer defaults to My dorm, and Wilbur's Maya can't see a FloMo-only request). The chips show *black binder · Academic · Wed <date> · Borrow*. Within about 10 s the request lists matching binders, and their owners get a `match` notification.
 5. **Maya** opens the notification → "I can help" → offers her binder. Jordan accepts. They chat. Maya marks it handed off, then later "got it back". Both leave reviews. Points, badges, and the activity history update for both.
 6. **Private haves:**
    - During onboarding, Sam also ticks "Bike pump" as private ("only me, ping me if someone needs it").
