@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import type { Condition, TransactionType } from "@/lib/api/types";
 import { CONDITION_LABEL, TX_TYPE_LABEL } from "@/lib/categories";
 import { cn } from "@/lib/utils";
+import { ChoicePills } from "./choice-pills";
 
 export interface Filters {
   max_walk_min: number | null;
@@ -19,35 +20,6 @@ export const DEFAULT_FILTERS: Filters = { max_walk_min: null, transaction_type: 
 
 export function activeFilterCount(f: Filters): number {
   return [f.max_walk_min !== null, f.transaction_type !== null, f.condition !== null, !f.available_only].filter(Boolean).length;
-}
-
-function Pills<T extends string | number>({ options, value, onChange, label }: {
-  options: { value: T | null; label: string }[]; value: T | null; onChange: (v: T | null) => void; label: string;
-}) {
-  return (
-    <fieldset>
-      <legend className="mb-2 text-[13px] font-semibold text-muted-foreground">{label}</legend>
-      <div className="flex flex-wrap gap-2">
-        {options.map((o) => {
-          const on = o.value === value;
-          return (
-            <button
-              key={String(o.value)}
-              type="button"
-              aria-pressed={on}
-              onClick={() => onChange(o.value)}
-              className={cn(
-                "h-11 rounded-full px-4 text-[15px] font-medium ring-1 transition",
-                on ? "bg-primary text-primary-foreground ring-primary" : "bg-card ring-border active:bg-muted",
-              )}
-            >
-              {o.label}
-            </button>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
 }
 
 export function FilterSheet({ value, onApply }: { value: Filters; onApply: (f: Filters) => void }) {
@@ -73,24 +45,24 @@ export function FilterSheet({ value, onApply }: { value: Filters; onApply: (f: F
             <SheetTitle className="text-[17px]">Filters</SheetTitle>
           </SheetHeader>
           <div className="space-y-6 px-4">
-            <Pills
+            <ChoicePills
               label="Walking distance"
               value={draft.max_walk_min}
-              onChange={(v) => setDraft({ ...draft, max_walk_min: v })}
+              onChange={(v: number | null) => setDraft({ ...draft, max_walk_min: v })}
               options={[{ value: 5, label: "5 min" }, { value: 10, label: "10 min" }, { value: 15, label: "15 min" },
                 { value: 30, label: "30 min" }, { value: null, label: "Any" }]}
             />
-            <Pills
+            <ChoicePills
               label="Type"
               value={draft.transaction_type}
-              onChange={(v) => setDraft({ ...draft, transaction_type: v })}
+              onChange={(v: TransactionType | null) => setDraft({ ...draft, transaction_type: v })}
               options={[{ value: null, label: "Any" },
                 ...(Object.keys(TX_TYPE_LABEL) as TransactionType[]).map((t) => ({ value: t, label: TX_TYPE_LABEL[t] }))]}
             />
-            <Pills
+            <ChoicePills
               label="Condition"
               value={draft.condition}
-              onChange={(v) => setDraft({ ...draft, condition: v })}
+              onChange={(v: Condition | null) => setDraft({ ...draft, condition: v })}
               options={[{ value: null, label: "Any" },
                 ...(Object.keys(CONDITION_LABEL) as Condition[]).map((c) => ({ value: c, label: CONDITION_LABEL[c] }))]}
             />
