@@ -88,6 +88,7 @@ class CommercialOffer(Schema):
 class CommercialSearchResponse(Schema):
     query: str  # the words that were searched (filler and personal details removed)
     near: str  # e.g. "Wilbur Hall", "your location", "Mountain View, CA"
+    # "dorm" is kept in the type so nothing breaks, but it is no longer returned (plans/LOCATION.md)
     near_source: Literal["place", "device", "dorm", "campus"]
     offers: list[CommercialOffer]  # cheapest first; no price → last
     provider: str  # "exa" | "mock" (sample data)

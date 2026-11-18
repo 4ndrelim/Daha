@@ -168,7 +168,7 @@ export type FeedEntry =
 export interface CommercialSearchBody {
   q: string;                     // the campus search text
   place?: string | null;         // typed town or ZIP, e.g. "94040"
-  lat?: number | null;           // opt-in browser location; rounded to ~1 km, never stored
+  lat?: number | null;           // the phone's location when allowed; rounded to ~1 km, never stored
   lng?: number | null;
 }
 export interface CommercialOffer {
@@ -181,8 +181,8 @@ export interface CommercialOffer {
 }
 export interface CommercialSearchResponse {
   query: string;                 // the words that were searched
-  near: string;                  // e.g. "Wilbur Hall", "your location", "Mountain View, CA"
-  near_source: "place" | "device" | "dorm" | "campus";
+  near: string;                  // e.g. "Stanford campus", "your location", "Mountain View, CA"
+  near_source: "place" | "device" | "dorm" | "campus";  // "dorm" is no longer returned (plans/LOCATION.md)
   offers: CommercialOffer[];     // cheapest first; no price → last
   provider: string;              // "exa" | "mock" (sample data)
   cached: boolean; fetched_at: ISODateTime;

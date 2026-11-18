@@ -1,6 +1,6 @@
 # Plan: phone location for "Buy or rent nearby"
 
-- Status: planned (not built) · Owners: **B** (web, most of it) + **C** (server) · Effort: about 1 day plus an hour of phone testing
+- Status: **built 2026-11-18** by A with B's and C's agreement (`docs/plans/location.md`); phone test table in §6 still to be filled in · Owners: **B** (web, most of it) + **C** (server) · Effort: about 1 day plus an hour of phone testing
 - Depends on: C6 "Buy or rent nearby" being merged (it adds the files below), and an **https** link for phones (§3)
 
 ## 1. The rule

@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     commercial_budget_usd: float = 9.0  # per calendar month (UTC)
     commercial_est_cost_usd: float = 0.017  # per uncached lookup when Exa reports no cost
     commercial_default_place: str = "Stanford, CA"
+    commercial_default_label: str = "Stanford campus"  # shown as "Near Stanford campus"
     commercial_default_lat: float = 37.4275
     commercial_default_lng: float = -122.1697
 

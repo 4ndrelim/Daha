@@ -220,6 +220,7 @@ Hosted:   one small Ubuntu VM — docker compose (db, api, web) + Caddy (HTTPS) 
 - API keys are server-side only (`backend/.env`). The browser talks only to our own `/api`.
 - Uploaded photos are re-encoded with all EXIF metadata removed, including GPS.
 - Locations are dorm-level coordinates only. No room numbers or addresses are stored.
+  - One exception: store search ("Buy or rent nearby") may use the phone's current location. It is rounded to ~1 km in the browser and again on the server, sent only in the POST body of `/api/search/commercial`, used only when the person allows it, and never stored or logged. Without it, store search uses Stanford campus. Everything peer-to-peer stays dorm-level (`plans/LOCATION.md`).
 - The pickup note is visible only to the owner and to the counterparty of an accepted transaction.
 - AI detections are drafts until the user explicitly publishes them. New listings default to **dorm** visibility.
 - A resource the viewer isn't allowed to see returns **404**, never 403, so its existence isn't revealed.
