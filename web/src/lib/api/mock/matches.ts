@@ -1,10 +1,14 @@
 import { http } from "../client";
-import type { ID, MatchesResponse, RequestDetail } from "../types";
+import type { ID, MatchesResponse, MutualMatchesResponse, RequestDetail } from "../types";
 import { getPool, itemScore, latency, tokens } from "./pool";
 
 const COLORS = new Set(["black", "white", "blue", "red", "green", "navy", "grey", "gray", "pink", "brown", "yellow", "purple", "orange", "silver"]);
 
 export const mockMatches = {
+  /** Mutual matching needs the real backend: in mock mode it reads as "switched off". */
+  async mutual(): Promise<MutualMatchesResponse | null> {
+    return null;
+  },
   async get(requestId: ID): Promise<MatchesResponse> {
     const [pool, request] = await Promise.all([getPool(), http<RequestDetail>("GET", `/requests/${requestId}`), latency()]);
     // Colors alone ("black") shouldn't match a dress to a binder: require a non-color word to match.

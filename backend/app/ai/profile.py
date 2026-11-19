@@ -56,6 +56,7 @@ EVENT_TYPE = "mutual_profile_run"
 MIN_SIGNALS = 3  # below this the rules are enough, and the agent is never called
 MAX_NEEDS = 5
 REFRESH_AFTER = timedelta(hours=24)
+RUNS_PER_PERSON_PER_DAY = 2  # turning matching off and on again can't be used to burn credit
 CATEGORIES: tuple[str, ...] = get_args(schemas.Category)
 
 PROFILE_SYSTEM = """You help a campus lending app understand one student's lending and borrowing \
@@ -246,6 +247,47 @@ def budget_left(db: Session) -> bool:
     return spent(db) + settings.mutual_est_cost_per_profile <= settings.mutual_budget_usd
 
 
+def runs_today(db: Session, user_id: int) -> int:
+    since = datetime.now(UTC) - timedelta(hours=24)
+    return (
+        db.scalar(
+            select(func.count())
+            .select_from(Event)
+            .where(Event.type == EVENT_TYPE, Event.user_id == user_id, Event.created_at >= since)
+        )
+        or 0
+    )
+
+
+def store_profile(
+    db: Session, user_id: int, cleaned: dict[str, Any], *, digest: str, signals: int, source: str
+) -> None:
+    """Save a cleaned profile (from the agent, or shipped with the demo seed) with embeddings."""
+    needs = [dict(need) for need in cleaned.get("needs", [])][:MAX_NEEDS]
+    try:
+        vectors = embed_passages([need["name"] for need in needs])
+    except EmbeddingUnavailable:
+        vectors = [None] * len(needs)
+    for need, vector in zip(needs, vectors, strict=True):
+        need["embedding"] = [round(float(x), 5) for x in vector] if vector is not None else None
+    value = {
+        "summary": cleaned.get("summary"),
+        "lends": cleaned.get("lends", []),
+        "borrows": cleaned.get("borrows", []),
+        "needs": needs,
+        "input_hash": digest,
+        "signals": signals,
+        "source": source,
+        "prompt_version": PROFILE_PROMPT_VERSION,
+        "updated_at": datetime.now(UTC).isoformat(),
+    }
+    row = db.get(AICache, cache_key(user_id))
+    if row is None:
+        db.add(AICache(key=cache_key(user_id), value=value))
+    else:
+        row.value = value
+
+
 def _slot() -> KeySlot:
     pairs = key_pairs(settings.harnessrouter_api_keys, settings.harnessrouter_profile_harness_ids)
     key, harness = pairs[0]
@@ -320,6 +362,8 @@ def refresh_profile(
             digest = input_hash(payload)
             row = db.get(AICache, cache_key(user_id))
             if row is not None and not force:
+                if user.is_demo:
+                    return "demo"  # demo profiles ship with the seed and are never re-bought
                 if row.value.get("input_hash") == digest:
                     return "unchanged"
                 updated = datetime.fromisoformat(row.value.get("updated_at"))
@@ -327,6 +371,8 @@ def refresh_profile(
                     return "fresh"
             if not budget_left(db):
                 return "budget reached"
+            if runs_today(db, user_id) >= RUNS_PER_PERSON_PER_DAY and not force:
+                return "daily limit"
             if _scans_running():
                 return "scans running"
             try:
@@ -354,24 +400,7 @@ def refresh_profile(
                 )
             )
             if profile is not None:
-                try:
-                    vectors = embed_passages([need["name"] for need in profile["needs"]])
-                except EmbeddingUnavailable:
-                    vectors = [None] * len(profile["needs"])
-                for need, vector in zip(profile["needs"], vectors, strict=True):
-                    need["embedding"] = [round(float(x), 5) for x in vector] if vector else None
-                value = {
-                    **profile,
-                    "input_hash": digest,
-                    "signals": signals,
-                    "source": "ai",
-                    "prompt_version": PROFILE_PROMPT_VERSION,
-                    "updated_at": datetime.now(UTC).isoformat(),
-                }
-                if row is None:
-                    db.add(AICache(key=cache_key(user_id), value=value))
-                else:
-                    row.value = value
+                store_profile(db, user_id, profile, digest=digest, signals=signals, source="ai")
             db.commit()
             return "updated" if ok else "failed"
     except Exception:  # noqa: BLE001 — a background refresh must never take anything down

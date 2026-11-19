@@ -116,7 +116,7 @@ class MutualMatch(Schema):
     you_give: list[MutualLink]  # my items they need (1..3)
     you_get: list[MutualLink]  # their items I need (1..3)
     score: float  # 0..1
-    reason: str  # e.g. "Same dorm · you each have what the other asked for"
+    reason: str  # e.g. "Same dorm · you both asked"
     uses_prediction: bool  # true if any link is a guess
 
 

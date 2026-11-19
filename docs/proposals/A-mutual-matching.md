@@ -1,5 +1,5 @@
 # AI-powered mutual matching ("You two can help each other")
-- Status: new (B and C approved the scope on 2026-11-18; building waits for A's human to say "go")
+- Status: accepted (2026-11-18: B and C approved the scope, A's human said "go"; hackathon version built, full version not started)
 - Author: Person A · Date: 2026-11-18
 - Problem it solves: DAHA only matches one way (a request to people who have the item). Students are more willing to lend to someone who can also help them, and most never post a request, so many possible exchanges are never suggested.
 - Proposal: introduce pairs of students who have both turned matching on and who each have an available item the other needs. Pairs are found locally from data we already store (`request_matches`, `search_logs`, items). A HarnessRouter agent, running in the background, turns each opted-in person's own activity into a short habit profile with up to 5 predicted needs, which fills gaps when someone hasn't posted a request. Shown as a card on Home; later a `mutual_match` notification. Full plan: `docs/plans/mutual-matching.md`.

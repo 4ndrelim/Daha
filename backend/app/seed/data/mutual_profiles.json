@@ -1,0 +1,830 @@
+{
+ "user:maya": {
+  "summary": "You lend out lots of dorm, academic and outdoor gear, and you've just asked around for a suitcase.",
+  "lends": [
+   "dorm",
+   "academic",
+   "sports"
+  ],
+  "borrows": [
+   "moving"
+  ],
+  "needs": [
+   {
+    "name": "packing tape",
+    "category": "moving",
+    "confidence": 0.5
+   },
+   {
+    "name": "duffel bag",
+    "category": "moving",
+    "confidence": 0.45
+   },
+   {
+    "name": "luggage scale",
+    "category": "moving",
+    "confidence": 0.35
+   },
+   {
+    "name": "travel adapter",
+    "category": "tech",
+    "confidence": 0.2
+   }
+  ]
+ },
+ "user:jordan": {
+  "summary": "You share moving, sports and laundry gear, and you're looking for camping and school supplies.",
+  "lends": [
+   "moving",
+   "sports",
+   "consumables"
+  ],
+  "borrows": [
+   "sports",
+   "academic"
+  ],
+  "needs": [
+   {
+    "name": "sleeping bag",
+    "category": "sports",
+    "confidence": 0.5
+   },
+   {
+    "name": "headlamp",
+    "category": "sports",
+    "confidence": 0.35
+   },
+   {
+    "name": "hole punch",
+    "category": "academic",
+    "confidence": 0.4
+   },
+   {
+    "name": "binder dividers",
+    "category": "academic",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:alex": {
+  "summary": "You lend out tech gear and borrow dorm and academic basics, so you're a handy neighbor with a camera setup.",
+  "lends": [
+   "tech",
+   "dorm",
+   "academic"
+  ],
+  "borrows": [
+   "academic",
+   "dorm"
+  ],
+  "needs": [
+   {
+    "name": "hole punch",
+    "category": "academic",
+    "confidence": 0.4
+   },
+   {
+    "name": "extension cord",
+    "category": "dorm",
+    "confidence": 0.35
+   },
+   {
+    "name": "scotch tape",
+    "category": "academic",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:priya": {
+  "summary": "You lend out tech and study gear, and lately you've been looking for a tennis racket.",
+  "lends": [
+   "tech",
+   "academic"
+  ],
+  "borrows": [
+   "sports",
+   "dorm"
+  ],
+  "needs": [
+   {
+    "name": "tennis balls",
+    "category": "sports",
+    "confidence": 0.5
+   },
+   {
+    "name": "extension cord",
+    "category": "dorm",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:leo": {
+  "summary": "You mostly lend kitchen and dorm basics, with a few handy extras like a cooler and a calculator.",
+  "lends": [
+   "dorm",
+   "consumables",
+   "events"
+  ],
+  "borrows": [],
+  "needs": [
+   {
+    "name": "step stool",
+    "category": "dorm",
+    "confidence": 0.25
+   },
+   {
+    "name": "baking sheet",
+    "category": "dorm",
+    "confidence": 0.2
+   }
+  ]
+ },
+ "user:nina": {
+  "summary": "You list dorm and tech basics, and you're gearing up for a move while keeping your coursework organized.",
+  "lends": [
+   "dorm",
+   "tech",
+   "academic"
+  ],
+  "borrows": [
+   "academic",
+   "moving"
+  ],
+  "needs": [
+   {
+    "name": "packing tape",
+    "category": "moving",
+    "confidence": 0.5
+   },
+   {
+    "name": "moving boxes",
+    "category": "moving",
+    "confidence": 0.45
+   },
+   {
+    "name": "hand truck",
+    "category": "moving",
+    "confidence": 0.3
+   },
+   {
+    "name": "highlighters",
+    "category": "academic",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:omar": {
+  "summary": "You lend out interview-ready clothing and services, and you borrow sports gear and clothing care items.",
+  "lends": [
+   "clothing",
+   "services"
+  ],
+  "borrows": [
+   "sports",
+   "clothing"
+  ],
+  "needs": [
+   {
+    "name": "tennis balls",
+    "category": "sports",
+    "confidence": 0.5
+   },
+   {
+    "name": "clothes steamer",
+    "category": "dorm",
+    "confidence": 0.35
+   },
+   {
+    "name": "padfolio",
+    "category": "academic",
+    "confidence": 0.3
+   },
+   {
+    "name": "umbrella",
+    "category": "other",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:zoe": {
+  "summary": "You mostly lend clothing and costumes, and you're now looking to borrow a sewing machine for a project.",
+  "lends": [
+   "clothing",
+   "dorm"
+  ],
+  "borrows": [
+   "other"
+  ],
+  "needs": [
+   {
+    "name": "fabric scissors",
+    "category": "other",
+    "confidence": 0.5
+   },
+   {
+    "name": "iron",
+    "category": "dorm",
+    "confidence": 0.4
+   },
+   {
+    "name": "ironing board",
+    "category": "dorm",
+    "confidence": 0.3
+   },
+   {
+    "name": "measuring tape",
+    "category": "other",
+    "confidence": 0.35
+   }
+  ]
+ },
+ "user:ethan": {
+  "summary": "You mostly lend out tech gear, tools and study supplies, and you haven't borrowed anything yet this month.",
+  "lends": [
+   "tech",
+   "moving",
+   "academic"
+  ],
+  "borrows": [],
+  "needs": [
+   {
+    "name": "multimeter",
+    "category": "tech",
+    "confidence": 0.3
+   },
+   {
+    "name": "extension cord",
+    "category": "tech",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:aisha": {
+  "summary": "You share lots of pantry and wardrobe basics, and right now you're hunting for lab gear.",
+  "lends": [
+   "consumables",
+   "clothing",
+   "dorm"
+  ],
+  "borrows": [
+   "academic"
+  ],
+  "needs": [
+   {
+    "name": "safety goggles",
+    "category": "academic",
+    "confidence": 0.45
+   },
+   {
+    "name": "scientific calculator",
+    "category": "academic",
+    "confidence": 0.35
+   },
+   {
+    "name": "desk lamp",
+    "category": "dorm",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:ben": {
+  "summary": "You host game nights and sports meetups, and you're still getting set up for dorm life.",
+  "lends": [
+   "events",
+   "sports"
+  ],
+  "borrows": [
+   "dorm",
+   "consumables"
+  ],
+  "needs": [
+   {
+    "name": "extension cord",
+    "category": "dorm",
+    "confidence": 0.35
+   },
+   {
+    "name": "folding chairs",
+    "category": "events",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:chloe": {
+  "summary": "You lend lots of party and event gear, and you're now hunting for folding chairs for a get-together.",
+  "lends": [
+   "events",
+   "tech",
+   "moving"
+  ],
+  "borrows": [
+   "events"
+  ],
+  "needs": [
+   {
+    "name": "folding table",
+    "category": "events",
+    "confidence": 0.55
+   },
+   {
+    "name": "extension cord",
+    "category": "tech",
+    "confidence": 0.4
+   },
+   {
+    "name": "string lights",
+    "category": "events",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:diego": {
+  "summary": "You love sharing music and party gear, and you've started asking for dorm and tech basics.",
+  "lends": [
+   "events",
+   "tech",
+   "services"
+  ],
+  "borrows": [
+   "dorm",
+   "tech"
+  ],
+  "needs": [
+   {
+    "name": "string lights",
+    "category": "dorm",
+    "confidence": 0.4
+   },
+   {
+    "name": "power strip",
+    "category": "tech",
+    "confidence": 0.45
+   },
+   {
+    "name": "desk fan",
+    "category": "dorm",
+    "confidence": 0.2
+   }
+  ]
+ },
+ "user:emma": {
+  "summary": "You lend lots of outdoor and everyday gear, and you're now looking for event supplies like a cooler.",
+  "lends": [
+   "sports",
+   "consumables",
+   "dorm"
+  ],
+  "borrows": [
+   "events",
+   "sports"
+  ],
+  "needs": [
+   {
+    "name": "camping tent",
+    "category": "sports",
+    "confidence": 0.35
+   },
+   {
+    "name": "headlamp",
+    "category": "sports",
+    "confidence": 0.3
+   },
+   {
+    "name": "folding chairs",
+    "category": "events",
+    "confidence": 0.3
+   },
+   {
+    "name": "portable speaker",
+    "category": "events",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:felix": {
+  "summary": "You lend out tech gear and a few dorm and sports items, and you're now looking for a multimeter.",
+  "lends": [
+   "tech",
+   "dorm",
+   "sports"
+  ],
+  "borrows": [
+   "tech"
+  ],
+  "needs": [
+   {
+    "name": "soldering iron",
+    "category": "tech",
+    "confidence": 0.5
+   },
+   {
+    "name": "breadboard jumper wires",
+    "category": "tech",
+    "confidence": 0.35
+   },
+   {
+    "name": "wire strippers",
+    "category": "tech",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:grace": {
+  "summary": "You love sharing baking gear and know-how, and you're after a bike pump too.",
+  "lends": [
+   "dorm",
+   "consumables",
+   "services"
+  ],
+  "borrows": [
+   "sports"
+  ],
+  "needs": [
+   {
+    "name": "cookie cutters",
+    "category": "dorm",
+    "confidence": 0.35
+   },
+   {
+    "name": "rolling pin",
+    "category": "dorm",
+    "confidence": 0.35
+   },
+   {
+    "name": "wrapping paper",
+    "category": "events",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:hana": {
+  "summary": "You share a mix of tech, sports and academic gear, and you've turned to others for study and career help.",
+  "lends": [
+   "tech",
+   "academic",
+   "sports"
+  ],
+  "borrows": [
+   "services",
+   "academic"
+  ],
+  "needs": [
+   {
+    "name": "umbrella",
+    "category": "clothing",
+    "confidence": 0.25
+   },
+   {
+    "name": "study lamp",
+    "category": "dorm",
+    "confidence": 0.3
+   },
+   {
+    "name": "portable charger",
+    "category": "tech",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:ivan": {
+  "summary": "You share CS know-how and course materials, and right now you're looking for a graphing calculator.",
+  "lends": [
+   "services",
+   "academic"
+  ],
+  "borrows": [
+   "academic"
+  ],
+  "needs": [
+   {
+    "name": "laptop charger",
+    "category": "tech",
+    "confidence": 0.35
+   },
+   {
+    "name": "highlighters",
+    "category": "academic",
+    "confidence": 0.3
+   },
+   {
+    "name": "study lamp",
+    "category": "dorm",
+    "confidence": 0.25
+   },
+   {
+    "name": "whiteboard markers",
+    "category": "academic",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:jade": {
+  "summary": "You mostly share outdoor and sports gear, plus a few everyday study and tech items.",
+  "lends": [
+   "sports",
+   "clothing",
+   "consumables"
+  ],
+  "borrows": [],
+  "needs": [
+   {
+    "name": "ski goggles",
+    "category": "sports",
+    "confidence": 0.3
+   },
+   {
+    "name": "sleeping bag",
+    "category": "sports",
+    "confidence": 0.2
+   }
+  ]
+ },
+ "user:kai": {
+  "summary": "You're a cyclist who shares bikes and gear, and you're getting ready for cold weather and a busy term.",
+  "lends": [
+   "sports",
+   "services",
+   "clothing"
+  ],
+  "borrows": [
+   "dorm"
+  ],
+  "needs": [
+   {
+    "name": "bike lights",
+    "category": "sports",
+    "confidence": 0.5
+   },
+   {
+    "name": "bike pump",
+    "category": "sports",
+    "confidence": 0.4
+   },
+   {
+    "name": "umbrella",
+    "category": "dorm",
+    "confidence": 0.35
+   },
+   {
+    "name": "extension cord",
+    "category": "dorm",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:lila": {
+  "summary": "You share creative gear like sewing and art supplies, and you've borrowed a service while asking for a drill.",
+  "lends": [
+   "other",
+   "services",
+   "consumables"
+  ],
+  "borrows": [
+   "services",
+   "moving"
+  ],
+  "needs": [
+   {
+    "name": "packing tape",
+    "category": "moving",
+    "confidence": 0.4
+   },
+   {
+    "name": "cardboard boxes",
+    "category": "moving",
+    "confidence": 0.35
+   },
+   {
+    "name": "stud finder",
+    "category": "moving",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:mateo": {
+  "summary": "You share snacks and pantry goods, and you're hunting for spices to stock up your dorm cooking.",
+  "lends": [
+   "consumables",
+   "dorm"
+  ],
+  "borrows": [
+   "consumables",
+   "clothing"
+  ],
+  "needs": [
+   {
+    "name": "hot plate",
+    "category": "dorm",
+    "confidence": 0.35
+   },
+   {
+    "name": "pot",
+    "category": "dorm",
+    "confidence": 0.3
+   },
+   {
+    "name": "winter coat",
+    "category": "clothing",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:noor": {
+  "summary": "You share lots of dorm and moving gear, and you're now looking for a speaker and a hand with moving.",
+  "lends": [
+   "dorm",
+   "moving",
+   "clothing"
+  ],
+  "borrows": [
+   "services",
+   "tech"
+  ],
+  "needs": [
+   {
+    "name": "hand truck",
+    "category": "moving",
+    "confidence": 0.5
+   },
+   {
+    "name": "packing tape",
+    "category": "moving",
+    "confidence": 0.4
+   },
+   {
+    "name": "suitcase",
+    "category": "moving",
+    "confidence": 0.3
+   },
+   {
+    "name": "phone charger",
+    "category": "tech",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:owen": {
+  "summary": "You share a nice mix of gear and skills, and it looks like you're getting ready for a move.",
+  "lends": [
+   "services",
+   "tech",
+   "dorm"
+  ],
+  "borrows": [
+   "moving",
+   "tech"
+  ],
+  "needs": [
+   {
+    "name": "packing tape",
+    "category": "moving",
+    "confidence": 0.7
+   },
+   {
+    "name": "hand truck",
+    "category": "moving",
+    "confidence": 0.4
+   },
+   {
+    "name": "duffel bag",
+    "category": "moving",
+    "confidence": 0.35
+   },
+   {
+    "name": "blazer",
+    "category": "clothing",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:pia": {
+  "summary": "You like sharing sports gear and clothing, and you turn to the community when you need tech.",
+  "lends": [
+   "sports",
+   "clothing"
+  ],
+  "borrows": [
+   "tech"
+  ],
+  "needs": [
+   {
+    "name": "laptop charger",
+    "category": "tech",
+    "confidence": 0.4
+   },
+   {
+    "name": "extension cord",
+    "category": "tech",
+    "confidence": 0.3
+   }
+  ]
+ },
+ "user:quinn": {
+  "summary": "You offer moving help and gear, and you're only starting to ask for things yourself.",
+  "lends": [
+   "moving",
+   "services",
+   "tech"
+  ],
+  "borrows": [
+   "other"
+  ],
+  "needs": [
+   {
+    "name": "rain jacket",
+    "category": "clothing",
+    "confidence": 0.4
+   },
+   {
+    "name": "winter coat",
+    "category": "clothing",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:ravi": {
+  "summary": "You like sharing fun, practical extras like party and dorm items, and you borrow tech and dorm gear when needed.",
+  "lends": [
+   "events",
+   "dorm",
+   "consumables"
+  ],
+  "borrows": [
+   "tech",
+   "dorm"
+  ],
+  "needs": [
+   {
+    "name": "extension cord",
+    "category": "tech",
+    "confidence": 0.4
+   },
+   {
+    "name": "portable projector",
+    "category": "tech",
+    "confidence": 0.35
+   },
+   {
+    "name": "bed risers",
+    "category": "dorm",
+    "confidence": 0.25
+   }
+  ]
+ },
+ "user:sofia": {
+  "summary": "You mostly lend party and event gear, plus a few dorm and moving items, and you're hunting for a suit jacket.",
+  "lends": [
+   "events",
+   "moving",
+   "dorm"
+  ],
+  "borrows": [
+   "clothing"
+  ],
+  "needs": [
+   {
+    "name": "dress shirt",
+    "category": "clothing",
+    "confidence": 0.5
+   },
+   {
+    "name": "dress shoes",
+    "category": "clothing",
+    "confidence": 0.4
+   },
+   {
+    "name": "necktie",
+    "category": "clothing",
+    "confidence": 0.4
+   }
+  ]
+ },
+ "user:theo": {
+  "summary": "You list handy dorm and moving items and ask for dorm gear, so you're a helpful, comfort-minded neighbor.",
+  "lends": [
+   "dorm",
+   "moving",
+   "services"
+  ],
+  "borrows": [
+   "dorm"
+  ],
+  "needs": [
+   {
+    "name": "extension cord",
+    "category": "dorm",
+    "confidence": 0.4
+   },
+   {
+    "name": "pump",
+    "category": "dorm",
+    "confidence": 0.3
+   },
+   {
+    "name": "suitcase",
+    "category": "moving",
+    "confidence": 0.35
+   }
+  ]
+ }
+}

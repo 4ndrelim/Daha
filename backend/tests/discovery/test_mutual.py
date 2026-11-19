@@ -12,7 +12,7 @@ from sqlalchemy import select
 
 from app.ai import profile
 from app.core.config import settings
-from app.models import AICache, Event
+from app.models import AICache, Event, User
 from tests.discovery.helpers import item, request, world
 
 HR = "https://hr.test"
@@ -90,7 +90,7 @@ def test_a_pair_needs_both_directions_and_both_people_opted_in(client, db):
     assert [link["item"]["name"] for link in mine["you_get"]] == ["Large suitcase"]
     assert mine["you_give"][0]["need"]["kind"] == "request"
     assert mine["you_give"][0]["need"]["request"]["title"] == "Tent"
-    assert 0 < mine["score"] <= 1 and "each have what the other asked for" in mine["reason"]
+    assert 0 < mine["score"] <= 1 and "you both asked" in mine["reason"]
 
     (theirs,) = pairs(client, w.flomo)  # the same pair, seen from the other side
     assert theirs["user"]["id"] == w.wilbur_me["id"] and theirs["score"] == mine["score"]
@@ -224,7 +224,7 @@ def test_ai_profile_fills_one_side_of_a_pair_and_is_paid_for_once(client, db, ai
     assert seen_by_maya["summary"] is None and seen_by_maya["likely_needs"] == []
 
     (pair,) = pairs(client, w.wilbur)
-    assert pair["uses_prediction"] is True and "a guess" in pair["reason"]
+    assert pair["uses_prediction"] is True and "one side is a guess" in pair["reason"]
     assert pair["you_get"][0]["need"]["kind"] == "request"
     guess = pair["you_give"][0]
     assert guess["item"]["name"] == "Camping tent"
@@ -270,3 +270,33 @@ def test_a_bad_answer_is_repaired_once_then_dropped_and_still_counted(client, db
     assert db.get(AICache, profile.cache_key(w.wilbur_me["id"])) is None
     (run,) = db.scalars(select(Event).where(Event.type == profile.EVENT_TYPE)).all()
     assert run.payload["ok"] is False and run.payload["cost_usd"] == 0.05
+
+
+def test_paid_runs_are_capped_per_person_and_demo_profiles_are_never_rebought(client, db, ai):
+    w = world(client, db)
+    opt_in(client, w.wilbur)
+    for name in ("Camping tent", "Hiking boots", "Trail map"):
+        item(client, w.wilbur, name)
+    answer = json.dumps({"summary": "You lend outdoor gear.", "likely_needs": []})
+    uid = w.wilbur_me["id"]
+    with respx.mock(base_url=HR) as mock:
+        route = mock.post("/hrn_profile/v1/responses").mock(return_value=sse(answer))
+        assert profile.refresh_profile(uid) == "updated"
+        assert profile.refresh_profile(uid) == "unchanged"
+        opt_in(client, w.wilbur, on=False)  # forget, then come back: one more paid run is allowed
+        opt_in(client, w.wilbur)
+        assert profile.refresh_profile(uid) == "updated"
+        opt_in(client, w.wilbur, on=False)
+        opt_in(client, w.wilbur)
+        assert profile.refresh_profile(uid) == "daily limit"  # the third one today is refused
+        assert route.call_count == 2
+
+        # A demo account with a profile from the seed is never sent to the agent again.
+        demo = db.get(User, w.wilbur2_me["id"])
+        demo.is_demo, demo.match_suggestions = True, True
+        profile.store_profile(db, demo.id, {"needs": []}, digest="old", signals=5, source="seed")
+        db.commit()
+        for name in ("Desk lamp", "Kettle", "Yoga mat"):
+            item(client, w.wilbur2, name)
+        assert profile.refresh_profile(demo.id) == "demo"
+        assert route.call_count == 2

@@ -397,5 +397,21 @@
   ],
   "attributes": {},
   "hours_ago": 14
+ },
+ {
+  "key": "maya-sleeping-bag",
+  "requester": "maya",
+  "raw_text": "Does anyone have a sleeping bag I could borrow for a camping trip next weekend?",
+  "title": "Sleeping bag",
+  "item_name": "sleeping bag",
+  "category": "dorm",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   8,
+   10
+  ],
+  "attributes": {},
+  "hours_ago": 3
  }
 ]

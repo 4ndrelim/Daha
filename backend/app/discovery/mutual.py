@@ -184,9 +184,9 @@ def _best(links: list[Link]) -> list[Link]:
 
 def _why(place: str, uses_prediction: bool) -> str:
     tail = (
-        "a guess based on your habits"
+        "one side is a guess"
         if uses_prediction
-        else "you each have what the other asked for"
+        else "you both asked"
     )
     return f"{place} · {tail}"
 
