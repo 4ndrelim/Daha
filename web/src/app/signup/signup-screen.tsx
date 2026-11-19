@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { api, ApiError, getToken } from "@/lib/api";
 import { startSession } from "@/lib/auth";
 import { meKey } from "@/lib/queries/me";
+import { BrandLogo } from "@/components/daha/brand-logo";
 import { Field, fieldClass, PrimaryButton } from "@/components/daha/form";
 import { ErrorState } from "@/components/daha/states";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -59,8 +60,8 @@ function AccountStep() {
 
   return (
     <main className={shell}>
-      <p className="text-[28px] leading-none font-extrabold tracking-tight text-primary">daha</p>
-      <h1 className="mt-4 text-[22px] leading-7 font-semibold">Join your dorm on DAHA</h1>
+      <BrandLogo />
+      <h1 className="mt-5 text-[22px] leading-7 font-semibold">Join your dorm on DAHA</h1>
       <p className="mt-1 text-muted-foreground">Takes 30 seconds. Then snap your desk and we&apos;ll list what you can share.</p>
 
       <form onSubmit={handleSubmit((v) => signup.mutate(v))} className="mt-7 space-y-4" noValidate>
