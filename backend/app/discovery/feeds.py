@@ -8,7 +8,7 @@ from app import schemas
 from app.discovery import matching
 from app.discovery.scoring import loc_for, locations
 from app.models import Community, Item, ItemAudience, ItemRequest, Membership, RequestAudience
-from app.services import serializers
+from app.services import serializers, value_exchange
 from app.services.communities import get_community
 from app.services.viewer import ViewerContext
 from app.services.visibility import (
@@ -131,6 +131,7 @@ def home_feed(db: Session, viewer: ViewerContext) -> schemas.HomeFeed:
             select(func.count()).select_from(ItemRequest).where(*_open_requests_conds(viewer))
         )
         or 0,
+        dorm_value_shared_month_usd=value_exchange.dorm_shared_this_month(db, viewer.dorm_id),
     )
     return schemas.HomeFeed(
         dorm=serializers.community_ref(dorm) if dorm else None,

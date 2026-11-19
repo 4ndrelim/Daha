@@ -75,6 +75,14 @@ class HandoffSendBody(Schema):
     place_id: ID | None = None
 
 
+class TxValue(Schema):
+    """Value exchange on a completed transaction: an estimate in whole dollars, no money moves."""
+
+    value_usd: int | None  # the item's value, stored when the exchange completed
+    bonus_points: int  # the karma bonus the viewer got from this exchange
+    no_bonus_reason: str | None  # self | no_value
+
+
 class Transaction(Schema):
     id: ID
     kind: TransactionType
@@ -100,6 +108,7 @@ class Transaction(Schema):
     updated_at: ISODateTime
     condition: ConditionCheck | None = None  # null unless the feature is on and kind = lend
     handoff: HandoffState | None = None  # null unless the feature is on, before the handoff
+    value: TxValue | None = None  # null unless VALUE_EXCHANGE_ENABLED; estimates only
 
 
 class TxActionBody(Schema):

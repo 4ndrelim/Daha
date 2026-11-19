@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     # Item value: an optional estimated new price per item (US dollars). Off unless .env says so.
     # Display only: never used for points, karma or payments.
     item_value_enabled: bool = False
+    # Value exchange (needs ITEM_VALUE_ENABLED too): the value stored on completed exchanges,
+    # totals and a karma bonus. Off unless .env says so.
+    # No money ever moves in DAHA; every value is an estimate.
+    value_exchange_enabled: bool = False
     # Handoff coordinator (docs/plans/handoff-coordinator.md). Off unless backend/.env turns it on.
     handoff_coordinator_enabled: bool = False
     harnessrouter_handoff_harness_id: str = ""  # one shared id, or one per key in the same order

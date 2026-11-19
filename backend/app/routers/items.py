@@ -5,7 +5,7 @@ from app import schemas
 from app.api.deps import DB, CurrentUser, Viewer
 from app.models import Item, ItemRequest
 from app.services import items as items_service
-from app.services import serializers, transactions
+from app.services import serializers, transactions, value_exchange
 from app.services.notifications import notify
 from app.services.viewer import build_viewer
 
@@ -45,6 +45,12 @@ def my_items(viewer: Viewer, db: DB, status: schemas.ItemStatus | None = None):
         query = query.where(Item.status == status)
     rows = db.execute(query.order_by(Item.created_at.desc(), Item.id.desc())).scalars().all()
     return serializers.item_cards(db, list(rows), viewer)
+
+
+@router.get("/items/value-estimate", response_model=schemas.ValueEstimate)
+def value_estimate(name: str, viewer: Viewer, db: DB):
+    """Value exchange: a starting value for the List an item form. Never makes a paid call."""
+    return value_exchange.suggest(db, name[:120])
 
 
 @router.get("/items/{item_id}", response_model=schemas.ItemDetail)

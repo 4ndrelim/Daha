@@ -27,7 +27,7 @@ from app.models import (
     Upload,
     User,
 )
-from app.services import points
+from app.services import points, value_exchange
 from app.services.viewer import ViewerContext
 from app.services.visibility import (
     DISCOVERY_ITEM_STATUSES,
@@ -112,7 +112,7 @@ def user_public(db: Session, user: User) -> schemas.UserPublic:
     )
     return schemas.UserPublic(
         **ref.model_dump(),
-        value_shared_usd=value_shared_usd(db, user.id),
+        value_shared_usd=_value_shared(db, user.id),
         bio=user.bio,
         points=pts,
         level=points.level_for(pts),
@@ -122,6 +122,14 @@ def user_public(db: Session, user: User) -> schemas.UserPublic:
         items_shared_count=shared or 0,
         joined_at=user.created_at,
     )
+
+
+def _value_shared(db: Session, user_id: int) -> int | None:
+    """Value exchange on: stored values of completed exchanges between two people. Item value
+    only: the older total from current item values. Both off: null."""
+    if value_exchange.enabled():
+        return value_exchange.value_shared(db, user_id)
+    return value_shared_usd(db, user_id)
 
 
 def value_shared_usd(db: Session, user_id: int) -> int | None:
@@ -188,6 +196,7 @@ def me_out(db: Session, user: User) -> schemas.Me:
         unread_notifications=unread.notifications,
         unread_messages=unread.messages,
         item_value_enabled=settings.item_value_enabled,
+        value_exchange_enabled=value_exchange.enabled(),
     )
 
 

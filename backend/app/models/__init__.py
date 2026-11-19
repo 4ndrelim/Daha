@@ -378,6 +378,8 @@ class Transaction(IdMixin, Base):
     # Handoff coordinator (HANDOFF_COORDINATOR_ENABLED; app/services/handoff.py).
     pickup_at: Mapped[datetime | None] = _ts_null()  # the agreed handoff time
     handoff_suggestion: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # the current proposal
+    # Value exchange (VALUE_EXCHANGE_ENABLED; app/services/value_exchange.py). Estimates only.
+    value_usd: Mapped[int | None] = mapped_column(Integer)  # the item's value, stored at completion
 
     __table_args__ = (
         Index("ix_transactions_owner_id", "owner_id"),

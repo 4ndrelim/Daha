@@ -38,6 +38,7 @@ class HomeFeedStats(Schema):
     dorm_items: int
     campus_items: int
     open_requests: int
+    dorm_value_shared_month_usd: int | None = None  # value exchange: completed this month
 
 
 class HomeFeed(Schema):

@@ -34,6 +34,7 @@ export interface Me extends UserPublic {
   email: string; dorm: CommunityRef | null; groups: CommunityRef[]; walking_radius_min: number;
   onboarded: boolean; match_suggestions: boolean; unread_notifications: number; unread_messages: number;
   item_value_enabled?: boolean;      // ITEM_VALUE_ENABLED: show the Value field and totals
+  value_exchange_enabled?: boolean;  // VALUE_EXCHANGE_ENABLED (needs item value too); the web also needs NEXT_PUBLIC_VALUE_EXCHANGE
 }
 export interface AuthResponse { token: string; user: Me }
 export interface SignupBody { email: string; password: string; name: string; dorm_id?: ID | null; ref_user_id?: ID | null }
@@ -132,7 +133,16 @@ export interface Transaction {
   created_at: ISODateTime; updated_at: ISODateTime;
   condition: ConditionCheck | null;  // null unless CONDITION_CHECK_ENABLED and kind = lend
   handoff: HandoffState | null;      // null unless HANDOFF_COORDINATOR_ENABLED, before the handoff
+  value?: TxValue | null;            // completed + VALUE_EXCHANGE_ENABLED only; an estimate, no money moves
 }
+
+// ---------- value exchange (VALUE_EXCHANGE_ENABLED; estimates in whole US dollars, no money moves) ----------
+export interface TxValue {
+  value_usd: number | null;          // the item's value, stored when the exchange completed
+  bonus_points: number;              // the karma bonus I got from this exchange
+  no_bonus_reason: "self" | "no_value" | null;
+}
+export interface ValueEstimate { value_usd: number | null; source: "store" | "ai" | null }
 
 // ---------- handoff coordinator ("Suggest a time & place"; HANDOFF_COORDINATOR_ENABLED) ----------
 export interface HandoffSuggestion {
@@ -200,7 +210,7 @@ export interface HomeFeed {
   you_can_help: FulfillableRequest[];  // ≤ 5
   requests_nearby: RequestCard[];      // ≤ 10
   new_nearby: ItemCard[];              // ≤ 12
-  stats: { dorm_items: number; campus_items: number; open_requests: number };
+  stats: { dorm_items: number; campus_items: number; open_requests: number; dorm_value_shared_month_usd?: number | null };  // value exchange: completed this month
 }
 export type FeedEntry =
   | { kind: "request"; created_at: ISODateTime; request: RequestCard }
@@ -262,6 +272,7 @@ export interface Detection {
   suggested_share: boolean; sensitive_reason: string | null; suggested_transaction_type: TransactionType;
   status: "pending" | "published" | "discarded";
   value_estimate_usd?: number | null;  // the AI's estimate (ITEM_VALUE_ENABLED); null if the AI is off or unsure
+  value_source?: "store" | "ai" | null; // value exchange: where the estimate came from (a cached store price wins)
 }
 export interface Scan { id: ID; status: "processing" | "done" | "failed"; images: ScanImage[]; detections: Detection[]; provider: string; created_at: ISODateTime }
 export interface ScanCreate { upload_ids: ID[] }
