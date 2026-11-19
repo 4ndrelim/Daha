@@ -24,7 +24,7 @@ from app.models import (
     TransactionEvent,
     User,
 )
-from app.services import condition, points, serializers
+from app.services import condition, handoff, points, serializers
 from app.services.notifications import notify
 from app.services.viewer import ViewerContext
 
@@ -521,6 +521,7 @@ def transactions_out(
                 due_date=t.due_date,
                 is_overdue=is_overdue(t, today),
                 pickup_place=serializers.place_out(place, viewer) if place else None,
+                pickup_at=t.pickup_at,
                 pickup_note=t.pickup_note if note_visible else None,
                 conversation_id=t.conversation_id,
                 allowed_actions=allowed_actions(t, viewer.user_id),
@@ -529,6 +530,7 @@ def transactions_out(
                 created_at=t.created_at,
                 updated_at=t.updated_at,
                 condition=condition.condition_out(db, t, viewer.user_id),
+                handoff=handoff.handoff_out(db, t, viewer),
             )
         )
     return out

@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     harnessrouter_condition_harness_id: str = ""  # one shared id, or one per key in the same order
     condition_budget_usd: float = 2.0  # hard stop for paid condition checks (all time)
     condition_est_cost_per_check: float = 0.05  # used when the API reports no cost
+    # Handoff coordinator (docs/plans/handoff-coordinator.md). Off unless backend/.env turns it on.
+    handoff_coordinator_enabled: bool = False
+    harnessrouter_handoff_harness_id: str = ""  # one shared id, or one per key in the same order
+    harnessrouter_handoff_model: str = ""  # the model the handoff-coordinator harness was made with
+    handoff_budget_usd: float = 1.0  # hard stop for paid suggestions (all time)
+    handoff_est_cost_per_run: float = 0.02  # used when the API reports no cost
     anthropic_api_key: str = Field(default="", repr=False)
     anthropic_model: str = "claude-opus-5-5"
     anthropic_effort: str = "medium"
@@ -106,6 +112,10 @@ class Settings(BaseSettings):
     @property
     def harnessrouter_condition_harness_ids(self) -> list[str]:
         return csv_list(self.harnessrouter_condition_harness_id)
+
+    @property
+    def harnessrouter_handoff_harness_ids(self) -> list[str]:
+        return csv_list(self.harnessrouter_handoff_harness_id)
 
 
 @lru_cache

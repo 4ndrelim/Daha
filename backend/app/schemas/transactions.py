@@ -45,6 +45,36 @@ class ConditionCheck(Schema):
     can_add_return_photos: bool  # me = borrower, item handed off, no result yet
 
 
+class HandoffSuggestion(Schema):
+    """A proposed handoff time and exchange spot (HANDOFF_COORDINATOR_ENABLED)."""
+
+    # thinking = the agent is working · draft = only its author sees it · sent = waiting for the
+    # other person · accepted = it is now the transaction's pickup place and time · failed
+    status: Literal["thinking", "draft", "sent", "accepted", "failed"]
+    mine: bool  # I asked for it, or I sent it
+    start_time: ISODateTime | None
+    place: Place | None
+    reason: str | None  # one short line from the agent; null for a hand-picked time
+    confidence: float | None  # 0..1
+    sample: bool  # true = a labeled stand-in, no AI ran (AI_PROVIDER=mock)
+    message: str | None  # set when failed, e.g. "Couldn't find a good time — suggest one yourself"
+    can_send: bool  # my draft: "Send"
+    can_accept: bool  # their suggestion: one tap to confirm
+
+
+class HandoffState(Schema):
+    can_suggest: bool  # "Suggest a time & place" may run now
+    runs_left_today: int  # of 3 per transaction per 24 h
+    suggestion: HandoffSuggestion | None
+
+
+class HandoffSendBody(Schema):
+    """Empty = send my draft as it is. With both fields = send my own time and place ("Change")."""
+
+    start_time: ISODateTime | None = None
+    place_id: ID | None = None
+
+
 class Transaction(Schema):
     id: ID
     kind: TransactionType
@@ -60,6 +90,7 @@ class Transaction(Schema):
     due_date: date | None
     is_overdue: bool
     pickup_place: Place | None
+    pickup_at: ISODateTime | None = None  # the agreed handoff time, once someone accepted one
     pickup_note: str | None
     conversation_id: ID
     allowed_actions: list[TxAction]
@@ -68,6 +99,7 @@ class Transaction(Schema):
     created_at: ISODateTime
     updated_at: ISODateTime
     condition: ConditionCheck | None = None  # null unless the feature is on and kind = lend
+    handoff: HandoffState | None = None  # null unless the feature is on, before the handoff
 
 
 class TxActionBody(Schema):

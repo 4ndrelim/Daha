@@ -1,6 +1,6 @@
 import { call, http } from "../client";
 import { notMocked } from "../mock";
-import type { ConditionSlot, ConditionStage, ID, Review, ReviewCreate, Transaction, TxActionBody } from "../types";
+import type { ConditionSlot, ConditionStage, HandoffSendBody, ID, Review, ReviewCreate, Transaction, TxActionBody } from "../types";
 
 export interface TransactionListQuery { role?: "owner" | "borrower" | "all"; state?: "active" | "past" | "all" }
 
@@ -19,6 +19,16 @@ export const transactions = {
     call("transactions", () => http<Transaction>("POST", `/transactions/${id}/condition/confirm`), () => notMocked<Transaction>("transactions.conditionConfirm")),
   conditionCompare: (id: ID) =>
     call("transactions", () => http<Transaction>("POST", `/transactions/${id}/condition/compare`), () => notMocked<Transaction>("transactions.conditionCompare")),
+  /** "Suggest a time & place": the only call that starts the handoff agent (3 a day per transaction). */
+  handoffSuggest: (id: ID) =>
+    call("transactions", () => http<Transaction>("POST", `/transactions/${id}/handoff/suggest`), () => notMocked<Transaction>("transactions.handoffSuggest")),
+  /** Send my draft as it is (no body), or a time and place I picked. */
+  handoffSend: (id: ID, body: HandoffSendBody = {}) =>
+    call("transactions", () => http<Transaction>("POST", `/transactions/${id}/handoff/send`, { body }), () => notMocked<Transaction>("transactions.handoffSend")),
+  handoffAccept: (id: ID) =>
+    call("transactions", () => http<Transaction>("POST", `/transactions/${id}/handoff/accept`), () => notMocked<Transaction>("transactions.handoffAccept")),
+  handoffDismiss: (id: ID) =>
+    call("transactions", () => http<Transaction>("DELETE", `/transactions/${id}/handoff`), () => notMocked<Transaction>("transactions.handoffDismiss")),
   review: (id: ID, body: ReviewCreate) =>
     call("transactions", () => http<Review>("POST", `/transactions/${id}/review`, { body }), () => notMocked<Review>("transactions.review")),
 };

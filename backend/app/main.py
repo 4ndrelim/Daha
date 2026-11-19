@@ -12,6 +12,7 @@ from app.routers import (
     communities,
     condition,
     conversations,
+    handoff,
     health,
     items,
     notifications,
@@ -41,6 +42,7 @@ for module in (
     requests,
     transactions,
     condition,
+    handoff,
     conversations,
     notifications,
 ):

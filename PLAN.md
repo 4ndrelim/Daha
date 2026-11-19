@@ -176,6 +176,11 @@ CONDITION_CHECK_ENABLED=false        # condition check on loans (web: NEXT_PUBLI
 HARNESSROUTER_CONDITION_HARNESS_ID=  # set by setup_harnessrouter.py --condition --write-env
 CONDITION_BUDGET_USD=2               # hard stop for paid condition checks
 CONDITION_EST_COST_PER_CHECK=0.05
+HANDOFF_COORDINATOR_ENABLED=false    # "Suggest a time & place" in a transaction chat (docs/plans/handoff-coordinator.md)
+HARNESSROUTER_HANDOFF_HARNESS_ID=    # set by setup_harnessrouter.py --handoff --write-env
+HARNESSROUTER_HANDOFF_MODEL=         # the model of that harness (dsh base)
+HANDOFF_BUDGET_USD=1                 # hard stop for paid suggestions
+HANDOFF_EST_COST_PER_RUN=0.02
 ANTHROPIC_API_KEY=                   # optional fallback provider
 ANTHROPIC_MODEL=claude-opus-5-5
 ANTHROPIC_EFFORT=medium
@@ -245,7 +250,7 @@ Unless a table says otherwise:
 | `requests` | `requester_id` FK, `raw_text`, `title`, `item_name` null, `category` null, `attributes` JSONB default `{}`, `quantity` default 1, `needed_from` date null, `needed_until` date null, `duration_days` null, `transaction_type` null, `visibility`, `status` (open\|in_progress\|fulfilled\|cancelled) default open, `pickup_place_id` null, **C:** `matching_status` (pending\|done) default pending, `ai_enriched` bool default false, `embedding VECTOR(384)` null, `search_tsv GENERATED` (title, item_name, raw_text), `updated_at`, `fulfilled_at` null | `expired` is computed, not stored (see §7.7) |
 | `request_audiences` | PK(`request_id`, `community_id`) | |
 | `request_matches` (C) | PK(`request_id`, `item_id`), `score` float, `reason` text, `notified` bool default false, `anonymous` bool default false (a match on a private item; never shown to the requester) | Written by C's matching |
-| `transactions` | `kind`, `status` (requested\|offered\|accepted\|handed_off\|completed\|declined\|cancelled), `item_id` FK, `request_id` FK null, `owner_id` FK, `borrower_id` FK, `initiated_by` (owner\|borrower), `message` null, `start_date` null, `due_date` null, `pickup_place_id` null, `pickup_note` null, `conversation_id` FK, `accepted_at`/`handed_off_at`/`completed_at`/`declined_at`/`cancelled_at` null, `updated_at` | Indexes on owner, borrower, item |
+| `transactions` | `kind`, `status` (requested\|offered\|accepted\|handed_off\|completed\|declined\|cancelled), `item_id` FK, `request_id` FK null, `owner_id` FK, `borrower_id` FK, `initiated_by` (owner\|borrower), `message` null, `start_date` null, `due_date` null, `pickup_place_id` null, `pickup_note` null, `conversation_id` FK, `pickup_at` timestamptz null (the agreed handoff time), `handoff_suggestion` JSONB null (the current time-and-place proposal), `accepted_at`/`handed_off_at`/`completed_at`/`declined_at`/`cancelled_at` null, `updated_at` | Indexes on owner, borrower, item |
 | `transaction_events` | `transaction_id` FK, `status`, `actor_id` null, `note` null | Timeline |
 | `conversations` | `kind` (direct\|transaction), `transaction_id` FK unique null, `last_message_at` null | Direct = one per user pair |
 | `conversation_participants` | PK(`conversation_id`, `user_id`), `last_read_message_id` null | Unread = messages with id > `last_read_message_id` from others |
@@ -409,10 +414,30 @@ export interface Transaction {
   owner: UserRef; borrower: UserRef; initiated_by: "owner" | "borrower"; my_role: "owner" | "borrower";
   message: string | null; start_date: ISODate | null; due_date: ISODate | null; is_overdue: boolean;
   pickup_place: Place | null; pickup_note: string | null; conversation_id: ID;
+  pickup_at: ISODateTime | null;     // the agreed handoff time, once someone accepted one
   allowed_actions: TxAction[]; can_review: boolean; timeline: TxTimelineEntry[];
   created_at: ISODateTime; updated_at: ISODateTime;
   condition: ConditionCheck | null;  // null unless CONDITION_CHECK_ENABLED and kind = lend
+  handoff: HandoffState | null;      // null unless HANDOFF_COORDINATOR_ENABLED, before the handoff
 }
+
+// ---------- handoff coordinator ("Suggest a time & place"; HANDOFF_COORDINATOR_ENABLED) ----------
+export interface HandoffSuggestion {
+  // thinking = the agent is working · draft = only its author sees it · sent = waiting for the other
+  // person · accepted = it is now the transaction's pickup place and time · failed
+  status: "thinking" | "draft" | "sent" | "accepted" | "failed";
+  mine: boolean;                   // I asked for it, or I sent it
+  start_time: ISODateTime | null;
+  place: Place | null;
+  reason: string | null;           // one short line from the agent; null for a hand-picked time
+  confidence: number | null;       // 0..1
+  sample: boolean;                 // true = a labeled stand-in, no AI ran (AI_PROVIDER=mock)
+  message: string | null;          // set when failed, e.g. "Couldn't find a good time — suggest one yourself"
+  can_send: boolean;               // my draft: "Send"
+  can_accept: boolean;             // their suggestion: one tap to confirm
+}
+export interface HandoffState { can_suggest: boolean; runs_left_today: number; suggestion: HandoffSuggestion | null }  // 3 runs per transaction per 24 h
+export interface HandoffSendBody { start_time?: ISODateTime | null; place_id?: ID | null }  // empty = send my draft; both = my own time and place
 
 // ---------- condition check (loans; CONDITION_CHECK_ENABLED) ----------
 export type ConditionSlot = "front" | "back" | "marks";
@@ -564,6 +589,10 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | A | `GET /transactions/{id}` | | `Transaction` | Parties only |
 | A | `POST /transactions/{id}/actions` | `TxActionBody` | `Transaction` | Rules in §7.7; 409 if the action isn't allowed |
 | A | `POST /transactions/{id}/review` | `ReviewCreate` | `Review` 201 | Only when completed; one review per party |
+| A | `POST /transactions/{id}/handoff/suggest` | | `Transaction` | Handoff coordinator (404 unless `HANDOFF_COORDINATOR_ENABLED`). Starts the agent in the background, only on this call; poll the transaction while `handoff.suggestion.status = "thinking"`. 429 after 3 runs per transaction per 24 h |
+| A | `POST /transactions/{id}/handoff/send` | `HandoffSendBody` | `Transaction` | Send my draft, or my own time and place. Posts a system message |
+| A | `POST /transactions/{id}/handoff/accept` | | `Transaction` | The other person's one tap: sets `pickup_place` and `pickup_at`, adds a timeline row and a system message |
+| A | `DELETE /transactions/{id}/handoff` | | `Transaction` | Drop my own draft |
 | A | `PUT /transactions/{id}/condition/{handoff\|return}/{front\|back\|marks}` | multipart `file` | `Transaction` | Condition check (404 while `CONDITION_CHECK_ENABLED=false`; lend only, else 409). Handoff photos: owner, before the borrower confirms. Return photos: borrower, after handoff; the 3rd starts the comparison. Same image pipeline as `/uploads` |
 | A | `POST /transactions/{id}/condition/confirm` | | `Transaction` | Borrower: "This looks right" (all 3 handoff photos in) |
 | A + C | `POST /transactions/{id}/condition/compare` | | `Transaction` | Runs C's condition agent in the background (`status: "checking"` → `done`/`failed`); idempotent. `AI_PROVIDER=mock` or no harness → a labeled sample (`sample: true`). Never changes points. Photos are deleted when the loan ends (completed, cancelled or declined); the result text stays |
@@ -612,7 +641,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | `badge` | earner | a badge is awarded | `/profile` |
 
 ### 7.6 Standard event types (`POST /events`; B and C send them, A stores them)
-`page_view`, `search_performed`, `search_result_clicked`, `item_viewed`, `scan_started`, `scan_review_shown`, `scan_published`, `onboarding_skipped`, `request_composer_opened`, `request_posted`, `offer_sent`, `share_clicked`, `invite_copied`, `feedback_submitted`, `commercial_search_shown`, `commercial_offer_clicked`, `mutual_match_shown` (`{count, uses_prediction}`), `mutual_match_clicked` (`{rank, action}`), `match_suggestions_changed` (`{enabled}`), `location_permission` (`{state, opened_by}`; never coordinates). The payload is a small JSON object (ids, counts, seconds) and never contains free text from other people.
+`page_view`, `search_performed`, `search_result_clicked`, `item_viewed`, `scan_started`, `scan_review_shown`, `scan_published`, `onboarding_skipped`, `request_composer_opened`, `request_posted`, `offer_sent`, `share_clicked`, `invite_copied`, `feedback_submitted`, `commercial_search_shown`, `commercial_offer_clicked`, `handoff_suggest_tapped`, `handoff_sent` (`{changed}`), `handoff_accepted`, `mutual_match_shown` (`{count, uses_prediction}`), `mutual_match_clicked` (`{rank, action}`), `match_suggestions_changed` (`{enabled}`), `location_permission` (`{state, opened_by}`; never coordinates). The payload is a small JSON object (ids, counts, seconds) and never contains free text from other people.
 
 ### 7.7 Transaction rules (A's `services/transactions.py`: one `apply_action()` and one `allowed_actions()` from this table)
 | Status | Kind | Owner may | Borrower may |

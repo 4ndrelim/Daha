@@ -11,6 +11,7 @@ import { useMe } from "@/lib/queries/me";
 import { UserAvatar } from "@/components/daha/user-avatar";
 import { TransactionCard } from "@/components/daha/transaction-card";
 import { ConditionCheckCard } from "@/components/daha/condition-check";
+import { HandoffCoordinatorCard } from "@/components/daha/handoff-coordinator";
 import { EmptyState, ErrorState } from "@/components/daha/states";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, parseISO } from "date-fns";
@@ -177,6 +178,8 @@ export default function ChatPage() {
             </div>
           );
         })}
+        {/* "Suggest a time & place": below the newest messages, so it sits where the planning happens. */}
+        {txId && <div className="pt-3"><HandoffCoordinatorCard txId={txId} /></div>}
         <div ref={bottom} />
       </div>
 

@@ -373,6 +373,9 @@ class Transaction(IdMixin, Base):
     condition_sample: Mapped[bool] = mapped_column(Boolean, server_default="false", default=False)
     condition_checked_at: Mapped[datetime | None] = _ts_null()
     condition_photos_deleted_at: Mapped[datetime | None] = _ts_null()
+    # Handoff coordinator (HANDOFF_COORDINATOR_ENABLED; app/services/handoff.py).
+    pickup_at: Mapped[datetime | None] = _ts_null()  # the agreed handoff time
+    handoff_suggestion: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # the current proposal
 
     __table_args__ = (
         Index("ix_transactions_owner_id", "owner_id"),
