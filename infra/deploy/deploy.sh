@@ -57,6 +57,17 @@ fi
 ssh_vm() { ssh "${SSH_OPTS[@]}" "$VM" "$@"; }
 ssh_vm_tty() { ssh -t "${SSH_OPTS[@]}" "$VM" "$@"; }
 healthy() { curl -fsS --max-time 10 "https://$SITE/api/health" 2>/dev/null | grep -q '"ok":true'; }
+env_value() { # $1 = file, $2 = name: the value, without quotes or a trailing "  # comment"
+  [ -f "$1" ] || return 0
+  grep -E "^$2=" "$1" | tail -1 | cut -d= -f2- \
+    | sed -E 's/[[:space:]]+#.*$//; s/^#.*$//; s/^[[:space:]]+//; s/[[:space:]]+$//' | tr -d "\"'"
+}
+env_flag() { # true/false, read the way the backend reads it (true, 1, yes, on)
+  case "$(env_value "$BACKEND_ENV" "$1" | tr '[:upper:]' '[:lower:]')" in
+    true | 1 | yes | on) echo true ;;
+    *) echo false ;;
+  esac
+}
 
 ship() { # $1 = deploy | prepare: send the code and settings, then run remote.sh on the VM
   local mode=$1
@@ -100,9 +111,20 @@ ship() { # $1 = deploy | prepare: send the code and settings, then run remote.sh
     printf '\n# --- set by infra/deploy/deploy.sh (%s) ---\n' "$mode"
     printf 'DEMO_MODE=%s\nPUBLIC_BASE_URL=%s\nCORS_ORIGINS=%s\n' "$DEMO_MODE" "$base_url" "$base_url"
   } | ssh_vm 'umask 077 && cat > ~/daha/config/backend.env.new'
-  printf 'MODE=%q\nSITE=%q\nDEMO_MODE=%q\nDUCKDNS_SUBDOMAIN=%q\nDUCKDNS_TOKEN=%q\nPUBLIC_IP=%q\n' \
-    "$mode" "$SITE" "$DEMO_MODE" "${DUCKDNS_SUBDOMAIN:-}" "${DUCKDNS_TOKEN:-}" "$public_ip" \
-    | ssh_vm 'umask 077 && cat > ~/daha/config/deploy.env'
+  # The website's feature switches are baked in when it's built, so they come from here: the two
+  # features follow their backend switch in backend/.env, the theme follows web/.env.local.
+  local theme condition handoff
+  theme=$(env_value "$ROOT/web/.env.local" NEXT_PUBLIC_THEME)
+  [ "$theme" = classic ] || theme=holiday
+  condition=$(env_flag CONDITION_CHECK_ENABLED)
+  handoff=$(env_flag HANDOFF_COORDINATOR_ENABLED)
+  echo "   website switches: coordinator $handoff, condition check $condition, theme $theme"
+  {
+    printf 'MODE=%q\nSITE=%q\nDEMO_MODE=%q\nDUCKDNS_SUBDOMAIN=%q\nDUCKDNS_TOKEN=%q\nPUBLIC_IP=%q\n' \
+      "$mode" "$SITE" "$DEMO_MODE" "${DUCKDNS_SUBDOMAIN:-}" "${DUCKDNS_TOKEN:-}" "$public_ip"
+    printf 'NEXT_PUBLIC_THEME=%q\nNEXT_PUBLIC_CONDITION_CHECK=%q\nNEXT_PUBLIC_HANDOFF_COORDINATOR=%q\n' \
+      "$theme" "$condition" "$handoff"
+  } | ssh_vm 'umask 077 && cat > ~/daha/config/deploy.env'
 
   say "Setting up the VM and starting DAHA (the first time takes 10-20 minutes)"
   ssh_vm 'bash ~/daha/src.new/infra/deploy/remote.sh'
