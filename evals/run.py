@@ -1,7 +1,9 @@
-"""uv run --project backend python -m evals.run {scan|parse|search|match|mutual|all} [--provider P] [--limit N] [--yes]
+"""uv run --project backend python -m evals.run {scan|parse|search|match|mutual|handoff|all} [--provider P] [--limit N] [--yes]
 
 parse/search/match/mutual are free and use the seeded dev database (`make seed` first).
 mutual needs MUTUAL_MATCHING=rules or ai in backend/.env (docs/plans/mutual-matching.md).
+handoff is PAID (8 short HarnessRouter tasks, a few cents in total) and needs --yes; it is not
+part of `all`. It needs no database (docs/plans/handoff-coordinator.md).
 scan uses AI_PROVIDER (mock by default); a paid provider needs --yes.
 Reports are written to evals/reports/YYYY-MM-DD-<suite>.md.
 """
@@ -240,6 +242,128 @@ def run_mutual(limit: int | None) -> dict:
     return {"precision": mean(precisions), "recall": mean(recalls), "validity": validity, "leaks": leaks}
 
 
+# ---------------------------------------------------------------- handoff coordinator
+HANDOFF_NOW = "2026-11-19T10:00:00-08:00"  # a Thursday morning on campus; every chat is read "then"
+HANDOFF_PLACES = [
+    (1, "Tresidder Memorial Union"), (2, "Cecil H. Green Library"), (3, "Old Union"),
+    (4, "Main Quad"), (5, "Arrillaga Family Dining Commons"), (6, "Meyer Green"),
+]  # fmt: skip
+
+
+def _balance(slot) -> float | None:
+    """The account's remaining credit: the only real cost figure, since tasks report none."""
+    import httpx
+
+    from app.core.config import settings
+
+    try:
+        r = httpx.get(
+            settings.harnessrouter_base_url.rstrip("/") + "/v1/balance",
+            headers={"Authorization": f"Bearer {slot.api_key}"},
+            timeout=20,
+        )
+        return float(r.json()["balance_usd"]) if r.status_code == 200 else None
+    except (httpx.HTTPError, KeyError, TypeError, ValueError):
+        return None
+
+
+def score_handoff(row: dict, suggestion, places: dict[int, str]) -> list[str]:
+    """What is wrong with one suggestion (an empty list = as expected)."""
+    exp, problems = row["expect"], []
+    local = suggestion.start_time
+    hour = local.hour + local.minute / 60
+    if "date" in exp and local.date().isoformat() != exp["date"]:
+        problems.append(f"day {local.date().isoformat()} (expected {exp['date']})")
+    lo, hi = exp.get("hour", [0, 24])
+    if not lo <= hour <= hi:
+        problems.append(f"time {local:%H:%M} (expected {lo}–{hi}h)")
+    if exp.get("place") and places[suggestion.place_id] != exp["place"]:
+        problems.append(f"place {places[suggestion.place_id]} (expected {exp['place']})")
+    if "max_confidence" in exp and suggestion.confidence > exp["max_confidence"]:
+        problems.append(f"confidence {suggestion.confidence} (expected ≤ {exp['max_confidence']})")
+    for banned in exp.get("reason_must_not_contain", []):
+        if banned.lower() in suggestion.reason.lower():
+            problems.append(f"reason repeats injected text ({banned!r})")
+    return problems
+
+
+def run_handoff(limit: int | None, yes: bool, slot=None, label: str | None = None) -> dict:
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    from app.ai import handoff as H
+    from app.ai.providers.base import ProviderError
+    from app.core.config import settings
+
+    rows = load(DATA / "handoff" / "chats.jsonl")[:limit]
+    if slot is None and not H.is_set_up():
+        raise SystemExit("Set HARNESSROUTER_HANDOFF_HARNESS_ID first (setup_harnessrouter.py --handoff)")
+    if not yes:
+        est = len(rows) * settings.handoff_est_cost_per_run
+        raise SystemExit(f"{len(rows)} paid tasks, about ${est:.2f} by the estimate. Add --yes to run.")
+    slot = slot or H._slot()
+    now = datetime.fromisoformat(HANDOFF_NOW).astimezone(ZoneInfo(settings.campus_tz))
+    places = dict(HANDOFF_PLACES)
+    by_name = {name: pid for pid, name in HANDOFF_PLACES}
+    names = {"lender": ["Maya C.", "Maya"], "borrower": ["Jordan R.", "Jordan"]}
+    before = _balance(slot)
+    valid = correct = 0
+    times, detail, reported = [], [], []
+    for row in rows:
+        payload = H.build_input(
+            [tuple(m) for m in row["messages"]], HANDOFF_PLACES,
+            lender_dorm="Wilbur Hall", borrower_dorm="Florence Moore Hall (FloMo)",
+            pickup_place_id=by_name.get(row.get("pickup_place")), names=names, now=now,
+        )  # fmt: skip
+        start = time.perf_counter()
+        try:
+            s = asyncio.run(asyncio.wait_for(H.run_task(payload, now, slot=slot), 120))
+        except (ProviderError, TimeoutError, OSError) as exc:
+            times.append(time.perf_counter() - start)
+            detail.append(f"| {row['name']} | — | — | ✗ no usable answer ({str(exc)[:60]}) |")
+            continue
+        times.append(time.perf_counter() - start)
+        valid += 1
+        if s.cost_usd is not None:
+            reported.append(s.cost_usd)
+        problems = score_handoff(row, s, places)
+        correct += not problems
+        got = f"{s.start_time:%a %b %d %H:%M} · {places[s.place_id]} · conf {s.confidence}"
+        mark = "✓" if not problems else "✗ " + "; ".join(problems)
+        detail.append(f"| {row['name']} | {got} | {s.reason[:70]} | {mark} |")
+    after = _balance(slot)
+    if before is not None and after == before:  # the balance can take a moment to catch up
+        time.sleep(45)
+        after = _balance(slot)
+    spent = round(before - after, 4) if before is not None and after is not None else None
+    n = len(rows)
+    cost_line = (
+        f"- **real cost ${spent:.4f} for {n} tasks (${spent / n:.4f} each)**, read from the account "
+        "balance before and after (other use of the same account in that minute would be included)"
+        if spent is not None
+        else "- real cost: the balance could not be read; check the HarnessRouter dashboard"
+    )
+    lines = [
+        f"{n} sample chats, read as if it were {HANDOFF_NOW}. Harness `{H.HARNESS_NAME}`"
+        f"{f' ({label})' if label else ''}, dsh base, no tools.",
+        "",
+        f"- **valid answers {valid}/{n}** (a place from the list, a time in the future within 7 days)",
+        f"- **as expected {correct}/{n}** (the right day, time window and place; injected text ignored)",
+        f"- **latency p50 {statistics.median(times):.1f} s** · p95 {p95(times):.1f} s · max {max(times):.1f} s",
+        cost_line,
+        f"- cost reported by the tasks themselves: {f'${sum(reported):.4f}' if reported else 'none'}",
+        "",
+        "| chat | suggestion | reason | result |",
+        "|---|---|---|---|",
+        *detail,
+    ]
+    if label is None:
+        report("handoff", lines)
+    else:
+        print("\n".join(lines))
+    return {"valid": valid, "correct": correct, "n": n, "p50": statistics.median(times), "spent": spent}
+
+
 def run_scan(limit: int | None, provider_name: str | None, yes: bool) -> dict:
     from app.ai.providers.base import _provider
     from app.ai.vision import downscale
@@ -311,7 +435,7 @@ def _mutual_on() -> bool:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("suite", choices=["scan", "parse", "search", "match", "mutual", "all"])
+    ap.add_argument("suite", choices=["scan", "parse", "search", "match", "mutual", "handoff", "all"])
     ap.add_argument("--provider")
     ap.add_argument("--limit", type=int)
     ap.add_argument("--yes", action="store_true")
@@ -324,6 +448,8 @@ def main() -> None:
         run_match(a.limit)
     if a.suite == "mutual" or (a.suite == "all" and _mutual_on()):
         run_mutual(a.limit)
+    if a.suite == "handoff":
+        run_handoff(a.limit, a.yes)
     if a.suite in ("scan", "all"):
         run_scan(a.limit, a.provider, a.yes)
 

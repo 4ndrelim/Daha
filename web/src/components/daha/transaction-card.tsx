@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { AlertTriangle, Check, Lock, MapPin, Star } from "lucide-react";
+import { AlertTriangle, CalendarClock, Check, Lock, MapPin, Star } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import type { Transaction, TxAction, TxStatus } from "@/lib/api/types";
 import { firstName, shortDate } from "@/lib/format";
 import { useTxAction } from "@/lib/queries/transactions";
@@ -106,8 +107,9 @@ export function TransactionCard({ tx, compact = false }: { tx: Transaction; comp
         </p>
       )}
 
-      {!compact && (tx.pickup_place || tx.pickup_note) && (
+      {!compact && (tx.pickup_place || tx.pickup_note || tx.pickup_at) && (
         <div className="mt-3 space-y-1 rounded-xl bg-muted px-3 py-2 text-[13px]">
+          {tx.pickup_at && <p className="flex items-center gap-1.5 font-medium"><CalendarClock className="size-3.5" /> {format(parseISO(tx.pickup_at), "EEE, MMM d 'at' h:mm a")}</p>}
           {tx.pickup_place && <p className="flex items-center gap-1.5"><MapPin className="size-3.5" /> {tx.pickup_place.name}</p>}
           {tx.pickup_note && <p className="flex items-start gap-1.5"><Lock className="mt-0.5 size-3.5 shrink-0" /> {tx.pickup_note}</p>}
         </div>

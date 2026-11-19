@@ -123,10 +123,30 @@ export interface Transaction {
   owner: UserRef; borrower: UserRef; initiated_by: "owner" | "borrower"; my_role: "owner" | "borrower";
   message: string | null; start_date: ISODate | null; due_date: ISODate | null; is_overdue: boolean;
   pickup_place: Place | null; pickup_note: string | null; conversation_id: ID;
+  pickup_at: ISODateTime | null;     // the agreed handoff time, once someone accepted one
   allowed_actions: TxAction[]; can_review: boolean; timeline: TxTimelineEntry[];
   created_at: ISODateTime; updated_at: ISODateTime;
   condition: ConditionCheck | null;  // null unless CONDITION_CHECK_ENABLED and kind = lend
+  handoff: HandoffState | null;      // null unless HANDOFF_COORDINATOR_ENABLED, before the handoff
 }
+
+// ---------- handoff coordinator ("Suggest a time & place"; HANDOFF_COORDINATOR_ENABLED) ----------
+export interface HandoffSuggestion {
+  // thinking = the agent is working · draft = only its author sees it · sent = waiting for the other
+  // person · accepted = it is now the transaction's pickup place and time · failed
+  status: "thinking" | "draft" | "sent" | "accepted" | "failed";
+  mine: boolean;                   // I asked for it, or I sent it
+  start_time: ISODateTime | null;
+  place: Place | null;
+  reason: string | null;           // one short line from the agent; null for a hand-picked time
+  confidence: number | null;       // 0..1
+  sample: boolean;                 // true = a labeled stand-in, no AI ran (AI_PROVIDER=mock)
+  message: string | null;          // set when failed, e.g. "Couldn't find a good time — suggest one yourself"
+  can_send: boolean;               // my draft: "Send"
+  can_accept: boolean;             // their suggestion: one tap to confirm
+}
+export interface HandoffState { can_suggest: boolean; runs_left_today: number; suggestion: HandoffSuggestion | null }  // 3 runs per transaction per 24 h
+export interface HandoffSendBody { start_time?: ISODateTime | null; place_id?: ID | null }  // empty = send my draft; both = my own time and place
 
 // ---------- condition check (loans; CONDITION_CHECK_ENABLED) ----------
 export type ConditionSlot = "front" | "back" | "marks";
