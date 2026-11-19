@@ -72,8 +72,10 @@ def update_me(db: Session, user: User, body: schemas.MeUpdate) -> User:
         user.onboarded = body.onboarded
     if "match_suggestions" in sent and body.match_suggestions is not None:
         user.match_suggestions = body.match_suggestions
-        if not body.match_suggestions:
-            from app.ai.profile import forget_profile  # opting out deletes what was learned
+        if not body.match_suggestions and not user.is_demo:
+            # Opting out deletes what was learned. Demo accounts keep the profile that ships with
+            # the seed: deleting it would make the next opt-in buy a new one (a paid AI call).
+            from app.ai.profile import forget_profile
 
             forget_profile(db, user.id)
     if "dorm_id" in sent and body.dorm_id is not None:
