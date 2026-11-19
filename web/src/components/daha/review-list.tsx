@@ -12,7 +12,7 @@ export function ReviewList({ reviews, emptyBody }: { reviews: Review[]; emptyBod
           <div className="flex items-center gap-2">
             <UserAvatar user={r.reviewer} className="size-7" />
             <span className="font-medium">{r.reviewer.name}</span>
-            <span className="ml-auto text-[13px] text-amber-600" aria-label={`${r.rating} stars`}>{"★".repeat(r.rating)}<span className="text-border">{"★".repeat(5 - r.rating)}</span></span>
+            <span className="ml-auto text-[13px] text-reward-600" aria-label={`${r.rating} stars`}>{"★".repeat(r.rating)}<span className="text-border">{"★".repeat(5 - r.rating)}</span></span>
           </div>
           {r.body && <p className="mt-2 text-[14px]">{r.body}</p>}
           <p className="mt-1 text-[12px] text-muted-foreground">{timeAgo(r.created_at)}</p>

@@ -142,9 +142,9 @@ export function RequestComposer() {
       {eff?.kind === "offer" && (
         <Link
           href={`/add/item?name=${encodeURIComponent(eff.item_name ?? "")}${eff.category ? `&category=${eff.category}` : ""}`}
-          className="flex items-center gap-3 rounded-2xl bg-points-soft px-4 py-3 ring-1 ring-amber-200"
+          className="flex items-center gap-3 rounded-2xl bg-points-soft px-4 py-3 ring-1 ring-reward-200"
         >
-          <Gift className="size-5 shrink-0 text-amber-600" />
+          <Gift className="size-5 shrink-0 text-reward-600" />
           <span className="flex-1 text-[14px]"><span className="font-semibold">Looks like you&apos;re offering something.</span> List it instead? People can find it in search.</span>
         </Link>
       )}

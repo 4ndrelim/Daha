@@ -23,13 +23,13 @@ function ScanCard() {
   return (
     <Link
       href="/add/scan"
-      className="relative block overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 p-5 text-white shadow-lg shadow-emerald-600/20 active:scale-[0.99]"
+      className="relative block overflow-hidden rounded-3xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-deep p-5 text-white shadow-lg shadow-brand-600/20 active:scale-[0.99]"
     >
       <span aria-hidden className="absolute -top-6 -right-4 text-[96px] opacity-20 select-none">📸</span>
-      <p className="text-[13px] font-semibold tracking-wide text-emerald-100 uppercase">Start here</p>
+      <p className="text-[13px] font-semibold tracking-wide text-brand-100 uppercase">Start here</p>
       <p className="mt-1 text-[22px] leading-7 font-semibold">Show us what you have</p>
-      <p className="mt-1 max-w-[16rem] text-emerald-50">Snap your desk, we&apos;ll list it. You pick what to share.</p>
-      <span className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 font-semibold text-emerald-700">
+      <p className="mt-1 max-w-[16rem] text-brand-50">Snap your desk, we&apos;ll list it. You pick what to share.</p>
+      <span className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 font-semibold text-brand-700">
         <Camera className="size-5" /> Snap your desk
       </span>
     </Link>
@@ -38,7 +38,7 @@ function ScanCard() {
 
 function ScanBanner() {
   return (
-    <Link href="/add/scan" className="flex min-h-14 items-center gap-3 rounded-2xl bg-primary-soft px-4 py-2.5 active:bg-emerald-100">
+    <Link href="/add/scan" className="flex min-h-14 items-center gap-3 rounded-2xl bg-primary-soft px-4 py-2.5 active:bg-brand-100">
       <span className="flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground"><Camera className="size-[18px]" /></span>
       <span className="flex-1 text-[15px]"><span className="font-semibold">Snap more stuff</span><span className="text-muted-foreground"> · we&apos;ll list it for you</span></span>
       <ChevronRight className="size-5 text-accent-foreground" />

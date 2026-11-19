@@ -50,7 +50,15 @@ test("demo login → home → search → item → post a request → every tab",
     await expect(page.getByText("Something went wrong")).toHaveCount(0);
   }
 
-  // 6. page_view events are sent with the path only (never the query string).
+  // 6. Leaderboard: podium with the three awards, both tabs, nickname only.
+  await page.goto("/leaderboard");
+  const board = page.locator("main:visible");
+  await expect(board.getByRole("list", { name: "Podium" })).toContainText("The Karma GOAT");
+  await board.getByRole("tab", { name: "All time" }).click();
+  await expect(board.getByRole("list", { name: "Dorm ranking" })).toBeVisible();
+  await expect(board).not.toContainText("Maya Chen");
+
+  // 7. page_view events are sent with the path only (never the query string).
   await expect.poll(() => pageViews.length).toBeGreaterThan(3);
   expect(pageViews.every((p) => typeof p === "string" && !p.includes("?"))).toBe(true);
   expect(pageViews).toContain("/profile");

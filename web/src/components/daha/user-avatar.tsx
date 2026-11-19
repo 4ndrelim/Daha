@@ -3,7 +3,7 @@ import type { UserRef } from "@/lib/api/types";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const COLORS = ["bg-emerald-100 text-emerald-800", "bg-amber-100 text-amber-800", "bg-sky-100 text-sky-800",
+const COLORS = ["bg-brand-100 text-brand-800", "bg-reward-100 text-reward-800", "bg-sky-100 text-sky-800",
   "bg-rose-100 text-rose-800", "bg-violet-100 text-violet-800", "bg-teal-100 text-teal-800"];
 
 export function UserAvatar({ user, className }: { user: Pick<UserRef, "id" | "name" | "avatar_url">; className?: string }) {

@@ -132,11 +132,11 @@ export default function CommunitiesPage() {
       {mine.isError && <ErrorState onRetry={() => mine.refetch()} />}
       {mine.isPending && <Skeleton className="h-32 rounded-3xl" />}
       {dorm && (
-        <Link href={`/communities/${dorm.slug}`} className="block rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-700 p-5 text-white shadow-lg shadow-emerald-600/20 active:scale-[0.99]">
-          <p className="text-[13px] font-semibold tracking-wide text-emerald-100 uppercase">Your dorm</p>
+        <Link href={`/communities/${dorm.slug}`} className="block rounded-3xl bg-gradient-to-br from-brand-500 to-brand-deep p-5 text-white shadow-lg shadow-brand-600/20 active:scale-[0.99]">
+          <p className="text-[13px] font-semibold tracking-wide text-brand-100 uppercase">Your dorm</p>
           <p className="mt-1 flex items-center gap-2 text-[22px] font-semibold"><span aria-hidden>{dorm.emoji ?? "🏠"}</span> {dorm.name}</p>
-          <p className="mt-1 text-emerald-50">{plural(dorm.member_count, "neighbor")} · {plural(dorm.item_count, "thing")} to share · {plural(dorm.open_request_count, "open ask")}</p>
-          <span className="mt-4 inline-flex h-10 items-center gap-1 rounded-full bg-white/95 px-4 text-[14px] font-semibold text-emerald-700">Open channel <ChevronRight className="size-4" /></span>
+          <p className="mt-1 text-brand-50">{plural(dorm.member_count, "neighbor")} · {plural(dorm.item_count, "thing")} to share · {plural(dorm.open_request_count, "open ask")}</p>
+          <span className="mt-4 inline-flex h-10 items-center gap-1 rounded-full bg-white/95 px-4 text-[14px] font-semibold text-brand-700">Open channel <ChevronRight className="size-4" /></span>
         </Link>
       )}
       {mine.data && !dorm && (

@@ -7,7 +7,7 @@ export const CATEGORIES: CategoryInfo[] = [
   { value: "academic", label: "Academic", emoji: "📚", tint: "bg-sky-50" },
   { value: "tech", label: "Tech", emoji: "💻", tint: "bg-indigo-50" },
   { value: "clothing", label: "Clothing", emoji: "👔", tint: "bg-rose-50" },
-  { value: "dorm", label: "Dorm essentials", emoji: "🏠", tint: "bg-amber-50" },
+  { value: "dorm", label: "Dorm essentials", emoji: "🏠", tint: "bg-reward-50" },
   { value: "consumables", label: "Consumables", emoji: "🧂", tint: "bg-orange-50" },
   { value: "sports", label: "Sports & outdoors", emoji: "🚲", tint: "bg-lime-50" },
   { value: "moving", label: "Moving", emoji: "📦", tint: "bg-yellow-50" },

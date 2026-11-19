@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 const chip = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium leading-5 whitespace-nowrap";
 
 const TX_STYLE: Record<TransactionType, string> = {
-  lend: "bg-emerald-50 text-emerald-700",
-  give: "bg-amber-50 text-amber-700",
+  lend: "bg-brand-50 text-brand-700",
+  give: "bg-reward-50 text-reward-700",
   exchange: "bg-sky-50 text-sky-700",
 };
 
@@ -16,8 +16,8 @@ export function TxTypeChip({ type, className }: { type: TransactionType; classNa
 }
 
 const STATUS_STYLE: Record<ItemStatus, string> = {
-  available: "bg-emerald-50 text-emerald-700",
-  reserved: "bg-amber-50 text-amber-700",
+  available: "bg-brand-50 text-brand-700",
+  reserved: "bg-reward-50 text-reward-700",
   borrowed: "bg-stone-100 text-stone-600",
   unavailable: "bg-stone-100 text-stone-500",
 };

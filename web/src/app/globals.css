@@ -5,6 +5,27 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+  --color-brand-deep: var(--brand-deep);
+  --color-reward-50: var(--reward-50);
+  --color-reward-100: var(--reward-100);
+  --color-reward-200: var(--reward-200);
+  --color-reward-300: var(--reward-300);
+  --color-reward-400: var(--reward-400);
+  --color-reward-500: var(--reward-500);
+  --color-reward-600: var(--reward-600);
+  --color-reward-700: var(--reward-700);
+  --color-reward-800: var(--reward-800);
+  --color-reward-900: var(--reward-900);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -80,6 +101,28 @@
   --chart-3: #0ea5e9;
   --chart-4: #e11d48;
   --chart-5: #78716c;
+  /* Brand + reward scales: classic = emerald + amber. Components use brand-* / reward-*, never emerald-* / amber-*. */
+  --brand-50: #ecfdf5;
+  --brand-100: #d1fae5;
+  --brand-200: #a7f3d0;
+  --brand-300: #6ee7b7;
+  --brand-400: #34d399;
+  --brand-500: #10b981;
+  --brand-600: #059669;
+  --brand-700: #047857;
+  --brand-800: #065f46;
+  --brand-900: #064e3b;
+  --brand-deep: #0f766e;          /* teal-700: end of hero gradients */
+  --reward-50: #fffbeb;
+  --reward-100: #fef3c7;
+  --reward-200: #fde68a;
+  --reward-300: #fcd34d;
+  --reward-400: #fbbf24;
+  --reward-500: #f59e0b;
+  --reward-600: #d97706;
+  --reward-700: #b45309;
+  --reward-800: #92400e;
+  --reward-900: #78350f;
   --radius: 0.75rem;
   --sidebar: #fafaf9;
   --sidebar-foreground: #1c1917;
@@ -89,6 +132,58 @@
   --sidebar-accent-foreground: #065f46;
   --sidebar-border: #e7e5e4;
   --sidebar-ring: #10b981;
+}
+
+/* Holiday theme (switch: src/lib/theme.ts → NEXT_PUBLIC_THEME). Holiday red takes emerald's place,
+   pine green takes amber's, on a warm white. All text pairs keep WCAG AA contrast (≥ 4.5:1). */
+[data-theme="holiday"] {
+  --brand-50: #fdf2f2;
+  --brand-100: #fbe3e2;
+  --brand-200: #f6c6c4;
+  --brand-300: #ee9b98;
+  --brand-400: #e2625e;
+  --brand-500: #bc2a24;
+  --brand-600: #b4231e;
+  --brand-700: #951b17;
+  --brand-800: #7a1814;
+  --brand-900: #5f1411;
+  --brand-deep: #6e1512;
+  --reward-50: #f0f6f2;
+  --reward-100: #dcebe1;
+  --reward-200: #b9d6c3;
+  --reward-300: #8bbb9d;
+  --reward-400: #589a73;
+  --reward-500: #357c54;
+  --reward-600: #23663f;
+  --reward-700: #1b5233;
+  --reward-800: #16422a;
+  --reward-900: #113321;
+  --background: #fffaf3;          /* warm white */
+  --foreground: #1f1a17;
+  --card-foreground: #1f1a17;
+  --popover-foreground: #1f1a17;
+  --primary: var(--brand-600);
+  --primary-hover: var(--brand-700);
+  --primary-soft: var(--brand-50);
+  --points: var(--reward-500);
+  --points-soft: var(--reward-50);
+  --secondary: #f6f1ea;
+  --muted: #f6f1ea;
+  --muted-foreground: #6f6259;
+  --accent: var(--brand-50);
+  --accent-foreground: var(--brand-800);
+  --destructive: #be123c;         /* rose-700, kept apart from the brand red; always paired with words */
+  --border: #ebe3d9;
+  --input: #ebe3d9;
+  --ring: var(--brand-500);
+  --chart-1: var(--brand-600);
+  --chart-2: var(--reward-500);
+  --sidebar: #fffaf3;
+  --sidebar-primary: var(--brand-600);
+  --sidebar-accent: var(--brand-50);
+  --sidebar-accent-foreground: var(--brand-800);
+  --sidebar-border: #ebe3d9;
+  --sidebar-ring: var(--brand-500);
 }
 
 .dark {
