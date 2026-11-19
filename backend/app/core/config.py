@@ -3,7 +3,8 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, field_validator
+from pydantic_core import PydanticUseDefault
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -94,6 +95,16 @@ class Settings(BaseSettings):
     def harnessrouter_api_keys(self) -> list[str]:
         """Every HarnessRouter key, in order; tasks are load-balanced across them."""
         return csv_list(self.harnessrouter_api_key)
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def _comment_only_means_unset(cls, value: object) -> object:
+        """`KEY=   # note` is empty to python-dotenv (`make api`), but Docker Compose's env_file
+        (the server, `make up`) passes the text "# note". A value that is only a comment means
+        "not set", so every setting gets its default the same way everywhere."""
+        if isinstance(value, str) and value.lstrip().startswith("#"):
+            raise PydanticUseDefault()
+        return value
 
     @property
     def harnessrouter_vision_harness_ids(self) -> list[str]:
