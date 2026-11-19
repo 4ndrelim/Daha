@@ -3,11 +3,11 @@
 import threading
 from typing import Literal
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 
 from app import schemas
 from app.api.deps import DB, Viewer
-from app.discovery import commercial, embeddings, feeds, matching
+from app.discovery import commercial, embeddings, feeds, matching, mutual
 from app.discovery import search as search_service
 from app.services import serializers
 from app.services.requests import get_visible_request
@@ -105,3 +105,19 @@ def request_matches(request_id: int, viewer: Viewer, db: DB):
 @router.get("/me/fulfillable", response_model=list[schemas.FulfillableRequest])
 def my_fulfillable(viewer: Viewer, db: DB):
     return feeds.fulfillable_out(db, viewer, 20)
+
+
+@router.get("/me/mutual-matches", response_model=schemas.MutualMatchesResponse)
+def my_mutual_matches(viewer: Viewer, db: DB, background: BackgroundTasks):
+    """Pairs where each of us has something the other needs (docs/plans/mutual-matching.md).
+
+    404 while MUTUAL_MATCHING=off, so the web simply hides the card.
+    """
+    if mutual.mode() == "off":
+        raise HTTPException(404, "Not found")
+    out = mutual.mutual_matches(db, viewer)
+    if out.enabled and mutual.mode() == "ai":
+        from app.ai.profile import refresh_profile
+
+        background.add_task(refresh_profile, viewer.user_id)  # paid, capped, never blocks
+    return out

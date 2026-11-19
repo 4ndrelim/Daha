@@ -31,13 +31,13 @@ export interface UserPublic extends UserRef {
 }
 export interface Me extends UserPublic {
   email: string; dorm: CommunityRef | null; groups: CommunityRef[]; walking_radius_min: number;
-  onboarded: boolean; unread_notifications: number; unread_messages: number;
+  onboarded: boolean; match_suggestions: boolean; unread_notifications: number; unread_messages: number;
 }
 export interface AuthResponse { token: string; user: Me }
 export interface SignupBody { email: string; password: string; name: string; dorm_id?: ID | null; ref_user_id?: ID | null }
 export interface LoginBody { email: string; password: string }
 export interface DemoLoginBody { user_id: ID }
-export interface MeUpdate { name?: string; bio?: string | null; avatar_upload_id?: ID | null; dorm_id?: ID; walking_radius_min?: number; onboarded?: boolean }
+export interface MeUpdate { name?: string; bio?: string | null; avatar_upload_id?: ID | null; dorm_id?: ID; walking_radius_min?: number; onboarded?: boolean; match_suggestions?: boolean }
 
 // ---------- communities & places ----------
 export interface CommunityRef { id: ID; slug: string; name: string; kind: CommunityKind; emoji: string | null }
@@ -163,6 +163,28 @@ export interface HomeFeed {
 export type FeedEntry =
   | { kind: "request"; created_at: ISODateTime; request: RequestCard }
   | { kind: "item"; created_at: ISODateTime; item: ItemCard };
+
+// ---------- mutual matching (docs/plans/mutual-matching.md) ----------
+export interface MutualNeed {
+  kind: "request" | "search" | "predicted";  // "search" and "predicted" are guesses: word them as "might need"
+  name: string;                    // e.g. "tripod"
+  request: RequestCard | null;     // set when kind = "request"
+}
+export interface MutualLink { item: ItemCard; need: MutualNeed; score: number }  // this item answers that need
+export interface MutualMatch {
+  user: UserRef;                   // the other person
+  you_give: MutualLink[];          // my items they need (1..3)
+  you_get: MutualLink[];           // their items I need (1..3)
+  score: number;                   // 0..1
+  reason: string;                  // e.g. "Same dorm · you both asked"
+  uses_prediction: boolean;        // true if any link is a guess
+}
+export interface MutualMatchesResponse {
+  enabled: boolean;                // my opt-in (Me.match_suggestions)
+  matches: MutualMatch[];          // ≤ 10
+  summary: string | null;          // what the profile agent noticed about me (only with MUTUAL_MATCHING=ai)
+  likely_needs: string[];          // ≤ 5 guesses; word them as "might need"
+}
 
 // ---------- buy or rent nearby (C6) ----------
 export interface CommercialSearchBody {

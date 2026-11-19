@@ -1,0 +1,16 @@
+# AI-powered mutual matching ("You two can help each other")
+- Status: accepted (2026-11-18: B and C approved the scope, A's human said "go"; hackathon version built, full version not started)
+- Author: Person A · Date: 2026-11-18
+- Problem it solves: DAHA only matches one way (a request to people who have the item). Students are more willing to lend to someone who can also help them, and most never post a request, so many possible exchanges are never suggested.
+- Proposal: introduce pairs of students who have both turned matching on and who each have an available item the other needs. Pairs are found locally from data we already store (`request_matches`, `search_logs`, items). A HarnessRouter agent, running in the background, turns each opted-in person's own activity into a short habit profile with up to 5 predicted needs, which fills gaps when someone hasn't posted a request. Shown as a card on Home; later a `mutual_match` notification. Full plan: `docs/plans/mutual-matching.md`.
+- Cost: usage-based, about $0.05 per profile task (an estimate from `docs/research/harnessrouter-workflows.md` §5; to be measured before building). $0 for people with fewer than 3 signals and for all rule-based pairs. Hackathon: its own line of `MUTUAL_BUDGET_USD=3`, taken out of the $40 `AI_BUDGET_USD` cap. After the hackathon: about $0.002–0.006 per active person per day with batching.
+- Effort: hackathon version about 9 h (new `backend/app/discovery/mutual.py`, one endpoint, one `users` column, a Home card, a profile harness). Full version about 2 weeks (three new tables, the generic HarnessRouter task runner, notifications, a "what DAHA learned" page, an eval suite). Touches C's `discovery/` and `ai/`, A's models, schemas, seed and config, B's Home and settings, and `PLAN.md` §6–§7 (additive only).
+- Keys / accounts needed: the existing `HARNESSROUTER_API_KEY` — who has it: the team account holder (already in `backend/.env`). A new harness id per key (`HARNESSROUTER_PROFILE_HARNESS_ID`), created free by `setup_harnessrouter.py`, to be registered with the hackathon organizers.
+- Risks / privacy:
+  - It infers habits from behaviour, which is new for DAHA. Off by default, both people must opt in, and each person can see and delete what was learned.
+  - HarnessRouter receives an anonymous summary of one person's own activity: category counts, their own public item names, their own request titles and cleaned search words. Never a name, id, email, dorm, photo, message, private item, or anyone else's text.
+  - Predictions can be wrong: they are worded as guesses, validated on the server, never notified on their own, and never posted for the person.
+  - Real cost is unknown until measured, because the API reports no cost; a per-task cap and a separate budget line limit the damage.
+  - It is a second paid use of HarnessRouter, against the 2026-11-16 decision "HarnessRouter for vision only".
+  - Hackathon risk: about 13 hours to the Thu 09:30 target. Everything sits behind `MUTUAL_MATCHING` (default `off`) and adds new files instead of changing live matching code.
+- Recommendation: do now, in the small hackathon version only (strict pairs first, the agent's profile as an add-on that can be cut), and decide on the full version after a week of real usage shows how many pairs exist and whether people opt in.

@@ -70,6 +70,12 @@ def update_me(db: Session, user: User, body: schemas.MeUpdate) -> User:
         user.walking_radius_min = body.walking_radius_min
     if "onboarded" in sent and body.onboarded is not None:
         user.onboarded = body.onboarded
+    if "match_suggestions" in sent and body.match_suggestions is not None:
+        user.match_suggestions = body.match_suggestions
+        if not body.match_suggestions:
+            from app.ai.profile import forget_profile  # opting out deletes what was learned
+
+            forget_profile(db, user.id)
     if "dorm_id" in sent and body.dorm_id is not None:
         communities.set_dorm(db, user.id, body.dorm_id)
     db.add(user)

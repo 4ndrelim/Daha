@@ -71,6 +71,8 @@ class User(IdMixin, Base):
     walking_radius_min: Mapped[int] = mapped_column(Integer, server_default="10", default=10)
     onboarded: Mapped[bool] = mapped_column(Boolean, server_default="false", default=False)
     is_demo: Mapped[bool] = mapped_column(Boolean, server_default="false", default=False)
+    # Opt-in to mutual matching (docs/plans/mutual-matching.md): a pair needs both people on.
+    match_suggestions: Mapped[bool] = mapped_column(Boolean, server_default="false", default=False)
     referred_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
     seed_key: Mapped[str | None] = mapped_column(Text, unique=True)
 
