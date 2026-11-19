@@ -166,6 +166,7 @@ class ScanDetection(IdMixin, Base):
     suggested_share: Mapped[bool] = mapped_column(Boolean, nullable=False)
     sensitive_reason: Mapped[str | None] = mapped_column(Text)
     suggested_transaction_type: Mapped[str] = _enum(nullable=False)
+    value_estimate_usd: Mapped[int | None] = mapped_column(Integer)  # the AI's guess, or null
     status: Mapped[str] = _enum(nullable=False)  # pending | published | discarded
     published_item_id: Mapped[int | None] = mapped_column(Integer)
     edits: Mapped[Any | None] = mapped_column(JSONB)  # what the user changed: future training data
@@ -181,6 +182,7 @@ class Item(IdMixin, Base):
     category: Mapped[str] = _enum(nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, server_default="1", default=1, nullable=False)
     condition: Mapped[str | None] = _enum()
+    value_usd: Mapped[int | None] = mapped_column(Integer)  # estimated new price, display only
     transaction_type: Mapped[str] = _enum(nullable=False)  # lend | give | exchange
     max_lend_days: Mapped[int | None] = mapped_column(Integer)
     available_from: Mapped[date | None] = mapped_column(Date)

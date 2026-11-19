@@ -13,6 +13,7 @@ import { invalidatePool } from "@/lib/api/mock/pool";
 import { ChoicePills } from "@/components/daha/choice-pills";
 import { Field, fieldClass, PrimaryButton } from "@/components/daha/form";
 import { PhotoPicker, type PickedPhoto } from "@/components/daha/photo-picker";
+import { ValueInput } from "@/components/daha/value-input";
 import { VisibilityPicker } from "@/components/daha/visibility-picker";
 import { ErrorState } from "@/components/daha/states";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +29,7 @@ interface FormState {
   name: string; description: string; category: Category | null; quantity: number; condition: Condition | null;
   type: TransactionType; maxLendDays: string; from: string; until: string;
   visibility: Visibility; groupIds: ID[]; placeId: ID | null; note: string;
+  value: number | null;
 }
 
 function fromItem(i: ItemDetail): FormState {
@@ -35,7 +37,7 @@ function fromItem(i: ItemDetail): FormState {
     name: i.name, description: i.description ?? "", category: i.category, quantity: i.quantity, condition: i.condition,
     type: i.transaction_type, maxLendDays: i.max_lend_days ? String(i.max_lend_days) : "",
     from: i.available_from ?? "", until: i.available_until ?? "", visibility: i.visibility, groupIds: i.group_ids,
-    placeId: i.pickup_place?.id ?? null, note: i.pickup_note ?? "",
+    placeId: i.pickup_place?.id ?? null, note: i.pickup_note ?? "", value: i.value_usd ?? null,
   };
 }
 
@@ -51,6 +53,7 @@ export function ItemForm() {
       name: params.get("name") ?? "", description: "", category, quantity: 1, condition: null,
       type: category ? DEFAULT_TYPE[category] : "lend", maxLendDays: "", from: "", until: "",
       visibility: params.get("visibility") === "private" ? "private" : "dorm", groupIds: [], placeId: null, note: "",
+      value: null,
     };
     return <ItemFormBody editId={null} initial={initial} initialPhotos={[]} />;
   }
@@ -99,6 +102,7 @@ function ItemFormBody({ editId, initial, initialPhotos }: { editId: ID | null; i
         group_ids: f.visibility === "groups" ? f.groupIds : [],
         pickup_place_id: f.placeId,
         pickup_note: f.note.trim() || null,
+        ...(me?.item_value_enabled ? { value_usd: f.value } : {}),
       };
       const newUploads = photos.flatMap((p) => (p.upload ? [p.upload.id] : []));
       if (editId) {
@@ -169,6 +173,12 @@ function ItemFormBody({ editId, initial, initialPhotos }: { editId: ID | null; i
         </div>
         {errors.category && <p className="mt-1.5 text-[13px] text-destructive">{errors.category}</p>}
       </fieldset>
+
+      {me?.item_value_enabled && (
+        <Field label="Value (optional)" htmlFor="value" hint="About what it costs new, in US dollars. Just so people know; it never changes points.">
+          <ValueInput id="value" value={f.value} onChange={(v) => set("value", v)} className="w-full max-w-48" />
+        </Field>
+      )}
 
       <Field label="Description" htmlFor="desc" hint="Size, color, anything people should know.">
         <textarea id="desc" value={f.description} onChange={(e) => set("description", e.target.value)} rows={3}

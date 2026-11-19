@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.ai.normalize import normalize_items
-from app.ai.prompts import PROMPT_VERSION
+from app.ai.prompts import prompt_version
 from app.ai.providers import VisionProvider
 from app.ai.schemas import DetectedItemRaw, ProviderResult
 from app.models import AICache
@@ -31,7 +31,7 @@ def downscale(jpeg: bytes, max_side: int = MAX_SIDE_PX) -> bytes:
 
 def cache_key(image: bytes, provider: VisionProvider) -> str:
     digest = hashlib.sha256(image).hexdigest()
-    return f"{digest}:{PROMPT_VERSION}:{provider.name}:{provider.model}"
+    return f"{digest}:{prompt_version()}:{provider.name}:{provider.model}"
 
 
 def cache_get(db: Session, key: str) -> list[DetectedItemRaw] | None:

@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app import schemas
 from app.ai import vision
-from app.ai.prompts import PROMPT_VERSION
+from app.ai.prompts import prompt_version
 from app.ai.providers import ProviderError, get_vision_provider
 from app.core.config import settings
 from app.core.db import SessionLocal
@@ -98,6 +98,7 @@ def scan_out(db: Session, scan: Scan) -> schemas.Scan:
                 sensitive_reason=d.sensitive_reason,
                 suggested_transaction_type=d.suggested_transaction_type,
                 status=d.status,
+                value_estimate_usd=d.value_estimate_usd if settings.item_value_enabled else None,
             )
             for d in dets
         ],
@@ -126,7 +127,7 @@ def create_scan(
         status="processing",
         provider=provider.name,
         model=provider.model,
-        prompt_version=PROMPT_VERSION,
+        prompt_version=prompt_version(),
     )
     db.add(scan)
     db.flush()
@@ -243,6 +244,7 @@ def _save_image_result(
                 suggested_share=it.suggested_share and it.confidence >= SHARE_MIN_CONFIDENCE,
                 sensitive_reason=it.sensitive_reason,
                 suggested_transaction_type=it.suggested_transaction_type,
+                value_estimate_usd=it.value_usd if settings.item_value_enabled else None,
                 status="pending",
             )
             for it in items
@@ -328,12 +330,15 @@ _EDIT_FIELDS = {
     "transaction_type": "suggested_transaction_type",
     "description": "description",
     "condition": "condition_guess",
+    "value_usd": "value_estimate_usd",
 }
 
 
 def _edits(item: schemas.ScanPublishItem, det: ScanDetection) -> dict:
     out = {}
     for field, det_field in _EDIT_FIELDS.items():
+        if field == "value_usd" and not settings.item_value_enabled:
+            continue
         new, old = getattr(item, field), getattr(det, det_field)
         if field in ("name", "description"):
             new, old = (new or "").strip(), (old or "").strip()

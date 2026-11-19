@@ -7,6 +7,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app import schemas
+from app.core.config import settings
 from app.core.geo import distance_min
 from app.models import (
     Community,
@@ -111,6 +112,7 @@ def user_public(db: Session, user: User) -> schemas.UserPublic:
     )
     return schemas.UserPublic(
         **ref.model_dump(),
+        value_shared_usd=value_shared_usd(db, user.id),
         bio=user.bio,
         points=pts,
         level=points.level_for(pts),
@@ -120,6 +122,24 @@ def user_public(db: Session, user: User) -> schemas.UserPublic:
         items_shared_count=shared or 0,
         joined_at=user.created_at,
     )
+
+
+def value_shared_usd(db: Session, user_id: int) -> int | None:
+    """What this user's shared items were worth, counting only completed exchanges they gave.
+
+    Each completed transaction where the user is the owner adds that item's value once (a lamp
+    lent 3 times counts 3 times). Items without a value add nothing. Null when the flag is off.
+    Display only: never feeds points, karma or payments.
+    """
+    if not settings.item_value_enabled:
+        return None
+    total = db.scalar(
+        select(func.coalesce(func.sum(Item.value_usd), 0))
+        .select_from(Transaction)
+        .join(Item, Item.id == Transaction.item_id)
+        .where(Transaction.owner_id == user_id, Transaction.status == "completed")
+    )
+    return int(total or 0)
 
 
 def unread_counts(db: Session, user_id: int) -> schemas.UnreadCounts:
@@ -167,6 +187,7 @@ def me_out(db: Session, user: User) -> schemas.Me:
         match_suggestions=user.match_suggestions,
         unread_notifications=unread.notifications,
         unread_messages=unread.messages,
+        item_value_enabled=settings.item_value_enabled,
     )
 
 
@@ -340,6 +361,7 @@ def item_cards(
                 created_at=i.created_at,
                 match_score=score,
                 match_reason=reason,
+                value_usd=i.value_usd if settings.item_value_enabled else None,
             )
         )
     return out

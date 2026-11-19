@@ -25,6 +25,7 @@ class Detection(Schema):
     sensitive_reason: str | None
     suggested_transaction_type: TransactionType
     status: Literal["pending", "published", "discarded"]
+    value_estimate_usd: int | None = None  # the AI's estimate; null if the AI is off or unsure
 
 
 class Scan(Schema):

@@ -37,6 +37,8 @@ class UserPublic(UserRef):
     completed_count: int
     items_shared_count: int
     joined_at: ISODateTime
+    # Sum of value_usd over completed exchanges where this user shared the item; null if flag off
+    value_shared_usd: int | None = None
 
 
 class Me(UserPublic):
@@ -48,6 +50,7 @@ class Me(UserPublic):
     match_suggestions: bool  # opted in to mutual matching
     unread_notifications: int
     unread_messages: int
+    item_value_enabled: bool = False  # ITEM_VALUE_ENABLED: show the Value field and totals
 
 
 class AuthResponse(Schema):

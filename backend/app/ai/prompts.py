@@ -1,7 +1,15 @@
 # ruff: noqa: E501 — prompt text is kept verbatim
-"""Vision prompt v1 (PLAN.md C1.3). Bump PROMPT_VERSION whenever the text changes (it keys ai_cache)."""
+"""Vision prompt v1 (PLAN.md C1.3). Bump PROMPT_VERSION whenever the text changes (it keys ai_cache).
+
+With ITEM_VALUE_ENABLED the task also asks for `value_usd` (an estimated new price). That variant
+has its own cache version (`prompt_version()`), so cached answers without values aren't reused.
+The harness (VISION_SYSTEM) is the same either way, so no new harness is needed.
+"""
+
+from app.core.config import settings
 
 PROMPT_VERSION = "vision-v1"
+VALUE_SUFFIX = "+value"
 
 VISION_SYSTEM = (
     "You are DAHA's inventory scanner for a college campus sharing app. You look at one photo "
@@ -31,14 +39,33 @@ Rules:
 - List at most 20 items, most useful first. If nothing is shareable, return {{"items":[]}}."""
 
 
+_VALUE_RULE = """
+- value_usd is your estimate of what this item costs to buy new in the US, in whole dollars (e.g. 25). Use null if you can't tell what exact kind of item it is. Never guess for services, food or things you can't identify."""
+
+
+def with_value() -> bool:
+    return settings.item_value_enabled
+
+
+def prompt_version() -> str:
+    return PROMPT_VERSION + (VALUE_SUFFIX if with_value() else "")
+
+
 def vision_task(filename: str) -> str:
-    return _TASK.format(filename=filename)
+    task = _TASK.format(filename=filename)
+    if with_value():
+        task = task.replace(
+            '"suggested_transaction_type"}]}', '"suggested_transaction_type","value_usd"}]}', 1
+        ).replace("\n\nRules:", _VALUE_RULE + "\n\nRules:", 1)
+    return task
 
 
-# Used by providers that receive the image inline (no file in a working directory).
-VISION_TASK_INLINE = vision_task("(attached above)").replace(
-    "Open the image file `(attached above)` in your working directory.",
-    "Look at the attached photo.",
-)
+def vision_task_inline() -> str:
+    """For providers that receive the image inline (no file in a working directory)."""
+    return vision_task("(attached above)").replace(
+        "Open the image file `(attached above)` in your working directory.",
+        "Look at the attached photo.",
+    )
+
 
 REPAIR_TURN = "Return only the JSON object."

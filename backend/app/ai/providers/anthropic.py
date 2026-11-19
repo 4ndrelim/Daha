@@ -4,7 +4,7 @@ import base64
 import time
 
 from app.ai.normalize import normalize_items
-from app.ai.prompts import VISION_SYSTEM, VISION_TASK_INLINE
+from app.ai.prompts import VISION_SYSTEM, vision_task_inline
 from app.ai.providers.base import ProviderError
 from app.ai.schemas import DetectionPayload, ProviderResult
 from app.core.config import settings
@@ -61,7 +61,7 @@ class AnthropicVisionProvider:
                                     "data": base64.b64encode(image_jpeg).decode(),
                                 },
                             },
-                            {"type": "text", "text": VISION_TASK_INLINE},
+                            {"type": "text", "text": vision_task_inline()},
                         ],
                     }
                 ],
