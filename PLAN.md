@@ -177,8 +177,10 @@ HARNESSROUTER_CONDITION_HARNESS_ID=  # set by setup_harnessrouter.py --condition
 CONDITION_BUDGET_USD=2               # hard stop for paid condition checks
 CONDITION_EST_COST_PER_CHECK=0.05
 HANDOFF_COORDINATOR_ENABLED=false    # "Suggest a time & place" in a transaction chat (docs/plans/handoff-coordinator.md)
-HARNESSROUTER_HANDOFF_HARNESS_ID=    # set by setup_harnessrouter.py --handoff --write-env
-HARNESSROUTER_HANDOFF_MODEL=         # the model of that harness (dsh base)
+# Set by setup_harnessrouter.py --handoff --write-env
+HARNESSROUTER_HANDOFF_HARNESS_ID=
+# The model of that harness (dsh base)
+HARNESSROUTER_HANDOFF_MODEL=
 HANDOFF_BUDGET_USD=1                 # hard stop for paid suggestions
 HANDOFF_EST_COST_PER_RUN=0.02
 ANTHROPIC_API_KEY=                   # optional fallback provider
