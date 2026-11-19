@@ -45,6 +45,7 @@ class Me(UserPublic):
     groups: list[CommunityRef]
     walking_radius_min: int
     onboarded: bool
+    match_suggestions: bool  # opted in to mutual matching
     unread_notifications: int
     unread_messages: int
 
@@ -78,3 +79,4 @@ class MeUpdate(Schema):
     dorm_id: ID | None = None
     walking_radius_min: int | None = Field(default=None, ge=1, le=120)
     onboarded: bool | None = None
+    match_suggestions: bool | None = None

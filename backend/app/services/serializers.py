@@ -164,6 +164,7 @@ def me_out(db: Session, user: User) -> schemas.Me:
         groups=[community_ref(c) for c in communities if c.kind == "group"],
         walking_radius_min=user.walking_radius_min,
         onboarded=user.onboarded,
+        match_suggestions=user.match_suggestions,
         unread_notifications=unread.notifications,
         unread_messages=unread.messages,
     )

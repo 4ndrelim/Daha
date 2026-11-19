@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     harnessrouter_max_concurrency: int = 2
     harnessrouter_timeout_s: int = 180
     harnessrouter_est_cost_per_image: float = 0.10
+    # Mutual matching (docs/plans/mutual-matching.md). Off unless backend/.env turns it on.
+    mutual_matching: str = "off"  # off | rules (free) | ai (rules + HarnessRouter habit profiles)
+    mutual_budget_usd: float = 3.0  # hard stop for paid profile tasks
+    mutual_est_cost_per_profile: float = 0.05  # used when the API reports no cost
+    harnessrouter_profile_harness_id: str = ""  # one shared id, or one per key in the same order
     anthropic_api_key: str = Field(default="", repr=False)
     anthropic_model: str = "claude-opus-5-5"
     anthropic_effort: str = "medium"
@@ -88,6 +93,10 @@ class Settings(BaseSettings):
     @property
     def harnessrouter_vision_harness_ids(self) -> list[str]:
         return csv_list(self.harnessrouter_vision_harness_id)
+
+    @property
+    def harnessrouter_profile_harness_ids(self) -> list[str]:
+        return csv_list(self.harnessrouter_profile_harness_id)
 
 
 @lru_cache

@@ -156,6 +156,7 @@ class DemoSeeder:
                 name=row["name"],
                 bio=row["bio"],
                 is_demo=True,
+                match_suggestions=True,  # demo accounts show mutual matching; real users opt in
                 onboarded=row["key"] != "sam",  # Sam is the onboarding demo account
                 seed_key=f"user:{row['key']}",
                 created_at=self.ago(days=self.rng.randint(35, 60)),
@@ -226,8 +227,13 @@ class DemoSeeder:
             if row.get("avail") == "weekend":
                 available_from, available_until = self.weekend()
 
-            place = self.rng.choice(self.places) if self.rng.random() < 0.25 else None
-            created_at = self.ago(days=self.rng.randint(1, 30), hours=self.rng.randint(0, 23))
+            if row.get("days_ago") is not None:
+                # A fixed age draws nothing from the random stream, so adding such a row never
+                # reshuffles the rest of the seed.
+                place, created_at = None, self.ago(days=row["days_ago"])
+            else:
+                place = self.rng.choice(self.places) if self.rng.random() < 0.25 else None
+                created_at = self.ago(days=self.rng.randint(1, 30), hours=self.rng.randint(0, 23))
             key = row.get("key") or f"{index:03d}-{slugify(row['name'])}"
             item = Item(
                 owner_id=owner.id,
@@ -273,7 +279,10 @@ class DemoSeeder:
         for index, row in enumerate(load("requests.json"), start=1):
             requester = self.users[row["requester"]]
             needed_from, needed_until = self.needed(row.get("needed"))
-            created_at = self.ago(hours=self.rng.randint(1, 60))
+            if row.get("hours_ago") is not None:  # fixed age: see seed_items
+                created_at = self.ago(hours=row["hours_ago"])
+            else:
+                created_at = self.ago(hours=self.rng.randint(1, 60))
             key = row.get("key") or f"{index:02d}-{slugify(row['title'])}"
             req = ItemRequest(
                 requester_id=requester.id,
