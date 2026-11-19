@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     # Run each photo on two keys at once when a task slot is free; the first answer wins
     # (app/ai/providers/harnessrouter.py, _race). Faster and steadier, about twice the cost.
     harnessrouter_race: bool = False
+    # Task slots on key 1 that photos leave free for the other agents (coordinator, condition
+    # check, profiles), which always run on key 1; HarnessRouter allows 2 per key on the free plan.
+    harnessrouter_agent_slots: int = 0
     harnessrouter_max_concurrency: int = 2
     harnessrouter_timeout_s: int = 180
     harnessrouter_est_cost_per_image: float = 0.10

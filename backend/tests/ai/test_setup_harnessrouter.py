@@ -100,3 +100,24 @@ def test_check_reports_each_key_without_printing_it(setup_script, monkeypatch, c
     assert "key 1/3: OK · organization Daha" in out and "key 3/3: HTTP 401" in out
     assert "keys 1, 2 are in the same organization" in out
     assert "sk-hr" not in out
+
+
+@respx.mock
+def test_missing_adds_harnesses_only_for_new_keys(setup_script, monkeypatch, capsys):
+    respx.get(f"{BASE}/v1/bases").mock(return_value=httpx.Response(200, json=[]))
+    respx.get(f"{BASE}/v1/models").mock(return_value=httpx.Response(200, json=[]))
+    create = respx.post(f"{BASE}/v1/harnesses").mock(
+        return_value=httpx.Response(200, json={"id": "hrn_c"})
+    )
+    monkeypatch.setattr(settings, "harnessrouter_api_key", "sk-hr-a,sk-hr-b,sk-hr-c")
+    monkeypatch.setattr(settings, "harnessrouter_vision_harness_id", "hrn_a,hrn_b")
+    monkeypatch.setattr(sys, "argv", ["setup_harnessrouter.py", "--missing", "--write-env"])
+    setup_script.main()
+    assert [c.request.headers["authorization"] for c in create.calls] == ["Bearer sk-hr-c"]
+    saved = setup_script.ENV_FILE.read_text()
+    assert saved == "HARNESSROUTER_VISION_HARNESS_ID=hrn_a,hrn_b,hrn_c\n"
+
+    monkeypatch.setattr(settings, "harnessrouter_vision_harness_id", "hrn_a,hrn_b,hrn_c")
+    setup_script.main()  # every key has one now: nothing to create
+    assert len(create.calls) == 1
+    assert "nothing to do" in capsys.readouterr().out
