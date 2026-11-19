@@ -183,6 +183,8 @@ class Item(IdMixin, Base):
     quantity: Mapped[int] = mapped_column(Integer, server_default="1", default=1, nullable=False)
     condition: Mapped[str | None] = _enum()
     value_usd: Mapped[int | None] = mapped_column(Integer)  # estimated new price, display only
+    # Value exchange: set when the value looks far above the typical price (held for review).
+    value_flagged_at: Mapped[datetime | None] = _ts_null()
     transaction_type: Mapped[str] = _enum(nullable=False)  # lend | give | exchange
     max_lend_days: Mapped[int | None] = mapped_column(Integer)
     available_from: Mapped[date | None] = mapped_column(Date)
@@ -378,6 +380,9 @@ class Transaction(IdMixin, Base):
     # Handoff coordinator (HANDOFF_COORDINATOR_ENABLED; app/services/handoff.py).
     pickup_at: Mapped[datetime | None] = _ts_null()  # the agreed handoff time
     handoff_suggestion: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # the current proposal
+    # Value exchange (VALUE_EXCHANGE_ENABLED; app/services/value_exchange.py). Estimates only.
+    value_usd: Mapped[int | None] = mapped_column(Integer)  # the item's value, frozen at completion
+    swap_value_usd: Mapped[int | None] = mapped_column(Integer)  # swaps: what the borrower gave
 
     __table_args__ = (
         Index("ix_transactions_owner_id", "owner_id"),

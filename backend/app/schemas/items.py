@@ -43,6 +43,7 @@ class ItemCard(Schema):
     match_score: float | None  # only in search/match/fulfillable responses, else null
     match_reason: str | None
     value_usd: int | None = None  # estimated new price in US dollars; null if unset or flag off
+    high_value: bool = False  # VALUE_EXCHANGE_ENABLED and value_usd >= 100
 
 
 class ItemDetail(ItemCard):
@@ -56,6 +57,8 @@ class ItemDetail(ItemCard):
     group_ids: list[ID]  # owner only, else []
     pings_enabled: bool
     is_mine: bool
+    value_locked: bool = False  # value exchange: someone asked for it, so the value can't change
+    value_under_review: bool = False  # owner only: the value looks far above the typical price
     can_borrow: bool
     active_transaction_id: ID | None
     source: ItemSource
@@ -117,3 +120,10 @@ class ItemsBatchBody(Schema):
 
 class ItemsBatchResponse(Schema):
     items: list[ItemDetail]
+
+
+class ValueEstimate(Schema):
+    """A starting value for the Value field: a cached store price, else the AI's, else none."""
+
+    value_usd: int | None
+    source: Literal["store", "ai"] | None

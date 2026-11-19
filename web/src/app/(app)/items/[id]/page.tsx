@@ -9,11 +9,11 @@ import { toast } from "sonner";
 import { api, ApiError, track } from "@/lib/api";
 import type { ItemDetail, TransactionType } from "@/lib/api/types";
 import { categoryInfo, CONDITION_LABEL } from "@/lib/categories";
-import { worthLabel } from "@/lib/value";
+import { VALUE_EXCHANGE, worthLabel } from "@/lib/value";
 import { firstName, shortDate } from "@/lib/format";
 import { invalidatePool } from "@/lib/api/mock/pool";
 import { BackButton } from "@/components/daha/back-button";
-import { CategoryChip, DistanceChip, StatusBadge, TxTypeChip } from "@/components/daha/chips";
+import { CategoryChip, DistanceChip, StatusBadge, TxTypeChip, ValueChips } from "@/components/daha/chips";
 import { Field, fieldClass, PrimaryButton } from "@/components/daha/form";
 import { ItemThumb } from "@/components/daha/item-thumb";
 import { ErrorState, EmptyState } from "@/components/daha/states";
@@ -206,6 +206,7 @@ export default function ItemPage() {
       </div>
 
       <div className="space-y-2">
+        {VALUE_EXCHANGE && <ValueChips value={i.value_usd} high={i.high_value} />}
         <div className="flex flex-wrap items-center gap-1.5">
           <TxTypeChip type={i.transaction_type} />
           <StatusBadge status={i.status} />
@@ -215,7 +216,15 @@ export default function ItemPage() {
         <h1 className="text-[22px] leading-7 font-semibold">
           {i.quantity > 1 && <span className="text-muted-foreground">{i.quantity}× </span>}{i.name}
         </h1>
-        {i.value_usd != null && <p className="text-[14px] text-muted-foreground">{worthLabel(i.value_usd)}</p>}
+        {!VALUE_EXCHANGE && i.value_usd != null && <p className="text-[14px] text-muted-foreground">{worthLabel(i.value_usd)}</p>}
+        {VALUE_EXCHANGE && i.is_mine && i.value_under_review && (
+          <p className="rounded-xl bg-muted px-3 py-2 text-[13px] text-muted-foreground">
+            This value looks far above the typical price, so it&apos;s held for review and earns no value bonus. Edit it if it&apos;s a typo.
+          </p>
+        )}
+        {VALUE_EXCHANGE && i.is_mine && i.value_locked && (
+          <p className="text-[13px] text-muted-foreground">The value is locked while someone has asked for this.</p>
+        )}
         <DistanceChip min={i.distance_min} label={i.community_label} />
         {i.visibility === "private" && (
           <p className="flex items-center gap-1.5 rounded-xl bg-muted px-3 py-2 text-[13px]">

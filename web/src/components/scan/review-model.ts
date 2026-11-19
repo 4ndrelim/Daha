@@ -23,6 +23,8 @@ export interface Row {
   value: number | null;
   /** The AI suggested `value` and nobody changed it: shown as "estimate". */
   valueIsEstimate: boolean;
+  /** Value exchange: "store" when a cached store price filled it in. */
+  valueFromStore?: boolean;
 }
 
 export interface Defaults {
@@ -44,7 +46,7 @@ export function rowFromDetection(d: Detection): Row {
     name: d.name, category: d.category, quantity: Math.max(1, d.quantity || 1), type: null,
     description: d.description ?? "", condition: d.condition_guess, visibility: null, open: false,
     sensitive: d.sensitive_reason, suggestedType: d.suggested_transaction_type,
-    value: d.value_estimate_usd ?? null, valueIsEstimate: d.value_estimate_usd != null,
+    value: d.value_estimate_usd ?? null, valueIsEstimate: d.value_estimate_usd != null, valueFromStore: d.value_source === "store",
   };
 }
 

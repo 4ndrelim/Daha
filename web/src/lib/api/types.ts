@@ -29,11 +29,13 @@ export interface UserPublic extends UserRef {
   bio: string | null; points: number; level: Level; badges: Badge[];
   rating_count: number; completed_count: number; items_shared_count: number; joined_at: ISODateTime;
   value_shared_usd?: number | null;  // ITEM_VALUE_ENABLED: sum of value_usd over completed exchanges they shared; null when off
+  value_received_usd?: number | null; // VALUE_EXCHANGE_ENABLED: what they borrowed, were given or swapped for; null when off
 }
 export interface Me extends UserPublic {
   email: string; dorm: CommunityRef | null; groups: CommunityRef[]; walking_radius_min: number;
   onboarded: boolean; match_suggestions: boolean; unread_notifications: number; unread_messages: number;
   item_value_enabled?: boolean;      // ITEM_VALUE_ENABLED: show the Value field and totals
+  value_exchange_enabled?: boolean;  // VALUE_EXCHANGE_ENABLED (needs item value too); the web also needs NEXT_PUBLIC_VALUE_EXCHANGE
 }
 export interface AuthResponse { token: string; user: Me }
 export interface SignupBody { email: string; password: string; name: string; dorm_id?: ID | null; ref_user_id?: ID | null }
@@ -67,6 +69,7 @@ export interface ItemCard {
   match_score: number | null;    // only in search/match/fulfillable responses, else null
   match_reason: string | null;   // e.g. "Same dorm · 2 min walk"
   value_usd?: number | null;     // ITEM_VALUE_ENABLED: estimated new price, whole US dollars; display only
+  high_value?: boolean;          // VALUE_EXCHANGE_ENABLED and value_usd >= 100
 }
 export interface ItemDetail extends ItemCard {
   description: string | null; images: ItemImage[]; max_lend_days: number | null;
@@ -76,6 +79,8 @@ export interface ItemDetail extends ItemCard {
   group_ids: ID[];               // owner only, else []
   pings_enabled: boolean;        // owner can turn anonymous pings off for this item
   is_mine: boolean; can_borrow: boolean; active_transaction_id: ID | null;
+  value_locked?: boolean;        // value exchange: someone asked for it, so the value can't change
+  value_under_review?: boolean;  // owner only: the value looks far above the typical price
   source: ItemSource; updated_at: ISODateTime;
 }
 export interface ItemCreate {
@@ -132,7 +137,21 @@ export interface Transaction {
   created_at: ISODateTime; updated_at: ISODateTime;
   condition: ConditionCheck | null;  // null unless CONDITION_CHECK_ENABLED and kind = lend
   handoff: HandoffState | null;      // null unless HANDOFF_COORDINATOR_ENABLED, before the handoff
+  value?: TxValue | null;            // null unless VALUE_EXCHANGE_ENABLED; estimates only, no money moves
 }
+
+// ---------- value exchange (VALUE_EXCHANGE_ENABLED; estimates in whole US dollars, no money moves) ----------
+export interface TxValue {
+  value_usd: number | null;          // the item's value, frozen when the exchange completes
+  swap_value_usd: number | null;     // swaps: what the borrower gave in return
+  difference_usd: number | null;     // swaps: the gap between the two, when both are known
+  high_value: boolean;               // value_usd >= 100
+  needs_condition_check: boolean;    // a High value lend waits for the confirmed 3 handoff photos
+  bonus_points: number | null;       // completed: the value bonus I got from this exchange
+  no_bonus_reason: "self" | "no_value" | "under_review" | "repeat" | null;
+  can_set_swap_value: boolean;       // I'm the swap's borrower and it isn't finished
+}
+export interface ValueEstimate { value_usd: number | null; source: "store" | "ai" | null }
 
 // ---------- handoff coordinator ("Suggest a time & place"; HANDOFF_COORDINATOR_ENABLED) ----------
 export interface HandoffSuggestion {
@@ -200,7 +219,7 @@ export interface HomeFeed {
   you_can_help: FulfillableRequest[];  // ≤ 5
   requests_nearby: RequestCard[];      // ≤ 10
   new_nearby: ItemCard[];              // ≤ 12
-  stats: { dorm_items: number; campus_items: number; open_requests: number };
+  stats: { dorm_items: number; campus_items: number; open_requests: number; dorm_value_shared_month_usd?: number | null };  // value exchange: completed this month
 }
 export type FeedEntry =
   | { kind: "request"; created_at: ISODateTime; request: RequestCard }
@@ -262,6 +281,7 @@ export interface Detection {
   suggested_share: boolean; sensitive_reason: string | null; suggested_transaction_type: TransactionType;
   status: "pending" | "published" | "discarded";
   value_estimate_usd?: number | null;  // the AI's estimate (ITEM_VALUE_ENABLED); null if the AI is off or unsure
+  value_source?: "store" | "ai" | null; // value exchange: where the estimate came from (a cached store price wins)
 }
 export interface Scan { id: ID; status: "processing" | "done" | "failed"; images: ScanImage[]; detections: Detection[]; provider: string; created_at: ISODateTime }
 export interface ScanCreate { upload_ids: ID[] }

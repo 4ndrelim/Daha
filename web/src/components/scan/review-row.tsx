@@ -102,7 +102,7 @@ export function ReviewRow({ row, bbox, photo, type, visibility, defaultVisibilit
               {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>)}
             </NativeSelect>
             {me?.item_value_enabled && (
-              <ValueInput value={row.value} estimate={row.valueIsEstimate}
+              <ValueInput value={row.value} estimate={row.valueIsEstimate} estimateLabel={row.valueFromStore ? "store price" : "estimate"}
                 onChange={(value) => onChange({ value, valueIsEstimate: false })} className="w-36 shrink-0" />
             )}
             <Stepper label="Quantity" value={row.quantity} onChange={(quantity) => onChange({ quantity })} />

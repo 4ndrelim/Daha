@@ -1,6 +1,6 @@
 import type { UserPublic } from "@/lib/api/types";
 import { Progress } from "@/components/ui/progress";
-import { formatUsd } from "@/lib/value";
+import { formatUsd, VALUE_EXCHANGE } from "@/lib/value";
 import { UserAvatar } from "./user-avatar";
 
 export function LevelBar({ user }: { user: UserPublic }) {
@@ -41,7 +41,15 @@ export function ProfileHeader({ user, dormName }: { user: UserPublic; dormName?:
         <div className="rounded-xl bg-muted py-2"><dt className="text-[11px] text-muted-foreground">Handoffs</dt><dd className="font-semibold">{user.completed_count}</dd></div>
         <div className="rounded-xl bg-muted py-2"><dt className="text-[11px] text-muted-foreground">Sharing</dt><dd className="font-semibold">{user.items_shared_count}</dd></div>
       </dl>
-      {user.value_shared_usd != null && (
+      {VALUE_EXCHANGE && user.value_shared_usd != null && user.value_received_usd != null ? (
+        <div className="rounded-xl bg-muted px-3 py-2 text-[13px]">
+          <dl className="grid grid-cols-2 gap-2">
+            <div><dt className="font-medium">Value shared</dt><dd className="font-semibold tabular-nums">about {formatUsd(user.value_shared_usd)}</dd></div>
+            <div><dt className="font-medium">Value received</dt><dd className="font-semibold tabular-nums">about {formatUsd(user.value_received_usd)}</dd></div>
+          </dl>
+          <p className="mt-1 text-[12px] text-muted-foreground">Estimated, from completed exchanges. No money changes hands.</p>
+        </div>
+      ) : user.value_shared_usd != null && (
         <p className="flex items-baseline justify-between gap-2 rounded-xl bg-muted px-3 py-2 text-[13px]">
           <span><span className="font-medium">Value shared</span> <span className="text-muted-foreground">· completed exchanges</span></span>
           <span className="font-semibold tabular-nums">{formatUsd(user.value_shared_usd)}</span>

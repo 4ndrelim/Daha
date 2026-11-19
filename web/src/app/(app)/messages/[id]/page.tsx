@@ -11,6 +11,7 @@ import { useMe } from "@/lib/queries/me";
 import { UserAvatar } from "@/components/daha/user-avatar";
 import { TransactionCard } from "@/components/daha/transaction-card";
 import { ConditionCheckCard } from "@/components/daha/condition-check";
+import { ValueReceiptCard } from "@/components/daha/value-receipt";
 import { HandoffCoordinatorCard } from "@/components/daha/handoff-coordinator";
 import { EmptyState, ErrorState } from "@/components/daha/states";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -150,6 +151,7 @@ export default function ChatPage() {
       </div>
 
       <div className="flex-1 space-y-1.5 py-4 pb-24">
+        {txId && <div className="pb-3 empty:hidden"><ValueReceiptCard txId={txId} /></div>}
         {txId && <div className="pb-3"><ConditionCheckCard txId={txId} /></div>}
         {messages.isPending && <div className="space-y-3">{[60, 40, 70].map((w) => <Skeleton key={w} className="h-10 rounded-2xl" style={{ width: `${w}%` }} />)}</div>}
         {messages.isError && <ErrorState message="Couldn't load messages." onRetry={() => messages.refetch()} />}

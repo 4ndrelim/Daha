@@ -26,6 +26,7 @@ class Detection(Schema):
     suggested_transaction_type: TransactionType
     status: Literal["pending", "published", "discarded"]
     value_estimate_usd: int | None = None  # the AI's estimate; null if the AI is off or unsure
+    value_source: str | None = None  # value exchange: store | ai (the store price wins)
 
 
 class Scan(Schema):

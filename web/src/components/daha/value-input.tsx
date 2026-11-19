@@ -5,8 +5,10 @@ import { parseValue } from "@/lib/value";
 import { cn } from "@/lib/utils";
 
 /** Optional "Value" in whole US dollars. `estimate` marks a number the AI suggested and nobody changed. */
-export function ValueInput({ id, value, onChange, estimate = false, className }: {
-  id?: string; value: number | null; onChange: (v: number | null) => void; estimate?: boolean; className?: string;
+export function ValueInput({ id, value, onChange, estimate = false, estimateLabel = "estimate", disabled = false, className }: {
+  id?: string; value: number | null; onChange: (v: number | null) => void; estimate?: boolean;
+  /** The tag on the border, e.g. "store price" when value exchange filled it from a store lookup. */
+  estimateLabel?: string; disabled?: boolean; className?: string;
 }) {
   return (
     <span className={cn("relative inline-flex min-w-0 items-center", className)}>
@@ -19,17 +21,18 @@ export function ValueInput({ id, value, onChange, estimate = false, className }:
         enterKeyHint="done"
         value={value === null ? "" : String(value)}
         onChange={(e) => onChange(parseValue(e.target.value))}
+        disabled={disabled}
         placeholder="Value"
-        aria-label={estimate ? "Value in US dollars, an AI estimate you can change" : "Value in US dollars (optional)"}
+        aria-label={estimate ? `Value in US dollars, an estimate (${estimateLabel}) you can change` : "Value in US dollars (optional)"}
         className={cn(
-          "h-11 w-full min-w-0 rounded-xl border border-input bg-card pl-6 text-base outline-none tabular-nums placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30",
+          "h-11 w-full min-w-0 disabled:opacity-60 rounded-xl border border-input bg-card pl-6 text-base outline-none tabular-nums placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30",
           value !== null ? "pr-10" : "pr-3",
         )}
       />
       {estimate && value !== null && (
-        <span className="pointer-events-none absolute -top-2 left-2.5 rounded-full bg-muted px-1.5 text-[11px] leading-4 font-semibold text-muted-foreground ring-2 ring-card">estimate</span>
+        <span className="pointer-events-none absolute -top-2 left-2.5 rounded-full bg-muted px-1.5 text-[11px] leading-4 font-semibold text-muted-foreground ring-2 ring-card">{estimateLabel}</span>
       )}
-      {value !== null && (
+      {value !== null && !disabled && (
         <button type="button" onClick={() => onChange(null)} aria-label="Clear the value"
           className="absolute right-0 flex size-11 items-center justify-center text-muted-foreground">
           <X className="size-4" />

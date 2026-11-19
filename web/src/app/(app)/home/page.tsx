@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Camera, ChevronRight, Sparkles } from "lucide-react";
+import { Camera, ChevronRight, HandHeart, Sparkles } from "lucide-react";
 import type { FulfillableRequest, HomeFeed } from "@/lib/api/types";
 import { useHomeFeed } from "@/lib/queries/feed";
 import { useMe } from "@/lib/queries/me";
 import { firstName } from "@/lib/format";
+import { formatUsd, VALUE_EXCHANGE } from "@/lib/value";
 import { ItemCard } from "@/components/daha/item-card";
 import { ItemThumb } from "@/components/daha/item-thumb";
 import { MutualMatches } from "@/components/daha/mutual-matches";
@@ -77,12 +78,22 @@ function HelpCard({ f }: { f: FulfillableRequest }) {
 
 function Stats({ feed }: { feed: HomeFeed }) {
   const name = feed.dorm?.name.split(" (")[0];
+  const shared = feed.stats.dorm_value_shared_month_usd;
   return (
-    <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
-      <Sparkles className="size-3.5 text-points" />
-      {name ? `${name} has ${feed.stats.dorm_items} things to share` : `${feed.stats.campus_items} things to share on campus`}
-      {` · ${feed.stats.open_requests} open asks`}
-    </p>
+    <>
+      <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+        <Sparkles className="size-3.5 text-points" />
+        {name ? `${name} has ${feed.stats.dorm_items} things to share` : `${feed.stats.campus_items} things to share on campus`}
+        {` · ${feed.stats.open_requests} open asks`}
+      </p>
+      {/* Value exchange: an estimate from completed exchanges this month. */}
+      {VALUE_EXCHANGE && name && shared != null && shared > 0 && (
+        <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
+          <HandHeart className="size-3.5 text-points" aria-hidden />
+          {name} shared about {formatUsd(shared)} this month <span className="sr-only">(an estimate)</span>
+        </p>
+      )}
+    </>
   );
 }
 

@@ -13,7 +13,8 @@ import { firstName, shortDate, timeAgo } from "@/lib/format";
 import { useTxAction } from "@/lib/queries/transactions";
 import { invalidatePool } from "@/lib/api/mock/pool";
 import { BackButton } from "@/components/daha/back-button";
-import { InfoChip, TxTypeChip } from "@/components/daha/chips";
+import { InfoChip, TxTypeChip, ValueChips } from "@/components/daha/chips";
+import { VALUE_EXCHANGE } from "@/lib/value";
 import { ItemThumb } from "@/components/daha/item-thumb";
 import { PrimaryButton } from "@/components/daha/form";
 import { EmptyState, ErrorState } from "@/components/daha/states";
@@ -54,6 +55,7 @@ function MatchRow({ item, onAsk, asking }: { item: ItemCardT; onAsk?: () => void
       <Link href={`/items/${item.id}`} className="flex min-w-0 flex-1 items-center gap-3">
         <ItemThumb url={item.thumbnail_url} category={item.category} className="size-14 shrink-0 rounded-xl" emojiClassName="text-2xl" />
         <span className="min-w-0">
+          {VALUE_EXCHANGE && <ValueChips value={item.value_usd} high={item.high_value} className="mb-0.5" />}
           <span className="block truncate font-medium">{item.name}</span>
           <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
             <UserAvatar user={item.owner} className="size-4" /> {firstName(item.owner.name)}
@@ -79,6 +81,7 @@ function OfferRow({ tx, isRequester }: { tx: Transaction; isRequester: boolean }
       <div className="flex items-center gap-3">
         <ItemThumb url={tx.item.thumbnail_url} category={tx.item.category} className="size-12 shrink-0 rounded-xl" emojiClassName="text-xl" />
         <div className="min-w-0 flex-1">
+          {VALUE_EXCHANGE && <ValueChips value={tx.item.value_usd} high={tx.item.high_value} className="mb-0.5" />}
           <p className="truncate font-medium">{tx.item.name}</p>
           <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
             <UserAvatar user={who} className="size-4" /> {isRequester ? who.name : "Your offer"} · {TX_STATUS[tx.status]}

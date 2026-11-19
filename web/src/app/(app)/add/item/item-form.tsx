@@ -9,6 +9,7 @@ import { api, ApiError } from "@/lib/api";
 import type { Category, Condition, ID, ItemCreate, ItemDetail, TransactionType, Visibility } from "@/lib/api/types";
 import { CATEGORIES, categoryInfo, CONDITION_LABEL, TX_TYPE_LABEL } from "@/lib/categories";
 import { useMe } from "@/lib/queries/me";
+import { valueExchangeOn } from "@/lib/value";
 import { invalidatePool } from "@/lib/api/mock/pool";
 import { ChoicePills } from "@/components/daha/choice-pills";
 import { Field, fieldClass, PrimaryButton } from "@/components/daha/form";
@@ -64,12 +65,15 @@ export function ItemForm() {
       key={existing.data.id}
       editId={editId}
       initial={fromItem(existing.data)}
+      valueLocked={!!existing.data.value_locked}
       initialPhotos={existing.data.images.map((img) => ({ key: `img-${img.id}`, preview: img.url, upload: null }))}
     />
   );
 }
 
-function ItemFormBody({ editId, initial, initialPhotos }: { editId: ID | null; initial: FormState; initialPhotos: PickedPhoto[] }) {
+function ItemFormBody({ editId, initial, initialPhotos, valueLocked = false }: {
+  editId: ID | null; initial: FormState; initialPhotos: PickedPhoto[]; valueLocked?: boolean;
+}) {
   const router = useRouter();
   const { data: me } = useMe();
   const qc = useQueryClient();
@@ -79,6 +83,18 @@ function ItemFormBody({ editId, initial, initialPhotos }: { editId: ID | null; i
   const [errors, setErrors] = useState<{ name?: string; category?: string; groups?: string }>({});
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setF((s) => ({ ...s, [k]: v }));
+  const exchange = valueExchangeOn(me);
+  // Value exchange: a starting value from a cached store price (never a paid call). Owner can change it.
+  const [estimateFrom, setEstimateFrom] = useState<"store" | "ai" | null>(null);
+  const suggestValue = async () => {
+    if (!exchange || editId !== null || f.value !== null || f.name.trim().length < 3) return;
+    try {
+      const est = await api.items.valueEstimate(f.name.trim());
+      if (est.value_usd === null) return;
+      setF((s) => (s.value === null ? { ...s, value: est.value_usd } : s));
+      setEstimateFrom(est.source);
+    } catch { /* no estimate: the field stays empty */ }
+  };
 
   const pickCategory = (c: Category) => setF((s) => ({
     ...s, category: c,
@@ -102,7 +118,7 @@ function ItemFormBody({ editId, initial, initialPhotos }: { editId: ID | null; i
         group_ids: f.visibility === "groups" ? f.groupIds : [],
         pickup_place_id: f.placeId,
         pickup_note: f.note.trim() || null,
-        ...(me?.item_value_enabled ? { value_usd: f.value } : {}),
+        ...(me?.item_value_enabled && !valueLocked ? { value_usd: f.value } : {}),
       };
       const newUploads = photos.flatMap((p) => (p.upload ? [p.upload.id] : []));
       if (editId) {
@@ -151,7 +167,7 @@ function ItemFormBody({ editId, initial, initialPhotos }: { editId: ID | null; i
       </section>
 
       <Field label="What is it?" htmlFor="name" error={errors.name}>
-        <input id="name" value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. TI-84 calculator"
+        <input id="name" value={f.name} onChange={(e) => set("name", e.target.value)} onBlur={suggestValue} placeholder="e.g. TI-84 calculator"
           className={fieldClass} aria-invalid={!!errors.name} maxLength={120} />
       </Field>
 
@@ -175,8 +191,13 @@ function ItemFormBody({ editId, initial, initialPhotos }: { editId: ID | null; i
       </fieldset>
 
       {me?.item_value_enabled && (
-        <Field label="Value (optional)" htmlFor="value" hint="About what it costs new, in US dollars. Just so people know; it never changes points.">
-          <ValueInput id="value" value={f.value} onChange={(v) => set("value", v)} className="w-full max-w-48" />
+        <Field label={exchange ? "Estimated value (optional)" : "Value (optional)"} htmlFor="value"
+          hint={valueLocked ? "Locked while someone has asked for this. You can change it after."
+            : exchange ? "About what it costs new, in US dollars. An estimate only: no money changes hands. $100+ is High value."
+            : "About what it costs new, in US dollars. Just so people know; it never changes points."}>
+          <ValueInput id="value" value={f.value} onChange={(v) => { set("value", v); setEstimateFrom(null); }}
+            estimate={estimateFrom !== null} estimateLabel={estimateFrom === "store" ? "store price" : "estimate"}
+            disabled={valueLocked} className="w-full max-w-48" />
         </Field>
       )}
 

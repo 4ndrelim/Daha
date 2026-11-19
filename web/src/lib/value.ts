@@ -18,3 +18,25 @@ export function parseValue(text: string): number | null {
 export function worthLabel(n: number): string {
   return `Worth about ${formatUsd(n)} (estimate)`;
 }
+
+/** Value exchange: the web switch (the server also needs VALUE_EXCHANGE_ENABLED and ITEM_VALUE_ENABLED).
+ *  No money moves in DAHA: every number is an estimate, and the wording always says "about". */
+export const VALUE_EXCHANGE = process.env.NEXT_PUBLIC_VALUE_EXCHANGE?.trim().toLowerCase() === "true";
+export const HIGH_VALUE_USD = 100;
+
+/** Both switches on: the web one and the server's (from /api/me). */
+export function valueExchangeOn(me: { value_exchange_enabled?: boolean } | null | undefined): boolean {
+  return VALUE_EXCHANGE && !!me?.value_exchange_enabled;
+}
+
+/** "Worth about $45": the chip shown first on item cards. */
+export function worthChip(n: number): string {
+  return `Worth about ${formatUsd(n)}`;
+}
+
+export const NO_BONUS_TEXT: Record<string, string> = {
+  self: "No value bonus for exchanging with yourself.",
+  no_value: "No value bonus: this item had no estimated value.",
+  under_review: "No value bonus while the value is under review.",
+  repeat: "No value bonus: you two already exchanged in the last 7 days.",
+};

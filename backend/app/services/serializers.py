@@ -27,7 +27,7 @@ from app.models import (
     Upload,
     User,
 )
-from app.services import points
+from app.services import points, value_exchange
 from app.services.viewer import ViewerContext
 from app.services.visibility import (
     DISCOVERY_ITEM_STATUSES,
@@ -112,7 +112,7 @@ def user_public(db: Session, user: User) -> schemas.UserPublic:
     )
     return schemas.UserPublic(
         **ref.model_dump(),
-        value_shared_usd=value_shared_usd(db, user.id),
+        **_value_totals(db, user.id),
         bio=user.bio,
         points=pts,
         level=points.level_for(pts),
@@ -122,6 +122,15 @@ def user_public(db: Session, user: User) -> schemas.UserPublic:
         items_shared_count=shared or 0,
         joined_at=user.created_at,
     )
+
+
+def _value_totals(db: Session, user_id: int) -> dict[str, int | None]:
+    """Value exchange on: frozen values of completed exchanges between two people (shared and
+    received). Item value only: the older "Value shared" from current item values. Else nulls."""
+    if value_exchange.enabled():
+        shared, received = value_exchange.totals(db, user_id)
+        return {"value_shared_usd": shared, "value_received_usd": received}
+    return {"value_shared_usd": value_shared_usd(db, user_id), "value_received_usd": None}
 
 
 def value_shared_usd(db: Session, user_id: int) -> int | None:
@@ -188,6 +197,7 @@ def me_out(db: Session, user: User) -> schemas.Me:
         unread_notifications=unread.notifications,
         unread_messages=unread.messages,
         item_value_enabled=settings.item_value_enabled,
+        value_exchange_enabled=value_exchange.enabled(),
     )
 
 
@@ -362,6 +372,7 @@ def item_cards(
                 match_score=score,
                 match_reason=reason,
                 value_usd=i.value_usd if settings.item_value_enabled else None,
+                high_value=value_exchange.enabled() and value_exchange.is_high_value(i.value_usd),
             )
         )
     return out
@@ -425,6 +436,10 @@ def item_detail(db: Session, item: Item, viewer: ViewerContext) -> schemas.ItemD
         group_ids=group_ids,
         pings_enabled=item.pings_enabled,
         is_mine=is_mine,
+        value_locked=value_exchange.value_locked(db, item),
+        value_under_review=is_mine
+        and value_exchange.enabled()
+        and item.value_flagged_at is not None,
         can_borrow=(
             not is_mine
             and not item.archived

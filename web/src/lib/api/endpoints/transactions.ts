@@ -15,6 +15,9 @@ export const transactions = {
     form.append("file", file, `${slot}.jpg`);
     return call("transactions", () => http<Transaction>("PUT", `/transactions/${id}/condition/${stage}/${slot}`, { form }), () => notMocked<Transaction>("transactions.conditionPhoto"));
   },
+  /** Value exchange: the swap's borrower says about what their side is worth (null clears it). */
+  swapValue: (id: ID, value_usd: number | null) =>
+    call("transactions", () => http<Transaction>("POST", `/transactions/${id}/swap-value`, { body: { value_usd } }), () => notMocked<Transaction>("transactions.swapValue")),
   conditionConfirm: (id: ID) =>
     call("transactions", () => http<Transaction>("POST", `/transactions/${id}/condition/confirm`), () => notMocked<Transaction>("transactions.conditionConfirm")),
   conditionCompare: (id: ID) =>

@@ -6,7 +6,7 @@ from sqlalchemy import or_, select
 from app import schemas
 from app.api.deps import DB, CurrentUser, Viewer
 from app.models import Transaction
-from app.services import condition, transactions
+from app.services import condition, transactions, value_exchange
 
 router = APIRouter(tags=["transactions"])
 
@@ -62,3 +62,15 @@ def review_transaction(transaction_id: int, body: schemas.ReviewCreate, user: Cu
     review = transactions.create_review(db, tx, user, body)
     db.commit()
     return transactions.review_out(db, review)
+
+
+@router.post("/transactions/{transaction_id}/swap-value", response_model=schemas.Transaction)
+def set_swap_value(
+    transaction_id: int, body: schemas.SwapValueBody, user: CurrentUser, viewer: Viewer, db: DB
+):
+    """Value exchange: the swap's borrower says about what their side is worth (an estimate)."""
+    tx = transactions.get_for_party(db, transaction_id, user.id, lock=True)
+    value_exchange.set_swap_value(tx, user.id, body.value_usd)
+    db.commit()
+    db.refresh(tx)
+    return transactions.transaction_out(db, tx, viewer)

@@ -75,6 +75,24 @@ class HandoffSendBody(Schema):
     place_id: ID | None = None
 
 
+class TxValue(Schema):
+    """Value exchange on one transaction (estimates in whole US dollars; no money moves)."""
+
+    value_usd: int | None  # the item's value (frozen when the exchange completes)
+    swap_value_usd: int | None  # swaps: what the borrower gave in return
+    difference_usd: int | None  # swaps: |value_usd - swap_value_usd| when both are known
+    high_value: bool  # value_usd >= 100
+    needs_condition_check: bool  # a High value lend waits for the confirmed 3 handoff photos
+    bonus_points: int | None  # completed: the value bonus the viewer got from this exchange
+    # completed with no bonus: self | no_value | under_review | repeat
+    no_bonus_reason: str | None
+    can_set_swap_value: bool  # the viewer is the swap's borrower and it isn't finished
+
+
+class SwapValueBody(Schema):
+    value_usd: int | None = Field(default=None, ge=0, le=10000)
+
+
 class Transaction(Schema):
     id: ID
     kind: TransactionType
@@ -100,6 +118,7 @@ class Transaction(Schema):
     updated_at: ISODateTime
     condition: ConditionCheck | None = None  # null unless the feature is on and kind = lend
     handoff: HandoffState | None = None  # null unless the feature is on, before the handoff
+    value: TxValue | None = None  # null unless VALUE_EXCHANGE_ENABLED; estimates only
 
 
 class TxActionBody(Schema):

@@ -45,6 +45,14 @@ from app.services import points
 from app.services.visibility import resolve_audiences
 
 DATA_DIR = Path(__file__).parent / "data"
+
+
+def demo_values() -> dict[str, int]:
+    """DEMO DATA: made-up estimated values for a few items (data/demo_values.json). Not real."""
+    rows = json.loads((DATA_DIR / "demo_values.json").read_text())
+    return {k: int(v) for k, v in rows.items() if not k.startswith("_")}
+
+
 DEMO_PASSWORD = "daha-demo"
 DEMO_EMAIL_DOMAIN = "demo.daha"
 RANDOM_SEED = 42
@@ -212,6 +220,7 @@ class DemoSeeder:
         # Maya's 12 items are explicit; Sam has none (onboarding demo).
         pool = [k for k in self.users if k not in ("maya", "sam")]
         per_day: dict[tuple[int, date], int] = defaultdict(int)
+        values = demo_values()  # DEMO DATA: made-up estimates, display only unless flags are on
         for index, row in enumerate(load("items.json"), start=1):
             owner_key = row.get("owner") or self.rng.choice(pool)
             owner = self.users[owner_key]
@@ -258,6 +267,7 @@ class DemoSeeder:
                     else None
                 ),
                 source="manual",
+                value_usd=values.get(key),
                 seed_key=f"item:{key}",
                 created_at=created_at,
                 updated_at=created_at,
@@ -384,6 +394,7 @@ class DemoSeeder:
             pickup_place_id=item.pickup_place_id,
             pickup_note=item.pickup_note,
             conversation_id=conv.id,
+            value_usd=item.value_usd,  # value exchange snapshot (demo value, or none)
             created_at=at,
             updated_at=at,
         )
@@ -467,6 +478,7 @@ class DemoSeeder:
             self.message(conv, None, f"{first} handed over “{item.name}”. All done!", t_handoff)
             item.status = "unavailable" if item.category != "services" else "available"
         tx.status, tx.completed_at, tx.updated_at = "completed", t_done, t_done
+        tx.value_usd = item.value_usd  # value exchange snapshot (demo value, or none)
         self.event(tx, "completed", owner, t_done)
         self.mark_read(conv, owner, borrower)
 

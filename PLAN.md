@@ -246,13 +246,13 @@ Unless a table says otherwise:
 | `memberships` | PK(`user_id`, `community_id`), `role` (member\|admin) default member | Every user: campus + ≤ 1 dorm (enforced in the service) + groups |
 | `places` | `name`, `lat`, `lng`, `description` null | Campus exchange points |
 | `uploads` | `owner_id` FK, `path`, `url`, `width`, `height`, `sha256` | JPEG, metadata stripped |
-| `items` | `owner_id` FK, `name`, `description` null, `category`, `quantity` int default 1, `condition` null, `transaction_type` (lend\|give\|exchange), `max_lend_days` null, `available_from` date null, `available_until` date null, `visibility` (campus\|dorm\|groups\|private), `pings_enabled` bool default true, `status` (available\|reserved\|borrowed\|unavailable) default available, `archived` bool default false, `pickup_place_id` FK places null, `pickup_note` null, `source` (manual\|scan\|offer), `scan_detection_id` FK null, `value_usd` int null (estimated new price in whole US dollars, 0–10000; display only, never points, `ITEM_VALUE_ENABLED`), **C:** `embedding VECTOR(384)` null, `search_tsv TSVECTOR GENERATED` (name weight A, description weight B), `updated_at` | GIN on `search_tsv`, trigram GIN on `name`, HNSW (`vector_cosine_ops`) on `embedding`, index on (`owner_id`), (`status`) where not archived |
+| `items` | `owner_id` FK, `name`, `description` null, `category`, `quantity` int default 1, `condition` null, `transaction_type` (lend\|give\|exchange), `max_lend_days` null, `available_from` date null, `available_until` date null, `visibility` (campus\|dorm\|groups\|private), `pings_enabled` bool default true, `status` (available\|reserved\|borrowed\|unavailable) default available, `archived` bool default false, `pickup_place_id` FK places null, `pickup_note` null, `source` (manual\|scan\|offer), `scan_detection_id` FK null, `value_usd` int null (estimated new price in whole US dollars, 0–10000; display only, never points, `ITEM_VALUE_ENABLED`; with `VALUE_EXCHANGE_ENABLED` it also sets the value bonus), `value_flagged_at` timestamptz null (value exchange: far above the typical price, held for review), **C:** `embedding VECTOR(384)` null, `search_tsv TSVECTOR GENERATED` (name weight A, description weight B), `updated_at` | GIN on `search_tsv`, trigram GIN on `name`, HNSW (`vector_cosine_ops`) on `embedding`, index on (`owner_id`), (`status`) where not archived |
 | `item_images` | `item_id` FK, `upload_id` FK, `position` int | First image = thumbnail |
 | `item_audiences` | PK(`item_id`, `community_id`) | Index on `community_id` |
 | `requests` | `requester_id` FK, `raw_text`, `title`, `item_name` null, `category` null, `attributes` JSONB default `{}`, `quantity` default 1, `needed_from` date null, `needed_until` date null, `duration_days` null, `transaction_type` null, `visibility`, `status` (open\|in_progress\|fulfilled\|cancelled) default open, `pickup_place_id` null, **C:** `matching_status` (pending\|done) default pending, `ai_enriched` bool default false, `embedding VECTOR(384)` null, `search_tsv GENERATED` (title, item_name, raw_text), `updated_at`, `fulfilled_at` null | `expired` is computed, not stored (see §7.7) |
 | `request_audiences` | PK(`request_id`, `community_id`) | |
 | `request_matches` (C) | PK(`request_id`, `item_id`), `score` float, `reason` text, `notified` bool default false, `anonymous` bool default false (a match on a private item; never shown to the requester) | Written by C's matching |
-| `transactions` | `kind`, `status` (requested\|offered\|accepted\|handed_off\|completed\|declined\|cancelled), `item_id` FK, `request_id` FK null, `owner_id` FK, `borrower_id` FK, `initiated_by` (owner\|borrower), `message` null, `start_date` null, `due_date` null, `pickup_place_id` null, `pickup_note` null, `conversation_id` FK, `pickup_at` timestamptz null (the agreed handoff time), `handoff_suggestion` JSONB null (the current time-and-place proposal), `accepted_at`/`handed_off_at`/`completed_at`/`declined_at`/`cancelled_at` null, `updated_at` | Indexes on owner, borrower, item |
+| `transactions` | `kind`, `status` (requested\|offered\|accepted\|handed_off\|completed\|declined\|cancelled), `item_id` FK, `request_id` FK null, `owner_id` FK, `borrower_id` FK, `initiated_by` (owner\|borrower), `message` null, `start_date` null, `due_date` null, `pickup_place_id` null, `pickup_note` null, `conversation_id` FK, `pickup_at` timestamptz null (the agreed handoff time), `handoff_suggestion` JSONB null (the current time-and-place proposal), `value_usd` int null (value exchange: the item's estimated value, frozen at completion), `swap_value_usd` int null (swaps: what the borrower gave), `accepted_at`/`handed_off_at`/`completed_at`/`declined_at`/`cancelled_at` null, `updated_at` | Indexes on owner, borrower, item |
 | `transaction_events` | `transaction_id` FK, `status`, `actor_id` null, `note` null | Timeline |
 | `conversations` | `kind` (direct\|transaction), `transaction_id` FK unique null, `last_message_at` null | Direct = one per user pair |
 | `conversation_participants` | PK(`conversation_id`, `user_id`), `last_read_message_id` null | Unread = messages with id > `last_read_message_id` from others |
@@ -321,12 +321,14 @@ export interface UserPublic extends UserRef {
   bio: string | null; points: number; level: Level; badges: Badge[];
   rating_count: number; completed_count: number; items_shared_count: number; joined_at: ISODateTime;
   value_shared_usd?: number | null;  // ITEM_VALUE_ENABLED: sum of value_usd over completed exchanges they shared; null when off
+  value_received_usd?: number | null; // VALUE_EXCHANGE_ENABLED: what they borrowed, were given or swapped for; null when off
 }
 export interface Me extends UserPublic {
   email: string; dorm: CommunityRef | null; groups: CommunityRef[]; walking_radius_min: number;
   onboarded: boolean; match_suggestions: boolean;   // match_suggestions = opted in to mutual matching
   unread_notifications: number; unread_messages: number;
   item_value_enabled?: boolean;      // ITEM_VALUE_ENABLED: show the Value field and totals
+  value_exchange_enabled?: boolean;  // VALUE_EXCHANGE_ENABLED (needs item value too); the web also needs NEXT_PUBLIC_VALUE_EXCHANGE
 }
 export interface AuthResponse { token: string; user: Me }
 export interface SignupBody { email: string; password: string; name: string; dorm_id?: ID | null; ref_user_id?: ID | null }
@@ -360,6 +362,7 @@ export interface ItemCard {
   match_score: number | null;    // only in search/match/fulfillable responses, else null
   match_reason: string | null;   // e.g. "Same dorm · 2 min walk"
   value_usd?: number | null;     // ITEM_VALUE_ENABLED: estimated new price, whole US dollars; display only
+  high_value?: boolean;          // VALUE_EXCHANGE_ENABLED and value_usd >= 100
 }
 export interface ItemDetail extends ItemCard {
   description: string | null; images: ItemImage[]; max_lend_days: number | null;
@@ -369,6 +372,8 @@ export interface ItemDetail extends ItemCard {
   group_ids: ID[];               // owner only, else []
   pings_enabled: boolean;        // owner can turn anonymous pings off for this item
   is_mine: boolean; can_borrow: boolean; active_transaction_id: ID | null;
+  value_locked?: boolean;        // value exchange: someone asked for it, so the value can't change
+  value_under_review?: boolean;  // owner only: the value looks far above the typical price
   source: ItemSource; updated_at: ISODateTime;
 }
 export interface ItemCreate {
@@ -425,6 +430,7 @@ export interface Transaction {
   created_at: ISODateTime; updated_at: ISODateTime;
   condition: ConditionCheck | null;  // null unless CONDITION_CHECK_ENABLED and kind = lend
   handoff: HandoffState | null;      // null unless HANDOFF_COORDINATOR_ENABLED, before the handoff
+  value?: TxValue | null;            // null unless VALUE_EXCHANGE_ENABLED; estimates only, no money moves
 }
 
 // ---------- handoff coordinator ("Suggest a time & place"; HANDOFF_COORDINATOR_ENABLED) ----------
@@ -493,7 +499,7 @@ export interface HomeFeed {
   you_can_help: FulfillableRequest[];  // ≤ 5
   requests_nearby: RequestCard[];      // ≤ 10
   new_nearby: ItemCard[];              // ≤ 12
-  stats: { dorm_items: number; campus_items: number; open_requests: number };
+  stats: { dorm_items: number; campus_items: number; open_requests: number; dorm_value_shared_month_usd?: number | null };  // value exchange: completed this month
 }
 export type FeedEntry =
   | { kind: "request"; created_at: ISODateTime; request: RequestCard }
@@ -555,6 +561,7 @@ export interface Detection {
   suggested_share: boolean; sensitive_reason: string | null; suggested_transaction_type: TransactionType;
   status: "pending" | "published" | "discarded";
   value_estimate_usd?: number | null;  // the AI's estimate (ITEM_VALUE_ENABLED); null if the AI is off or unsure
+  value_source?: "store" | "ai" | null; // value exchange: where the estimate came from (a cached store price wins)
 }
 export interface Scan { id: ID; status: "processing" | "done" | "failed"; images: ScanImage[]; detections: Detection[]; provider: string; created_at: ISODateTime }
 export interface ScanCreate { upload_ids: ID[] }
@@ -649,6 +656,21 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 
 ### 7.6 Standard event types (`POST /events`; B and C send them, A stores them)
 `page_view`, `search_performed`, `search_result_clicked`, `item_viewed`, `scan_started`, `scan_review_shown`, `scan_published`, `onboarding_skipped`, `request_composer_opened`, `request_posted`, `offer_sent`, `share_clicked`, `invite_copied`, `feedback_submitted`, `commercial_search_shown`, `commercial_offer_clicked`, `handoff_suggest_tapped`, `handoff_sent` (`{changed}`), `handoff_accepted`, `mutual_match_shown` (`{count, uses_prediction}`), `mutual_match_clicked` (`{rank, action}`), `match_suggestions_changed` (`{enabled}`), `location_permission` (`{state, opened_by}`; never coordinates). The payload is a small JSON object (ids, counts, seconds) and never contains free text from other people.
+
+### 7.6b Value exchange (`VALUE_EXCHANGE_ENABLED` + `ITEM_VALUE_ENABLED`, both off by default; additive)
+No money moves in DAHA; every value is an estimate in whole US dollars and the wording always says "about".
+```ts
+export interface TxValue {
+  value_usd: number | null; swap_value_usd: number | null; difference_usd: number | null;
+  high_value: boolean; needs_condition_check: boolean;
+  bonus_points: number | null; no_bonus_reason: "self" | "no_value" | "under_review" | "repeat" | null;
+  can_set_swap_value: boolean;
+}
+export interface ValueEstimate { value_usd: number | null; source: "store" | "ai" | null }
+```
+- `GET /api/items/value-estimate?name=` → `ValueEstimate`: a cached real store price only (never a paid call), else nulls.
+- `POST /api/transactions/{id}/swap-value` `{ value_usd: number | null }` → `Transaction`: the swap's borrower, before it completes.
+- Rules: value bonus = 1 pt per $20 (1 per $10 at $100+), max 30 per exchange and 100 per person per 7 days; none for self-exchanges, flagged values, or a pair that completed an exchange in the last 7 days. `PATCH /items/{id}` with a changed `value_usd` → 409 while a transaction on it is active. High value lends (with the condition check on) leave `hand_off` out of `allowed_actions` until the handoff photos are confirmed.
 
 ### 7.7 Transaction rules (A's `services/transactions.py`: one `apply_action()` and one `allowed_actions()` from this table)
 | Status | Kind | Owner may | Borrower may |

@@ -11,7 +11,7 @@ from app import schemas
 from app.core.config import settings
 from app.discovery import hooks
 from app.models import Item, ItemAudience, ItemImage, Place, PointsLedger, Upload, User
-from app.services import points
+from app.services import points, value_exchange
 from app.services.viewer import ViewerContext
 from app.services.visibility import item_visible_clause, resolve_audiences
 
@@ -119,6 +119,7 @@ def create_item(
     db.flush()
     _write_audiences(db, item, audience)
     _write_images(db, item, upload_ids)
+    value_exchange.check_flag(db, item)
     db.flush()
     _award_published(db, item)
     if background is not None:
@@ -157,7 +158,9 @@ def update_item(
             continue
         setattr(item, field, value.strip() if field == "name" else value)
     if "value_usd" in sent and settings.item_value_enabled:
+        value_exchange.guard_value_edit(db, item, data.value_usd)  # locked once someone asked
         item.value_usd = data.value_usd  # null clears it
+        value_exchange.check_flag(db, item)
 
     _validate_core(item.category, item.transaction_type, item.available_from, item.available_until)
     if "pickup_place_id" in sent:

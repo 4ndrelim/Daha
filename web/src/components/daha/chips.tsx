@@ -1,7 +1,8 @@
-import { Footprints } from "lucide-react";
+import { Footprints, Gem } from "lucide-react";
 import type { Category, ItemStatus, TransactionType } from "@/lib/api/types";
 import { categoryInfo, STATUS_LABEL, TX_TYPE_LABEL } from "@/lib/categories";
 import { cn } from "@/lib/utils";
+import { worthChip } from "@/lib/value";
 
 const chip = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium leading-5 whitespace-nowrap";
 
@@ -44,4 +45,15 @@ export function CategoryChip({ category, className }: { category: Category | nul
 /** Neutral chip for parsed attributes ("black binder", "Wed Nov 25", "Borrow"). */
 export function InfoChip({ children, className }: { children: React.ReactNode; className?: string }) {
   return <span className={cn(chip, "bg-primary-soft text-accent-foreground", className)}>{children}</span>;
+}
+
+/** Value exchange: "Worth about $X" (always an estimate) and, at $100+, "High value". */
+export function ValueChips({ value, high, className }: { value: number | null | undefined; high?: boolean; className?: string }) {
+  if (value == null) return null;
+  return (
+    <span className={cn("flex flex-wrap items-center gap-1", className)}>
+      <span className={cn(chip, "bg-reward-50 text-reward-800 tabular-nums")}>{worthChip(value)}</span>
+      {high && <span className={cn(chip, "bg-brand-50 text-brand-700")}><Gem className="size-3" aria-hidden /> High value</span>}
+    </span>
+  );
 }

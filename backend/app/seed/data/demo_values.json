@@ -1,0 +1,10 @@
+{
+  "_note": "DEMO DATA ONLY: made-up estimated values (whole US dollars) for a few seeded items, so the value exchange screens have something to show. Not real prices. Shown only when ITEM_VALUE_ENABLED (and VALUE_EXCHANGE_ENABLED) are on.",
+  "maya-black-binder": 8,
+  "maya-ti84": 120,
+  "priya-nspire": 150,
+  "omar-navy-suit": 250,
+  "maya-vacuum": 400,
+  "maya-tent": 180,
+  "jordan-suitcase": 90
+}
