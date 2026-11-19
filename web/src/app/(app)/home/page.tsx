@@ -110,6 +110,12 @@ export default function HomePage() {
         {feed.data ? <Stats feed={feed.data} /> : <Skeleton className="mt-1.5 h-4 w-56" />}
       </div>
 
+      {/* Tagline: centered, wrapped within 320 px; kept compact so the scan card stays in view. */}
+      <div className="mx-auto w-full max-w-[320px] text-center">
+        <p className="text-[24px] leading-[1.2] font-bold text-balance">Borrow it from down the hall.</p>
+        <p className="mt-1.5 text-[16px] leading-snug text-muted-foreground text-pretty">Lend, borrow, give away and swap with people in your dorm.</p>
+      </div>
+
       {feed.isError && <ErrorState message="Couldn't load your feed." onRetry={() => feed.refetch()} />}
 
       {feed.data && (feed.data.show_scan_cta ? <ScanCard /> : <ScanBanner />)}
