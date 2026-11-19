@@ -2,7 +2,7 @@
 
 Read this together with `AGENTS.md` (rules), `CONTRIBUTING.md` (git), `ARCHITECTURE.md` (diagrams), and your sub-plan in `plans/`. **§6 and §7 are the contract**: implement them exactly.
 
-## 0. Hackathon mode: submit by **Thu Nov 19, 12:00**
+## 0. Hackathon mode: submit by **Thu Nov 19, 11:59**
 > **Status (2026-11-17): the bulk of the MVP is built.** Every planned A, B and C milestone is merged, and the web runs live (`NEXT_PUBLIC_MOCK=none`); see the status table at the top of each sub-plan.
 >
 > **This isn't the end.** The next phase is improving and iterating on real use: weekly fixes from feedback (`plans/INTEGRATION.md` → "Iterate"), the evals loop (`plans/EVALS.md`), each sub-plan's **Next phase** list, and phone location for store search (`plans/LOCATION.md`, since most students will use DAHA on their phones). Still open from Phase 1: the C0 spike with 3 real photos (the HarnessRouter keys are verified), the `v0.1-mvp` tag, a two-phone pass with `AI_PROVIDER=harnessrouter`, and the mini-eval scan numbers.
@@ -16,14 +16,14 @@ This is a 5-day hackathon. Everything here serves one goal: a working, demo-able
 | Tue 21:00 | A2 | B2 + B3 | C4 |
 | Wed 10:00 | A3 | B4 | C2 |
 | Wed 15:00 | A4 | B5 | C3 |
-| **Wed 18:00: feature freeze** | fixes only | B6 done | C5 done, or deferred |
+| Wed 18:00 | keep building and fixing | B6 done | C5 done, or deferred |
 | Wed 18:00–22:00 | integration (`plans/INTEGRATION.md`; C drives) | ← | ← |
 | Wed night | quick demo with 3–5 friends (`plans/INTEGRATION.md` §3.1) | ← | ← |
-| Thu 08:00–10:30 | fix top bugs | polish + demo video | mini-eval + fixes |
-| **Thu 10:30: code freeze** | review the submission | review the submission | write-up, **submit by 11:30** |
+| Thu 08:00–11:30 | fix top bugs | polish + demo video | mini-eval + fixes |
+| **Thu 11:30: freeze + last redeploy** | review the submission | review the submission | write-up, **submit by 11:59** |
 
 Rules:
-- **Feature freeze Wed 18:00:** after that, only fixes. **Code freeze Thu 10:30:** after that, only the submission.
+- **One freeze, Thu 11:30:** features and fixes can land until then, and the live app gets its last redeploy (`./infra/deploy/deploy.sh`) by 11:30. After that, only the submission, due **11:59**.
 - **More than ~2 h behind?** Apply your sub-plan's **If behind, cut** list from the top, tell your human, and log it in `docs/decisions.md`. Never cut demo-script steps 1–5 or step 7 (search).
 - **Overnight:** before sleeping, tell Claude "keep going through your next milestones and leave me a report". Keep the laptop plugged in and awake.
 - **After the hackathon, beyond its scope:** A5 (Docker + CI), putting it online, a week of real feedback, full evals, the P1 list, follow-ups F1–F3, and `plans/ROADMAP.md`.

@@ -77,15 +77,15 @@ Full details are in `CONTRIBUTING.md`.
 
 ---
 
-## Timeline (hackathon: submit by **Thu Nov 19, 12:00**)
+## Timeline (hackathon: submit by **Thu Nov 19, 11:59**)
 | When | What | Who |
 |---|---|---|
 | **Tue morning**, by ~11:00 | Kickoff with Claude (10 min each), skeletons, HarnessRouter test | A, B, C |
 | **Tue → Wed afternoon** | Build in parallel. Leave Claude running in auto mode overnight if you can | A, B, C |
-| **Wed 18:00** | **Feature freeze**, then integrate together (~3–4 h; C drives) and tag `v0.1-mvp` | everyone |
+| **Wed 18:00** | Integrate together (~3–4 h; C drives) and tag `v0.1-mvp`. Building and fixing go on until Thursday's freeze | everyone |
 | **Wed night** | 3–5 friends try it through a temporary link. Note the top bugs | C hosts, everyone watches |
-| **Thu 08:00–10:30** | Fix the top bugs · record the demo video · get quick AI numbers for the pitch | A/C fix · B: video · C: numbers |
-| **Thu 10:30–11:30** | Submission: write-up, video, screenshots, repo link. **Submit by 11:30** (30-minute buffer) | C submits, everyone reviews |
+| **Thu 08:00–11:30** | Fix the top bugs · record the demo video · get quick AI numbers for the pitch · **last redeploy by 11:30 (freeze)** | A/C fix · B: video · C: numbers |
+| **Thu 11:30–11:59** | Submission: write-up, video, screenshots, repo link. **Submit by 11:59** | C submits, everyone reviews |
 
 Per-person target times, and what gets cut if we fall behind: `PLAN.md` §0.
 

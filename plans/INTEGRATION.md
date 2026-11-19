@@ -11,7 +11,7 @@
 - [ ] **After the session:** C posts the `v0.1-mvp` message. Thursday morning is polish and submission (§3.2–§3.3).
 
 ## Phase 2: integration checklist (C's Claude runs it top to bottom; do the steps in order)
-1. **Feature freeze (Wed 18:00).** Everyone merges their open PRs. After this, only fixes.
+1. **Merge what's ready (Wed 18:00).** Everyone merges their open PRs before integrating. Building and fixing go on until the freeze, **Thu 11:30**.
 2. **Fresh clone** into a new folder. Follow `README.md` from zero, and fix any doc step that fails (that's a docs PR).
 3. **Start live:**
    - `make db migrate seed`
@@ -30,7 +30,7 @@
 8. **Performance:** search p95 < 300 ms (from `search_logs.latency_ms`); home < 500 ms; record scan seconds per photo.
 9. **Tag:** `git tag v0.1-mvp && git push --tags`. C posts: *"v0.1-mvp ✅ — demo script passes. Next: quick demo with friends (§3.1), then Thursday polish and submission."*
 
-## Phase 3: hackathon finish (Wed night → submit by Thu 11:30)
+## Phase 3: hackathon finish (Wed night → submit by Thu 11:59)
 ### 3.1 Quick demo with friends (Wed night, ~1 h, C hosts)
 - Install `cloudflared` (`brew install cloudflared`), then run `cloudflared tunnel --url http://localhost:3000`. It prints a temporary `https://….trycloudflare.com` link that works while C's laptop is running.
 - With `DEMO_MODE=true`, have 3–5 friends try the photo scan and a request on their phones. Time "first photo → items shared" and watch where they hesitate.
@@ -40,7 +40,7 @@
   3. Would you use this instead of the dorm group chat?
 - Turn the findings into GitHub issues labeled `feedback` plus `A`, `B`, or `C`. Pick the top 5 for Thursday.
 
-### 3.2 Polish (Thu 08:00–10:30)
+### 3.2 Polish (Thu 08:00–11:30)
 - **A and C:** fix the top `feedback` and bug issues in your areas. Small PRs, same rules as always.
 - **B:** UI polish from the feedback, then record the **demo video** (≤ 3 min: a phone screen recording plus the laptop):
   1. the problem: dorm group chats
@@ -50,9 +50,9 @@
   5. private "I have this" → anonymous ping
   6. what's next
 - **C:** the mini-eval for the pitch (`plans/EVALS.md` → Hackathon mini-eval, ~45 min).
-- **10:30: code freeze.** After this, only submission work.
+- **11:30: freeze.** Redeploy the live app one last time by 11:30 (`./infra/deploy/deploy.sh`). After this, only submission work.
 
-### 3.3 Submission (Thu 10:30–11:30; submit by 11:30)
+### 3.3 Submission (Thu 11:30–11:59; submit by 11:59)
 **C submits; A and B review.** Check the hackathon's own submission requirements first and adjust this list.
 - [ ] `main` is clean, and the README top has the demo video link plus 3–5 screenshots: home, scan review, request with matches, chat, search.
 - [ ] The demo video (B) is uploaded, e.g. YouTube unlisted or Drive, and linked.
@@ -64,7 +64,7 @@
   - three numbers from the mini-eval
   - what's next (`plans/ROADMAP.md`)
 - [ ] A live-demo plan for judging: either the tunnel (C's laptop on, stack running) or the video, if judges don't need a live link.
-- [ ] Team names and roles, then **submit by 11:30**. That leaves a 30-minute buffer for upload problems.
+- [ ] Team names and roles, then **submit by 11:59**. Aim to finish a few minutes early in case an upload is slow.
 
 ## After the hackathon (beyond the hackathon scope; good next steps)
 ### Online for real (A)
