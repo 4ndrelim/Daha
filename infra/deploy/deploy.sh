@@ -128,19 +128,22 @@ ship() { # $1 = deploy | prepare: send the code and settings, then run remote.sh
     printf '\n# --- set by infra/deploy/deploy.sh (%s) ---\n' "$mode"
     printf 'DEMO_MODE=%s\nPUBLIC_BASE_URL=%s\nCORS_ORIGINS=%s\n' "$DEMO_MODE" "$base_url" "$base_url"
   } | ssh_vm 'umask 077 && cat > ~/daha/config/backend.env.new'
-  # The website's feature switches are baked in when it's built, so they come from here: the two
-  # features follow their backend switch in backend/.env, the theme follows web/.env.local.
-  local theme condition handoff
+  # The website's feature switches are baked in when it's built, so they come from here: the
+  # features follow their backend switches in backend/.env, the theme follows web/.env.local.
+  local theme condition handoff value
   theme=$(env_value "$ROOT/web/.env.local" NEXT_PUBLIC_THEME)
   [ "$theme" = classic ] || theme=holiday
   condition=$(env_flag CONDITION_CHECK_ENABLED)
   handoff=$(env_flag HANDOFF_COORDINATOR_ENABLED)
-  echo "   website switches: coordinator $handoff, condition check $condition, theme $theme"
+  value=false # value exchange needs both of its backend switches
+  if [ "$(env_flag ITEM_VALUE_ENABLED)" = true ]; then value=$(env_flag VALUE_EXCHANGE_ENABLED); fi
+  echo "   website switches: coordinator $handoff, condition check $condition, value exchange $value, theme $theme"
   {
     printf 'MODE=%q\nSITE=%q\nDEMO_MODE=%q\nDUCKDNS_SUBDOMAIN=%q\nDUCKDNS_TOKEN=%q\nPUBLIC_IP=%q\n' \
       "$mode" "$SITE" "$DEMO_MODE" "${DUCKDNS_SUBDOMAIN:-}" "${DUCKDNS_TOKEN:-}" "$public_ip"
     printf 'NEXT_PUBLIC_THEME=%q\nNEXT_PUBLIC_CONDITION_CHECK=%q\nNEXT_PUBLIC_HANDOFF_COORDINATOR=%q\n' \
       "$theme" "$condition" "$handoff"
+    printf 'NEXT_PUBLIC_VALUE_EXCHANGE=%q\n' "$value"
   } | ssh_vm 'umask 077 && cat > ~/daha/config/deploy.env'
 
   say "Setting up the VM and starting DAHA (the first time takes 10-20 minutes)"
