@@ -112,6 +112,9 @@ def create_harness(
         "name": f"daha-vision-{PROMPT_VERSION}",
         "base": settings.harnessrouter_base,
         "default_model": settings.harnessrouter_model or None,
+        # Every harness (vision, profile, condition, handoff) gets the same effort. A harness
+        # can't be edited later, so a new effort or model means new harnesses (docs/ai-spike.md).
+        "reasoning_effort": settings.harnessrouter_reasoning_effort or None,
         "system_prompt": VISION_SYSTEM,
         "mcp_servers": [],
         "skills": [],

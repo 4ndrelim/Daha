@@ -1,16 +1,16 @@
 # HarnessRouter spike results (C0)
 
-> **Status (2026-11-17): code ready, numbers pending the API key.** The provider, setup script,
-> and spike script are built and tested against a mocked HarnessRouter SSE stream
-> (`backend/tests/ai/test_harnessrouter.py`). The table below gets filled in the first time the
-> spike runs with a real key. Until then the app runs on `AI_PROVIDER=mock`.
+> **Status (2026-11-19): decided and live.** Photos run on `claude-code` / **`claude-opus-5.5` at
+> low reasoning effort** (measured below). The app uses `AI_PROVIDER=harnessrouter`.
 
 ## How to run it (≈ 10 minutes, ≈ $0.30)
 1. Put the Workspace key in `backend/.env` only: `HARNESSROUTER_API_KEY=sk-hr-…`. Several keys:
    comma-separated, no spaces (`sk-hr-aaa,sk-hr-bbb`). Check them (free):
    `cd backend && uv run python scripts/setup_harnessrouter.py --check`
 2. See what's available (free): `cd backend && uv run python scripts/setup_harnessrouter.py --list`
-3. Pick a base/model, set `HARNESSROUTER_BASE` and `HARNESSROUTER_MODEL` in `backend/.env`.
+3. Pick a base/model/effort: `HARNESSROUTER_BASE`, `HARNESSROUTER_MODEL` and
+   `HARNESSROUTER_REASONING_EFFORT` in `backend/.env`. They are fixed when a harness is created
+   (HarnessRouter can't edit one), so a change means running step 4 again: new ids.
 4. Create the harness (free; one per key): `uv run python scripts/setup_harnessrouter.py --write-env`.
    It saves `HARNESSROUTER_VISION_HARNESS_ID=<id1>,<id2>,…` (key order) into `backend/.env`.
 5. **Paid:** `uv run python scripts/hr_spike.py ~/daha-spike/photos/*.jpg` (3 photos, no people or
@@ -24,11 +24,38 @@
 |---|---|---|---|---|---|---|
 | claude-code / claude-sonnet-5.5 (base default), **smoke test**: 2 drawn desk photos, 2 keys in parallel (2026-11-17) | 17.5 | 17.7 | 2/2 | 5 each (lamp, 3 books, mug) | 0.10 (estimate: the stream reported no cost; check the dashboards) | both keys OK, one photo per key; the real spike still needs 3 real photos |
 
+**Model and effort comparison (2026-11-19).** Two public photos with no people (Wikimedia Commons:
+a TI-84 Plus Silver Edition graphing calculator, CC BY-SA 4.0; "Laptop on desk book stacks", CC0),
+one per key in parallel, through temporary copies of the vision harness that differ only in model
+and effort (deleted afterwards). Seconds are per photo, calculator / desk; each run was timed once,
+and runs of the same config varied by up to 5 s, so only big gaps mean anything.
+
+| base / model / effort | runs | calculator s | desk s | desk items (truth: laptop, lamp, book stacks, file holder, notebook, white box) |
+|---|---|---|---|---|
+| claude-code / sonnet-5.5 / default (what ran before) | 1 | 10.2 | 14.6 | 7, all real; called it "TI-84 Plus Silver Edition" |
+| claude-code / sonnet-5.5 / low | 1 | 10.3 | 12.9 | 5, all real |
+| claude-code / haiku-5.5 / low | 1 | 18.1 | 15.7 | 4; missed file holder and notebook; "TI-84 Plus" only |
+| claude-code / **opus-5.5 / low** | 3 | 11.8–16.5 | 15.9–24.4 | 6–7, all real; full model name every time |
+| claude-code / opus-5.5 / medium (its default) | 2 | 17.7–18.1 | 26.4–28.5 | 5–7 |
+| claude-code / opus-5.5 / high | 2 | 15.2–16.3 | 30.5–31.8 | 6 |
+| pi / opus-5.5 / low | 2 | 11.2–11.3 | 19.0–21.5 | 4 and 7 (inconsistent) |
+| pi / opus-5.5 / medium | 1 | 11.5 | 21.3 | 6 |
+| fast-agent / opus-5.5 / low | 2 | 14.7–15.7 | 18.7–22.5 | 6–8, adds the brand |
+| fast-agent / opus-5.5 / medium | 1 | 15.8 | 22.0 | 7 |
+
+What it shows: most of the 10–20 s is the agent harness (start-up, reading the uploaded file,
+steps), not the model; Haiku was no faster. Higher effort added 7–11 s on a busy photo without
+finding more. The cost the stream reports is always empty, so `$0.10` is our estimate.
+
 ## Decision
-- Chosen base / model: _pending_ (default in `.env.example`: `claude-code`)
-- Why:
-- Team OK'd by:
-- $40 budget (`AI_BUDGET_USD`) ≈ ___ photos at this cost
+- Chosen base / model: **`claude-code` / `claude-opus-5.5`, reasoning effort `low`** (2026-11-19)
+- Why: accuracy comes first, and Opus at low effort was the most accurate and consistent while
+  staying in the same 15–20 s range as Sonnet. Medium/high effort were slower with no visible gain;
+  the lighter bases (`pi`, `fast-agent`) weren't reliably faster and are untested in production.
+- Team OK'd by: Andre (key holder), 2026-11-19
+- $40 budget (`AI_BUDGET_USD`) ≈ 400 photos at the $0.10 estimate; Opus costs more per token than
+  Sonnet, so check the real spend on the HarnessRouter dashboards.
+- Next speed levers, not tried yet: show scan progress in the app; a lighter base after more tests.
 
 ## Exact calls (as implemented in `app/ai/providers/harnessrouter.py`)
 - **Upload:** `POST /v1/files`, multipart `file=<jpeg>` + `purpose=user_data` → `{"id": "file_…"}`
