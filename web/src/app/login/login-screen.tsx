@@ -57,8 +57,11 @@ export function LoginScreen() {
         <Smartphone className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
         Best viewed on mobile!
       </p>
-      <h1 className="mt-5 text-[22px] leading-7 font-semibold">Borrow it from down the hall.</h1>
-      <p className="mt-1 text-muted-foreground">Lend, borrow, give away and swap with people in your dorm.</p>
+      {/* Tagline: centered, wrapped within 320 px so it never touches a phone's edges. */}
+      <div className="mx-auto mt-5 w-full max-w-[320px] text-center">
+        <h1 className="text-[28px] leading-[1.2] font-bold text-balance">Borrow it from down the hall.</h1>
+        <p className="mt-2 text-[17px] leading-snug text-muted-foreground text-pretty">Lend, borrow, give away and swap with people in your dorm.</p>
+      </div>
 
       <form onSubmit={handleSubmit((v) => login.mutate(v))} className="mt-8 space-y-4" noValidate>
         <Field label="Email" htmlFor="email" error={errors.email?.message}>
