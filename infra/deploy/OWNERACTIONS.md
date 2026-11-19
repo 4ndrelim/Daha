@@ -84,7 +84,7 @@ It connects, adds swap if the VM is small, installs Docker, points the DuckDNS n
 | add a HarnessRouter key | put it at the end of `HARNESSROUTER_API_KEY` in `backend/.env`; in `backend/`: `uv run python scripts/setup_harnessrouter.py --all --missing --write-env`, then `--smoke --yes` (one tiny paid photo per key: every key must say OK); then `./infra/deploy/deploy.sh` |
 | switch a feature on or off | set it in your `backend/.env` (e.g. `HANDOFF_COORDINATOR_ENABLED=true`), then `./infra/deploy/deploy.sh` |
 
-Your laptop's `backend/.env` is the server's settings: every deploy sends it. The website's switches are baked in when it's built, so the deploy sets them from the backend ones (`HANDOFF_COORDINATOR_ENABLED`, `CONDITION_CHECK_ENABLED`) and the look from `NEXT_PUBLIC_THEME` in `web/.env.local`; the deploy prints them ("website switches: …"). Data survives every redeploy. Restoring, rolling back, and turning demo mode off are in `PLAN.md`.
+Your laptop's `backend/.env` is the server's settings: every deploy sends it. The website's switches are baked in when it's built, so the deploy sets them from the backend ones (`HANDOFF_COORDINATOR_ENABLED`, `CONDITION_CHECK_ENABLED`, and `ITEM_VALUE_ENABLED` + `VALUE_EXCHANGE_ENABLED` for value exchange) and the look from `NEXT_PUBLIC_THEME` in `web/.env.local`; the deploy prints them ("website switches: …"). Data survives every redeploy. Restoring, rolling back, and turning demo mode off are in `PLAN.md`.
 
 ## If something goes wrong
 | You see | Fix |
