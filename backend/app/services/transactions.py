@@ -24,7 +24,7 @@ from app.models import (
     TransactionEvent,
     User,
 )
-from app.services import condition, handoff, points, serializers
+from app.services import condition, handoff, points, serializers, value_exchange
 from app.services.notifications import notify
 from app.services.viewer import ViewerContext
 
@@ -210,6 +210,7 @@ def _auto_decline(db: Session, tx: Transaction, actor: User, reason: str) -> Non
 def _complete(db: Session, tx: Transaction, item: Item, actor: User) -> None:
     """Shared by hand_off (give/exchange) and mark_returned (lend)."""
     tx.status, tx.completed_at = "completed", _now()
+    value_exchange.on_complete(db, tx, item)  # store the value; the karma bonus
     if tx.kind == "lend":
         points.award(
             db, tx.owner_id, points.POINTS_LEND_COMPLETED, "lend_completed", "transaction", tx.id
@@ -499,6 +500,7 @@ def transactions_out(
             )
         )
     today = campus_today()
+    values = value_exchange.tx_values_out(db, txs, viewer.user_id)
     out = []
     for t in txs:
         role = role_of(t, viewer.user_id) or "borrower"
@@ -531,6 +533,7 @@ def transactions_out(
                 updated_at=t.updated_at,
                 condition=condition.condition_out(db, t, viewer.user_id),
                 handoff=handoff.handoff_out(db, t, viewer),
+                value=values[t.id],
             )
         )
     return out

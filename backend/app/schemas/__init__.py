@@ -55,6 +55,7 @@ from app.schemas.items import (
     ItemsBatchBody,
     ItemsBatchResponse,
     ItemUpdate,
+    ValueEstimate,
 )
 from app.schemas.messaging import (
     ConversationSummary,
@@ -100,6 +101,7 @@ from app.schemas.transactions import (
     Transaction,
     TxActionBody,
     TxTimelineEntry,
+    TxValue,
 )
 from app.schemas.users import (
     AuthResponse,
@@ -116,6 +118,7 @@ from app.schemas.users import (
 
 __all__ = [
     "ConditionCheck",
+    "TxValue",
     "ConditionPhotos",
     "ConditionSlot",
     "ConditionStage",
@@ -139,6 +142,7 @@ __all__ = [
     "ConversationTransaction",
     "DemoLoginBody",
     "Detection",
+    "ValueEstimate",
     "DirectConversationBody",
     "EventIn",
     "EventsBody",

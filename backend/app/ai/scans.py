@@ -20,7 +20,7 @@ from app.core.db import SessionLocal
 from app.core.storage import InvalidImage, read_upload_bytes, save_image_bytes
 from app.models import Scan, ScanDetection, ScanImage, Upload, User
 from app.services import items as items_service
-from app.services import points, serializers
+from app.services import points, serializers, value_exchange
 from app.services.viewer import build_viewer
 
 log = logging.getLogger(__name__)
@@ -99,6 +99,7 @@ def scan_out(db: Session, scan: Scan) -> schemas.Scan:
                 suggested_transaction_type=d.suggested_transaction_type,
                 status=d.status,
                 value_estimate_usd=d.value_estimate_usd if settings.item_value_enabled else None,
+                value_source=_value_source(db, d),
             )
             for d in dets
         ],
@@ -222,6 +223,22 @@ def _cached(key: str):
         return vision.cache_get(db, key)
 
 
+def _start_value(db, name: str, ai_value: int | None) -> int | None:
+    """Item value: the AI's estimate. Value exchange: a cached store price first (free)."""
+    if not settings.item_value_enabled:
+        return None
+    if not value_exchange.enabled():
+        return ai_value
+    return value_exchange.suggest(db, name, ai_value).value_usd
+
+
+def _value_source(db, d: ScanDetection) -> str | None:
+    if not value_exchange.enabled() or d.value_estimate_usd is None:
+        return None
+    store = value_exchange.cached_store_price(db, d.name)
+    return "store" if store == d.value_estimate_usd else "ai"
+
+
 def _save_image_result(
     image_id: int, items, latency_ms: int, cost: float | None, raw: dict
 ) -> None:
@@ -244,7 +261,7 @@ def _save_image_result(
                 suggested_share=it.suggested_share and it.confidence >= SHARE_MIN_CONFIDENCE,
                 sensitive_reason=it.sensitive_reason,
                 suggested_transaction_type=it.suggested_transaction_type,
-                value_estimate_usd=it.value_usd if settings.item_value_enabled else None,
+                value_estimate_usd=_start_value(db, it.name, it.value_usd),
                 status="pending",
             )
             for it in items

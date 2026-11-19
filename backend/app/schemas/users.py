@@ -51,6 +51,7 @@ class Me(UserPublic):
     unread_notifications: int
     unread_messages: int
     item_value_enabled: bool = False  # ITEM_VALUE_ENABLED: show the Value field and totals
+    value_exchange_enabled: bool = False  # VALUE_EXCHANGE_ENABLED (and item value) are on
 
 
 class AuthResponse(Schema):

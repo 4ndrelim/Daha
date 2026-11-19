@@ -117,3 +117,10 @@ class ItemsBatchBody(Schema):
 
 class ItemsBatchResponse(Schema):
     items: list[ItemDetail]
+
+
+class ValueEstimate(Schema):
+    """A starting value for the Value field: a cached store price, else the AI's, else none."""
+
+    value_usd: int | None
+    source: Literal["store", "ai"] | None
