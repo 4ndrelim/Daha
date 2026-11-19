@@ -88,7 +88,7 @@ export function ReviewStep({ scan, photos, me, startedAt, aboveNav, onPublished 
       return;
     }
     busy.current = true;
-    const items = selected.map((r) => toPublishItem(r, defaults));
+    const items = selected.map((r) => toPublishItem(r, defaults, !!me?.item_value_enabled));
     const published = selected.filter((r) => r.detectionId !== null);
     const edited = published.filter((r) => {
       const d = detectionsById.get(r.detectionId!);

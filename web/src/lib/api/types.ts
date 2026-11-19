@@ -28,10 +28,12 @@ export interface Level { name: string; min_points: number; next_level_name: stri
 export interface UserPublic extends UserRef {
   bio: string | null; points: number; level: Level; badges: Badge[];
   rating_count: number; completed_count: number; items_shared_count: number; joined_at: ISODateTime;
+  value_shared_usd?: number | null;  // ITEM_VALUE_ENABLED: sum of value_usd over completed exchanges they shared; null when off
 }
 export interface Me extends UserPublic {
   email: string; dorm: CommunityRef | null; groups: CommunityRef[]; walking_radius_min: number;
   onboarded: boolean; match_suggestions: boolean; unread_notifications: number; unread_messages: number;
+  item_value_enabled?: boolean;      // ITEM_VALUE_ENABLED: show the Value field and totals
 }
 export interface AuthResponse { token: string; user: Me }
 export interface SignupBody { email: string; password: string; name: string; dorm_id?: ID | null; ref_user_id?: ID | null }
@@ -64,6 +66,7 @@ export interface ItemCard {
   distance_min: number | null; same_dorm: boolean; created_at: ISODateTime;
   match_score: number | null;    // only in search/match/fulfillable responses, else null
   match_reason: string | null;   // e.g. "Same dorm · 2 min walk"
+  value_usd?: number | null;     // ITEM_VALUE_ENABLED: estimated new price, whole US dollars; display only
 }
 export interface ItemDetail extends ItemCard {
   description: string | null; images: ItemImage[]; max_lend_days: number | null;
@@ -82,6 +85,7 @@ export interface ItemCreate {
   visibility: Visibility; group_ids?: ID[]; pickup_place_id?: ID | null; pickup_note?: string | null;
   image_upload_ids?: ID[];       // ≤ 6, first = thumbnail
   pings_enabled?: boolean;       // default true
+  value_usd?: number | null;     // 0..10000 whole US dollars; null clears it. Ignored when ITEM_VALUE_ENABLED is off
 }
 export type ItemUpdate = Partial<ItemCreate> & { status?: "available" | "unavailable" };
 export interface BorrowBody { message?: string | null; start_date?: ISODate | null; due_date?: ISODate | null; request_id?: ID | null }
@@ -257,6 +261,7 @@ export interface Detection {
   bbox: [number, number, number, number] | null;   // normalized x, y, w, h (0..1), approximate
   suggested_share: boolean; sensitive_reason: string | null; suggested_transaction_type: TransactionType;
   status: "pending" | "published" | "discarded";
+  value_estimate_usd?: number | null;  // the AI's estimate (ITEM_VALUE_ENABLED); null if the AI is off or unsure
 }
 export interface Scan { id: ID; status: "processing" | "done" | "failed"; images: ScanImage[]; detections: Detection[]; provider: string; created_at: ISODateTime }
 export interface ScanCreate { upload_ids: ID[] }

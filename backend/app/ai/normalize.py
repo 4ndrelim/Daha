@@ -126,6 +126,24 @@ def _bbox(value: Any) -> list[float] | None:
     return [round(x, 4), round(y, 4), round(w, 4), round(h, 4)]
 
 
+MAX_VALUE_USD = 10000
+
+
+def _value(raw: Any) -> int | None:
+    """The model's value estimate → whole dollars in 0..10000, else None. Never made up here."""
+    if raw is None or isinstance(raw, bool):
+        return None
+    if isinstance(raw, str):
+        raw = raw.strip().replace("$", "").replace(",", "").replace("USD", "").strip()
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if value != value or value < 0 or value > MAX_VALUE_USD:  # NaN or out of range
+        return None
+    return round(value)
+
+
 def coerce_item(raw: Any) -> DetectedItemRaw | None:
     """One model item → a valid DetectedItemRaw, or None to drop it."""
     if not isinstance(raw, dict):
@@ -169,6 +187,7 @@ def coerce_item(raw: Any) -> DetectedItemRaw | None:
         suggested_share=share,
         sensitive_reason=None if share else reason,
         suggested_transaction_type=tx,
+        value_usd=_value(raw.get("value_usd")),
     )
 
 

@@ -246,7 +246,7 @@ Unless a table says otherwise:
 | `memberships` | PK(`user_id`, `community_id`), `role` (member\|admin) default member | Every user: campus + ≤ 1 dorm (enforced in the service) + groups |
 | `places` | `name`, `lat`, `lng`, `description` null | Campus exchange points |
 | `uploads` | `owner_id` FK, `path`, `url`, `width`, `height`, `sha256` | JPEG, metadata stripped |
-| `items` | `owner_id` FK, `name`, `description` null, `category`, `quantity` int default 1, `condition` null, `transaction_type` (lend\|give\|exchange), `max_lend_days` null, `available_from` date null, `available_until` date null, `visibility` (campus\|dorm\|groups\|private), `pings_enabled` bool default true, `status` (available\|reserved\|borrowed\|unavailable) default available, `archived` bool default false, `pickup_place_id` FK places null, `pickup_note` null, `source` (manual\|scan\|offer), `scan_detection_id` FK null, **C:** `embedding VECTOR(384)` null, `search_tsv TSVECTOR GENERATED` (name weight A, description weight B), `updated_at` | GIN on `search_tsv`, trigram GIN on `name`, HNSW (`vector_cosine_ops`) on `embedding`, index on (`owner_id`), (`status`) where not archived |
+| `items` | `owner_id` FK, `name`, `description` null, `category`, `quantity` int default 1, `condition` null, `transaction_type` (lend\|give\|exchange), `max_lend_days` null, `available_from` date null, `available_until` date null, `visibility` (campus\|dorm\|groups\|private), `pings_enabled` bool default true, `status` (available\|reserved\|borrowed\|unavailable) default available, `archived` bool default false, `pickup_place_id` FK places null, `pickup_note` null, `source` (manual\|scan\|offer), `scan_detection_id` FK null, `value_usd` int null (estimated new price in whole US dollars, 0–10000; display only, never points, `ITEM_VALUE_ENABLED`), **C:** `embedding VECTOR(384)` null, `search_tsv TSVECTOR GENERATED` (name weight A, description weight B), `updated_at` | GIN on `search_tsv`, trigram GIN on `name`, HNSW (`vector_cosine_ops`) on `embedding`, index on (`owner_id`), (`status`) where not archived |
 | `item_images` | `item_id` FK, `upload_id` FK, `position` int | First image = thumbnail |
 | `item_audiences` | PK(`item_id`, `community_id`) | Index on `community_id` |
 | `requests` | `requester_id` FK, `raw_text`, `title`, `item_name` null, `category` null, `attributes` JSONB default `{}`, `quantity` default 1, `needed_from` date null, `needed_until` date null, `duration_days` null, `transaction_type` null, `visibility`, `status` (open\|in_progress\|fulfilled\|cancelled) default open, `pickup_place_id` null, **C:** `matching_status` (pending\|done) default pending, `ai_enriched` bool default false, `embedding VECTOR(384)` null, `search_tsv GENERATED` (title, item_name, raw_text), `updated_at`, `fulfilled_at` null | `expired` is computed, not stored (see §7.7) |
@@ -263,7 +263,7 @@ Unless a table says otherwise:
 | `notifications` | `user_id`, `type`, `title`, `body`, `link`, `actor_id` null, `data` JSONB default `{}`, `read_at` null | Index (`user_id`, `read_at`) |
 | `scans` (C) | `user_id`, `status` (processing\|done\|failed), `provider`, `model` null, `prompt_version`, `finished_at` null | |
 | `scan_images` (C) | `scan_id`, `upload_id`, `position`, `status` (pending\|processing\|done\|failed), `error` null, `latency_ms` null, `cost_usd` null, `raw_response` JSONB null | |
-| `scan_detections` (C) | `scan_id`, `scan_image_id`, `image_index`, `name`, `category`, `description`, `quantity`, `condition_guess` null, `confidence` float, `bbox` JSONB null, `suggested_share` bool, `sensitive_reason` null, `suggested_transaction_type`, `status` (pending\|published\|discarded), `published_item_id` null, `edits` JSONB null | `edits` = what the user changed. This is future training data |
+| `scan_detections` (C) | `scan_id`, `scan_image_id`, `image_index`, `name`, `category`, `description`, `quantity`, `condition_guess` null, `confidence` float, `bbox` JSONB null, `suggested_share` bool, `sensitive_reason` null, `suggested_transaction_type`, `value_estimate_usd` int null (the AI's estimate, `ITEM_VALUE_ENABLED`), `status` (pending\|published\|discarded), `published_item_id` null, `edits` JSONB null | `edits` = what the user changed. This is future training data |
 | `search_logs` (C) | `user_id`, `raw_query`, `parsed` JSONB, `filters` JSONB, `result_item_ids` INT[], `latency_ms` | |
 | `events` | `user_id` null, `type`, `payload` JSONB | Product analytics |
 | `ai_cache` (C) | `key` TEXT PK, `value` JSONB | Key = sha256(image) + prompt version + provider + model |
@@ -320,11 +320,13 @@ export interface Level { name: string; min_points: number; next_level_name: stri
 export interface UserPublic extends UserRef {
   bio: string | null; points: number; level: Level; badges: Badge[];
   rating_count: number; completed_count: number; items_shared_count: number; joined_at: ISODateTime;
+  value_shared_usd?: number | null;  // ITEM_VALUE_ENABLED: sum of value_usd over completed exchanges they shared; null when off
 }
 export interface Me extends UserPublic {
   email: string; dorm: CommunityRef | null; groups: CommunityRef[]; walking_radius_min: number;
   onboarded: boolean; match_suggestions: boolean;   // match_suggestions = opted in to mutual matching
   unread_notifications: number; unread_messages: number;
+  item_value_enabled?: boolean;      // ITEM_VALUE_ENABLED: show the Value field and totals
 }
 export interface AuthResponse { token: string; user: Me }
 export interface SignupBody { email: string; password: string; name: string; dorm_id?: ID | null; ref_user_id?: ID | null }
@@ -357,6 +359,7 @@ export interface ItemCard {
   distance_min: number | null; same_dorm: boolean; created_at: ISODateTime;
   match_score: number | null;    // only in search/match/fulfillable responses, else null
   match_reason: string | null;   // e.g. "Same dorm · 2 min walk"
+  value_usd?: number | null;     // ITEM_VALUE_ENABLED: estimated new price, whole US dollars; display only
 }
 export interface ItemDetail extends ItemCard {
   description: string | null; images: ItemImage[]; max_lend_days: number | null;
@@ -375,6 +378,7 @@ export interface ItemCreate {
   visibility: Visibility; group_ids?: ID[]; pickup_place_id?: ID | null; pickup_note?: string | null;
   image_upload_ids?: ID[];       // ≤ 6, first = thumbnail
   pings_enabled?: boolean;       // default true
+  value_usd?: number | null;     // 0..10000 whole US dollars; null clears it. Ignored when ITEM_VALUE_ENABLED is off
 }
 export type ItemUpdate = Partial<ItemCreate> & { status?: "available" | "unavailable" };
 export interface BorrowBody { message?: string | null; start_date?: ISODate | null; due_date?: ISODate | null; request_id?: ID | null }
@@ -550,6 +554,7 @@ export interface Detection {
   bbox: [number, number, number, number] | null;   // normalized x, y, w, h (0..1), approximate
   suggested_share: boolean; sensitive_reason: string | null; suggested_transaction_type: TransactionType;
   status: "pending" | "published" | "discarded";
+  value_estimate_usd?: number | null;  // the AI's estimate (ITEM_VALUE_ENABLED); null if the AI is off or unsure
 }
 export interface Scan { id: ID; status: "processing" | "done" | "failed"; images: ScanImage[]; detections: Detection[]; provider: string; created_at: ISODateTime }
 export interface ScanCreate { upload_ids: ID[] }

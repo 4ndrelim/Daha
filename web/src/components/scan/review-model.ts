@@ -19,6 +19,10 @@ export interface Row {
   open: boolean;
   sensitive: string | null;
   suggestedType: TransactionType;
+  /** Whole US dollars, or null. Only sent when item value is on. */
+  value: number | null;
+  /** The AI suggested `value` and nobody changed it: shown as "estimate". */
+  valueIsEstimate: boolean;
 }
 
 export interface Defaults {
@@ -40,6 +44,7 @@ export function rowFromDetection(d: Detection): Row {
     name: d.name, category: d.category, quantity: Math.max(1, d.quantity || 1), type: null,
     description: d.description ?? "", condition: d.condition_guess, visibility: null, open: false,
     sensitive: d.sensitive_reason, suggestedType: d.suggested_transaction_type,
+    value: d.value_estimate_usd ?? null, valueIsEstimate: d.value_estimate_usd != null,
   };
 }
 
@@ -48,7 +53,7 @@ export function manualRow(): Row {
   return {
     key: `m${Date.now().toString(36)}${manualSeq++}`, detectionId: null, imageIndex: null, checked: true,
     name: "", category: "other", quantity: 1, type: null, description: "", condition: null, visibility: null,
-    open: false, sensitive: null, suggestedType: "lend",
+    open: false, sensitive: null, suggestedType: "lend", value: null, valueIsEstimate: false,
   };
 }
 
@@ -74,9 +79,10 @@ export function rowProblem(row: Row, defaults: Defaults, me: Me | undefined): st
   return null;
 }
 
-export function toPublishItem(row: Row, defaults: Defaults): ScanPublishItem {
+export function toPublishItem(row: Row, defaults: Defaults, withValue = false): ScanPublishItem {
   const visibility = effectiveVisibility(row, defaults);
   return {
+    ...(withValue ? { value_usd: row.value } : {}),
     detection_id: row.detectionId,
     name: row.name.trim().slice(0, NAME_MAX),
     description: row.description.trim() || null,
@@ -96,5 +102,5 @@ export function toPublishItem(row: Row, defaults: Defaults): ScanPublishItem {
 export function wasEdited(row: Row, d: Detection, defaults: Defaults): boolean {
   return row.name.trim() !== d.name || row.category !== d.category || row.quantity !== Math.max(1, d.quantity || 1)
     || effectiveType(row, defaults) !== d.suggested_transaction_type || row.description.trim() !== (d.description ?? "").trim()
-    || row.condition !== d.condition_guess;
+    || row.condition !== d.condition_guess || row.value !== (d.value_estimate_usd ?? null);
 }

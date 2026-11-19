@@ -4,6 +4,7 @@ import { Check, ChevronDown, ShieldAlert, Trash2 } from "lucide-react";
 import type { Category, Condition, Me, TransactionType, Visibility } from "@/lib/api/types";
 import { CATEGORIES, CONDITION_LABEL } from "@/lib/categories";
 import { cn } from "@/lib/utils";
+import { ValueInput } from "@/components/daha/value-input";
 import { NativeSelect, Segmented, Stepper } from "./controls";
 import { DetectionThumb } from "./thumbs";
 import { NAME_MAX, type Row } from "./review-model";
@@ -100,6 +101,10 @@ export function ReviewRow({ row, bbox, photo, type, visibility, defaultVisibilit
             >
               {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>)}
             </NativeSelect>
+            {me?.item_value_enabled && (
+              <ValueInput value={row.value} estimate={row.valueIsEstimate}
+                onChange={(value) => onChange({ value, valueIsEstimate: false })} className="w-36 shrink-0" />
+            )}
             <Stepper label="Quantity" value={row.quantity} onChange={(quantity) => onChange({ quantity })} />
           </div>
           <Segmented

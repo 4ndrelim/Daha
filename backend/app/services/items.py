@@ -8,6 +8,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app import schemas
+from app.core.config import settings
 from app.discovery import hooks
 from app.models import Item, ItemAudience, ItemImage, Place, PointsLedger, Upload, User
 from app.services import points
@@ -112,6 +113,7 @@ def create_item(
         pickup_note=data.pickup_note,
         source=source,
         scan_detection_id=scan_detection_id,
+        value_usd=data.value_usd if settings.item_value_enabled else None,
     )
     db.add(item)
     db.flush()
@@ -154,6 +156,8 @@ def update_item(
         if value is None and field in not_nullable | {"pings_enabled"}:
             continue
         setattr(item, field, value.strip() if field == "name" else value)
+    if "value_usd" in sent and settings.item_value_enabled:
+        item.value_usd = data.value_usd  # null clears it
 
     _validate_core(item.category, item.transaction_type, item.available_from, item.available_until)
     if "pickup_place_id" in sent:

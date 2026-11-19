@@ -42,6 +42,7 @@ class ItemCard(Schema):
     created_at: ISODateTime
     match_score: float | None  # only in search/match/fulfillable responses, else null
     match_reason: str | None
+    value_usd: int | None = None  # estimated new price in US dollars; null if unset or flag off
 
 
 class ItemDetail(ItemCard):
@@ -77,6 +78,8 @@ class ItemCreate(Schema):
     pickup_note: str | None = None
     image_upload_ids: list[ID] = Field(default_factory=list)  # ≤ 6, first = thumbnail
     pings_enabled: bool = True
+    # Estimated new price in whole US dollars (ITEM_VALUE_ENABLED). Display only: never points.
+    value_usd: int | None = Field(default=None, ge=0, le=10000)
 
 
 class ItemUpdate(Schema):
@@ -98,6 +101,7 @@ class ItemUpdate(Schema):
     image_upload_ids: list[ID] | None = None
     pings_enabled: bool | None = None
     status: Literal["available", "unavailable"] | None = None
+    value_usd: int | None = Field(default=None, ge=0, le=10000)  # null clears it
 
 
 class BorrowBody(Schema):

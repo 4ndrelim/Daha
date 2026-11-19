@@ -65,6 +65,9 @@ class Settings(BaseSettings):
     harnessrouter_condition_harness_id: str = ""  # one shared id, or one per key in the same order
     condition_budget_usd: float = 2.0  # hard stop for paid condition checks (all time)
     condition_est_cost_per_check: float = 0.05  # used when the API reports no cost
+    # Item value: an optional estimated new price per item (US dollars). Off unless .env says so.
+    # Display only: never used for points, karma or payments.
+    item_value_enabled: bool = False
     # Handoff coordinator (docs/plans/handoff-coordinator.md). Off unless backend/.env turns it on.
     handoff_coordinator_enabled: bool = False
     harnessrouter_handoff_harness_id: str = ""  # one shared id, or one per key in the same order

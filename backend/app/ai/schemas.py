@@ -31,6 +31,7 @@ class DetectedItemRaw(BaseModel):
     suggested_share: bool = True
     sensitive_reason: str | None = None
     suggested_transaction_type: TxTypeLit = "lend"
+    value_usd: int | None = None  # the AI's estimated new price in whole US dollars, or null
 
 
 class DetectionPayload(BaseModel):

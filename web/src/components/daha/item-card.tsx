@@ -4,6 +4,7 @@ import { DistanceChip, StatusBadge, TxTypeChip } from "./chips";
 import { ItemThumb } from "./item-thumb";
 import { UserAvatar } from "./user-avatar";
 import { cn } from "@/lib/utils";
+import { worthLabel } from "@/lib/value";
 
 export function ItemCard({ item, className, onClick }: { item: ItemCardT; className?: string; onClick?: () => void }) {
   return (
@@ -18,6 +19,7 @@ export function ItemCard({ item, className, onClick }: { item: ItemCardT; classN
           {item.quantity > 1 && <span className="text-muted-foreground">{item.quantity}× </span>}
           {item.name}
         </p>
+        {item.value_usd != null && <p className="truncate text-[12px] text-muted-foreground">{worthLabel(item.value_usd)}</p>}
         <div className="flex flex-wrap items-center gap-1">
           <TxTypeChip type={item.transaction_type} />
           {item.status !== "available" && <StatusBadge status={item.status} />}

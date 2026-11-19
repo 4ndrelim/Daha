@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { api, ApiError, track } from "@/lib/api";
 import type { ItemDetail, TransactionType } from "@/lib/api/types";
 import { categoryInfo, CONDITION_LABEL } from "@/lib/categories";
+import { worthLabel } from "@/lib/value";
 import { firstName, shortDate } from "@/lib/format";
 import { invalidatePool } from "@/lib/api/mock/pool";
 import { BackButton } from "@/components/daha/back-button";
@@ -214,6 +215,7 @@ export default function ItemPage() {
         <h1 className="text-[22px] leading-7 font-semibold">
           {i.quantity > 1 && <span className="text-muted-foreground">{i.quantity}× </span>}{i.name}
         </h1>
+        {i.value_usd != null && <p className="text-[14px] text-muted-foreground">{worthLabel(i.value_usd)}</p>}
         <DistanceChip min={i.distance_min} label={i.community_label} />
         {i.visibility === "private" && (
           <p className="flex items-center gap-1.5 rounded-xl bg-muted px-3 py-2 text-[13px]">
