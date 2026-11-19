@@ -37,7 +37,7 @@ def test_seed_runs_twice_cleanly_and_is_deterministic(db):
         == 1
     )
     assert (
-        db.scalar(select(func.count()).select_from(Community).where(Community.kind == "dorm")) == 15
+        db.scalar(select(func.count()).select_from(Community).where(Community.kind == "dorm")) == 19
     )
     assert (
         db.scalar(select(func.count()).select_from(Community).where(Community.kind == "group")) == 6

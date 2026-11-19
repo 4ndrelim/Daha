@@ -82,6 +82,11 @@ def seed_communities(db: Session) -> dict[str, Community]:
         key = f"community:{row['slug']}"
         c = db.execute(select(Community).where(Community.seed_key == key)).scalar_one_or_none()
         if c is None:
+            taken = db.scalar(select(Community.id).where(Community.slug == row["slug"]))
+            if taken is not None:
+                # Someone's own group already uses this address: leave it alone, skip the dorm.
+                print(f"  ! community '{row['slug']}' exists and isn't a seeded one; skipped")
+                continue
             c = Community(seed_key=key, slug=row["slug"])
             db.add(c)
         c.kind, c.name, c.emoji = row["kind"], row["name"], row["emoji"]
@@ -847,6 +852,26 @@ def run(do_reset: bool = False, demo: bool = True) -> dict[str, int]:
     return counts
 
 
+def sync_base() -> dict[str, int]:
+    """Add or update the campus, dorms and exchange points in a database that is already in use.
+
+    Safe to run any number of times, on any database: it only inserts or updates the rows that
+    come from `data/dorms.json` and `data/places.json`. It never deletes anything and never
+    touches users, memberships, items, requests, groups, or the demo world. This is how a new
+    dorm in dorms.json reaches a live deployment (the container runs it on every start).
+    """
+    with SessionLocal() as db:
+        before = db.scalar(select(func.count()).select_from(Community)) or 0
+        seed_communities(db)
+        seed_places(db)
+        db.commit()
+        after = db.scalar(select(func.count()).select_from(Community)) or 0
+        dorms = db.scalar(
+            select(func.count()).select_from(Community).where(Community.kind == "dorm")
+        )
+    return {"communities added": after - before, "dorms now": dorms or 0}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Seed DAHA demo data")
     parser.add_argument("--reset", action="store_true", help="truncate every table first")
@@ -858,7 +883,15 @@ def main() -> None:
     parser.add_argument(
         "--base-only", action="store_true", help="only campus, dorms, and places — no demo world"
     )
+    parser.add_argument(
+        "--sync-base",
+        action="store_true",
+        help="add or update campus, dorms and places in a live database; never deletes anything",
+    )
     args = parser.parse_args()
+    if args.sync_base:
+        print("Synced: " + ", ".join(f"{v} {k}" for k, v in sync_base().items()))
+        return
     if args.if_empty:
         with SessionLocal() as db:
             if db.scalar(select(func.count()).select_from(Community)):

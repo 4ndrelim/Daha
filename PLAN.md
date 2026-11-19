@@ -730,7 +730,8 @@ def reindex_all() -> int: ...                         # stub: return 0
 ## 8. Seed data (A builds it in A2; P0-A seeds only communities and places)
 - **Campus:** one community (`kind=campus`, slug `campus`, name "Stanford Campus").
 - **Dorms:** one community each. Look up approximate coordinates once via OpenStreetMap Nominatim (1 request/s, generic User-Agent `daha-seed/0.1`) and commit them to `app/seed/data/dorms.json`. If a lookup fails, use a nearby point on campus and mark it `"approx": true`. The list:
-  Wilbur Hall · Stern Hall · Florence Moore Hall (FloMo) · Lagunita Court · Roble Hall · Branner Hall · Toyon Hall · Crothers Hall · Governor's Corner · Manzanita Park · Mirrielees · Kimball Hall · Escondido Village · The Row · Off-campus (no coordinates).
+  Wilbur Hall · Stern Hall · Florence Moore Hall (FloMo) · Lagunita Court · Roble Hall · Branner Hall · Toyon Hall · Crothers Hall · Governor's Corner · Manzanita Park · Mirrielees · Kimball Hall · Escondido Village · EVGR A · EVGR B · EVGR C · EVGR D · The Row · Off-campus (no coordinates).
+  A database that is already in use gets new dorms with `make dorms` (`seed --sync-base`: inserts or updates only, never deletes); the API container runs it on every start.
 - **Exchange points** (`places`): Tresidder Memorial Union · Cecil H. Green Library · Old Union · Main Quad · Arrillaga Family Dining Commons · Meyer Green.
 - **Groups** (fictional): Robotics Club (club) · CS 106B Study Group (class) · Hiking & Outdoors (club) · Bio Lab 3rd Floor (research, private) · Hackathon Team Nova (team) · Film Society (org).
 - **Users:** 30 fictional students spread across dorms. Emails are `<first>@demo.daha` (a non-routable domain, never `@stanford.edu`), password `daha-demo`, `is_demo=true`. Three hero accounts:

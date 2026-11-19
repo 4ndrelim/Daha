@@ -14,7 +14,7 @@ The checklist is `OWNERACTIONS.md`. This page is how it works and how to run it 
      │    ▼
      ├─ web    127.0.0.1:3000  Next.js; proxies /api and /uploads to the API
      │    ▼
-     ├─ api    127.0.0.1:8000  FastAPI; migrates and seeds on start
+     ├─ api    127.0.0.1:8000  FastAPI; on every start it migrates, seeds an empty database, and adds new dorms/places (`seed --sync-base`, never deletes)
      │    ▼                    calls out to HarnessRouter (photo AI) and Exa (store search)
      └─ db     127.0.0.1:5432  Postgres 16 + pgvector
    volumes: daha_pgdata (database) · daha_uploads (photos) · daha_fastembed (search model)

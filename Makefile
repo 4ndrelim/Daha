@@ -3,7 +3,7 @@
 # already on PATH.
 export PATH := $(HOME)/.local/bin:$(HOME)/.local/node/bin:$(HOME)/.docker/bin:$(PATH)
 
-.PHONY: env db migrate seed api web test smoke reindex lan up down logs deploy
+.PHONY: env db migrate seed dorms api web test smoke reindex lan up down logs deploy
 
 env:  ## create backend/.env + web/.env.local, or add new variables after a pull (keeps yours)
 	@sh infra/env-sync.sh
@@ -16,6 +16,9 @@ migrate:  ## create / update tables
 
 seed:  ## reset and load the demo data (deterministic)
 	cd backend && uv run python -m app.seed.seed --reset
+
+dorms:  ## add new dorms / exchange points to the database you have (keeps all users, items, requests)
+	cd backend && uv run python -m app.seed.seed --sync-base
 
 api:  ## backend on http://localhost:8000 (docs at /docs)
 	cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

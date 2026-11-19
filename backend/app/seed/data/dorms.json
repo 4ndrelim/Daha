@@ -12,6 +12,10 @@
   {"slug": "mirrielees", "name": "Mirrielees", "emoji": "🏢", "lat": 37.4237, "lng": -122.1583, "approx": true},
   {"slug": "kimball", "name": "Kimball Hall", "emoji": "🎨", "lat": 37.42507, "lng": -122.16188},
   {"slug": "ev", "name": "Escondido Village", "emoji": "🏘️", "lat": 37.42562, "lng": -122.15723},
+  {"slug": "evgr-a", "name": "EVGR A", "emoji": "🏙️", "lat": 37.42488, "lng": -122.15863},
+  {"slug": "evgr-b", "name": "EVGR B", "emoji": "🌇", "lat": 37.42563, "lng": -122.15745},
+  {"slug": "evgr-c", "name": "EVGR C", "emoji": "🌆", "lat": 37.42659, "lng": -122.1566},
+  {"slug": "evgr-d", "name": "EVGR D", "emoji": "🌃", "lat": 37.42741, "lng": -122.15571},
   {"slug": "the-row", "name": "The Row", "emoji": "🏠", "lat": 37.42178, "lng": -122.16866, "approx": true},
   {"slug": "off-campus", "name": "Off-campus", "emoji": "🚲", "lat": null, "lng": null}
 ]
