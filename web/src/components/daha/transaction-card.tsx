@@ -61,7 +61,7 @@ export function TransactionCard({ tx, compact = false }: { tx: Transaction; comp
   return (
     <div className="rounded-2xl bg-card p-3.5 shadow-sm ring-1 ring-border/60">
       <div className="flex items-center gap-3">
-        <Link href={`/items/${tx.item.id}`} className="shrink-0">
+        <Link href={`/items/${tx.item.id}`} className="shrink-0" aria-label={`Open ${tx.item.name}`}>
           <ItemThumb url={tx.item.thumbnail_url} category={tx.item.category} className="size-12 rounded-xl" emojiClassName="text-2xl" />
         </Link>
         <div className="min-w-0 flex-1">
