@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Smartphone } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,6 +52,11 @@ export function LoginScreen() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-4 pt-[calc(3rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <BrandLogo />
+      {/* Desktop only (768 px and up): the app is built for phones. */}
+      <p className="mt-2 hidden items-center justify-center gap-1.5 text-[15px] font-normal text-muted-foreground md:flex">
+        <Smartphone className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+        Best viewed on mobile!
+      </p>
       <h1 className="mt-5 text-[22px] leading-7 font-semibold">Borrow it from down the hall.</h1>
       <p className="mt-1 text-muted-foreground">Lend, borrow, give away and swap with people in your dorm.</p>
 
