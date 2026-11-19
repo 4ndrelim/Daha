@@ -57,7 +57,7 @@ def test_creates_one_harness_per_key_in_order(setup_script, monkeypatch, capsys)
     assert setup_script.ENV_FILE.read_text() == "HARNESSROUTER_VISION_HARNESS_ID=hrn_a,hrn_b\n"
     assert json.loads(create.calls[0].request.content)["max_cost_usd"] == 0.5
     out = capsys.readouterr().out
-    assert "key 2/2: harness hrn_b" in out and "sk-hr" not in out
+    assert "key 2/2: vision harness hrn_b" in out and "sk-hr" not in out
 
 
 @respx.mock
@@ -121,3 +121,53 @@ def test_missing_adds_harnesses_only_for_new_keys(setup_script, monkeypatch, cap
     setup_script.main()  # every key has one now: nothing to create
     assert len(create.calls) == 1
     assert "nothing to do" in capsys.readouterr().out
+
+
+@respx.mock
+def test_all_missing_adds_every_harness_on_a_new_key_only(setup_script, monkeypatch):
+    respx.get(f"{BASE}/v1/bases").mock(return_value=httpx.Response(200, json=[]))
+    respx.get(f"{BASE}/v1/models").mock(return_value=httpx.Response(200, json=[]))
+    create = respx.post(f"{BASE}/v1/harnesses").mock(
+        side_effect=lambda req: httpx.Response(
+            200, json={"id": "new_" + json.loads(req.content)["name"][:12]}
+        )
+    )
+    monkeypatch.setattr(settings, "harnessrouter_api_key", "sk-hr-a,sk-hr-b,sk-hr-c")
+    for var in ("vision", "condition", "profile", "handoff"):
+        monkeypatch.setattr(settings, f"harnessrouter_{var}_harness_id", f"{var}1,{var}2")
+    monkeypatch.setattr(settings, "harnessrouter_handoff_model", "claude-haiku-5.5")
+    monkeypatch.setattr(
+        sys, "argv", ["setup_harnessrouter.py", "--all", "--missing", "--write-env"]
+    )
+    setup_script.main()
+    assert {c.request.headers["authorization"] for c in create.calls} == {"Bearer sk-hr-c"}
+    assert len(create.calls) == 4  # photos, condition check, profiles, handoff
+    saved = setup_script.ENV_FILE.read_text().splitlines()
+    assert "HARNESSROUTER_VISION_HARNESS_ID=vision1,vision2,new_daha-vision-" in saved
+    assert any(
+        line.startswith("HARNESSROUTER_HANDOFF_HARNESS_ID=handoff1,handoff2,") for line in saved
+    )
+
+
+@respx.mock
+def test_smoke_needs_yes_then_reports_each_key(setup_script, monkeypatch, capsys):
+    monkeypatch.setattr(settings, "harnessrouter_vision_harness_id", "hrn_a,hrn_b")
+    monkeypatch.setattr(sys, "argv", ["setup_harnessrouter.py", "--smoke"])
+    with pytest.raises(SystemExit) as stop:
+        setup_script.main()
+    assert "Add --yes" in str(stop.value)
+
+    good = '{"items":[{"name":"Desk lamp","category":"dorm","confidence":0.9}]}'
+    frames = [{"type": "response.created", "response": {"id": "r1"}}]
+    frames += [{"type": "response.output_text.delta", "delta": good}]
+    frames += [{"type": "response.completed", "response": {"id": "r1", "status": "completed"}}]
+    stream = "".join(f"data: {json.dumps(f)}\n\n" for f in frames)
+    respx.post(f"{BASE}/v1/files").mock(return_value=httpx.Response(200, json={"id": "f"}))
+    respx.post(f"{BASE}/hrn_a/v1/responses").mock(
+        return_value=httpx.Response(200, headers={"content-type": "text/event-stream"}, text=stream)
+    )
+    respx.post(f"{BASE}/hrn_b/v1/responses").mock(return_value=httpx.Response(401))
+    monkeypatch.setattr(sys, "argv", ["setup_harnessrouter.py", "--smoke", "--yes"])
+    setup_script.main()
+    out = capsys.readouterr().out
+    assert "key 1/2: OK" in out and "key 2/2: FAILED" in out and "sk-hr" not in out

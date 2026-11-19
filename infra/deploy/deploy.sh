@@ -62,6 +62,9 @@ env_value() { # $1 = file, $2 = name: the value, without quotes or a trailing " 
   grep -E "^$2=" "$1" | tail -1 | cut -d= -f2- \
     | sed -E 's/[[:space:]]+#.*$//; s/^#.*$//; s/^[[:space:]]+//; s/[[:space:]]+$//' | tr -d "\"'"
 }
+count_list() { # how many comma-separated values a setting in backend/.env has
+  env_value "$BACKEND_ENV" "$1" | tr ',' '\n' | grep -c '[^[:space:]]' || true
+}
 env_flag() { # true/false, read the way the backend reads it (true, 1, yes, on)
   case "$(env_value "$BACKEND_ENV" "$1" | tr '[:upper:]' '[:lower:]')" in
     true | 1 | yes | on) echo true ;;
@@ -76,6 +79,20 @@ ship() { # $1 = deploy | prepare: send the code and settings, then run remote.sh
   for key in HARNESSROUTER_API_KEY HARNESSROUTER_VISION_HARNESS_ID EXA_API_KEY; do
     grep -qE "^$key=[^[:space:]#]" "$BACKEND_ENV" \
       || echo "⚠️  $key is empty in backend/.env, so that feature will say it isn't set up."
+  done
+  # A key without a harness id for a feature is skipped for that feature (never an error), so
+  # say which: the usual reason is a key added without running the setup script.
+  local n_keys n_ids pair
+  n_keys=$(count_list HARNESSROUTER_API_KEY)
+  echo "   HarnessRouter keys: $n_keys"
+  for pair in VISION:photos CONDITION:"condition check" PROFILE:profiles HANDOFF:coordinator; do
+    n_ids=$(count_list "HARNESSROUTER_${pair%%:*}_HARNESS_ID")
+    if [ "$n_ids" -gt 1 ] && [ "$n_ids" -lt "$n_keys" ]; then
+      local unused="key $n_keys"
+      [ $((n_ids + 1)) -lt "$n_keys" ] && unused="keys $((n_ids + 1))-$n_keys"
+      echo "⚠️  ${pair#*:}: harnesses on $n_ids of $n_keys keys, so $unused isn't used for it yet."
+      echo "   Fix: cd backend && uv run python scripts/setup_harnessrouter.py --all --missing --write-env"
+    fi
   done
   local commit branch host public_ip=""
   commit=$(git -C "$ROOT" rev-parse --short HEAD)

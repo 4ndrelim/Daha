@@ -3,8 +3,10 @@
     cd backend && uv run python scripts/setup_harnessrouter.py --check       # keys OK? which org?
     cd backend && uv run python scripts/setup_harnessrouter.py --list        # bases + models only
     cd backend && uv run python scripts/setup_harnessrouter.py --write-env   # create + save ids
-    cd backend && uv run python scripts/setup_harnessrouter.py --missing --write-env
-        # after adding a key: harnesses only for the new key(s); the other ids stay
+    cd backend && uv run python scripts/setup_harnessrouter.py --all --missing --write-env
+        # after adding a key: every harness, only for the new key(s); the other ids stay
+    cd backend && uv run python scripts/setup_harnessrouter.py --smoke --yes
+        # PAID: one tiny photo per key, to prove each key really runs tasks before going live
     cd backend && uv run python scripts/setup_harnessrouter.py --profile --write-env
         # the same for the mutual-matching profile harness (HARNESSROUTER_PROFILE_HARNESS_ID)
     cd backend && uv run python scripts/setup_harnessrouter.py --condition --write-env
@@ -210,15 +212,29 @@ def main() -> None:
         action="store_true",
         help="after adding a key: create harnesses only for keys without one, keep the other ids",
     )
+    ap.add_argument(
+        "--all",
+        action="store_true",
+        help="all four harnesses (photos, condition check, profiles, handoff); use with --missing",
+    )
+    ap.add_argument(
+        "--smoke",
+        action="store_true",
+        help="PAID (with --yes): one tiny photo per key, to prove each key can really run tasks",
+    )
+    ap.add_argument("--yes", action="store_true", help="really spend money (for --smoke)")
     args = ap.parse_args()
-    if args.profile + args.condition + args.handoff > 1:
-        sys.exit("Pick one: --profile, --condition or --handoff")
+    if args.profile + args.condition + args.handoff + args.all > 1:
+        sys.exit("Pick one: --profile, --condition, --handoff or --all")
     model = args.model or settings.harnessrouter_handoff_model
-    if args.handoff and not model and not (args.check or args.list):
+    if args.handoff and not model and not (args.check or args.list or args.smoke):
         sys.exit("Set HARNESSROUTER_HANDOFF_MODEL in backend/.env (or pass --model) first")
     keys = api_keys()
     if args.check:
         check(keys)
+    if args.smoke:
+        smoke(keys, yes=args.yes)
+        return
     with client(keys[0]) as c:
         bases = c.get("/v1/bases").raise_for_status().json()
         models = c.get("/v1/models").raise_for_status().json()
@@ -226,18 +242,35 @@ def main() -> None:
     print("models:", json.dumps(models, indent=2)[:4000])
     if args.list:
         return
-    var = (
-        PROFILE_VAR
-        if args.profile
-        else CONDITION_VAR
-        if args.condition
-        else HANDOFF_VAR
-        if args.handoff
-        else HARNESS_VAR
-    )
+    if args.all:
+        kinds = ["vision", "condition", "profile"] + (["handoff"] if model else [])
+        if not model:
+            print(f"Skipping the handoff harness: set HARNESSROUTER_HANDOFF_MODEL ({HANDOFF_VAR})")
+    else:
+        kinds = [
+            "profile"
+            if args.profile
+            else "condition"
+            if args.condition
+            else "handoff"
+            if args.handoff
+            else "vision"
+        ]
+    for kind in kinds:
+        make_harnesses(kind, keys, bases, model, missing=args.missing, save=args.write_env)
+
+
+VARS = {"vision": HARNESS_VAR, "condition": CONDITION_VAR, "profile": PROFILE_VAR}
+
+
+def make_harnesses(
+    kind: str, keys: list[str], bases, model: str, *, missing: bool, save: bool
+) -> None:
+    """Create the `kind` harness on every key (or, with `missing`, only on keys without one)."""
+    var = VARS.get(kind, HANDOFF_VAR)
     ids: list[str] = []
     todo = list(enumerate(keys, 1))
-    if args.missing:  # keep the existing ids (e.g. registered with the organizers)
+    if missing:  # keep the existing ids (e.g. registered with the organizers)
         ids = csv_list(getattr(settings, var.lower()))
         if len(ids) == 1 and len(keys) > 1:
             sys.exit(f"{var} has one shared id; run without --missing to give each key its own")
@@ -250,21 +283,71 @@ def main() -> None:
             ids.append(
                 create_harness(
                     c,
-                    profile=args.profile,
-                    condition=args.condition,
-                    handoff=args.handoff,
+                    profile=kind == "profile",
+                    condition=kind == "condition",
+                    handoff=kind == "handoff",
                     model=model,
                     tools=base_tools(bases, HANDOFF_BASE),
                 )
             )
-        print(f"key {n}/{len(keys)}: harness {ids[-1]}")
+        print(f"key {n}/{len(keys)}: {kind} harness {ids[-1]}")
     value = ",".join(ids)
-    if args.write_env:
+    if save:
         write_env(value, var)
-        print(f"\nSaved {var} ({len(ids)} id(s)) to backend/.env. Restart `make api`.")
+        print(f"Saved {var} ({len(ids)} id(s)) to backend/.env. Restart `make api`.")
     else:
-        print("\nAdd this to backend/.env (or run again with --write-env):\n")
-        print(f"{var}={value}")
+        print(f"\nAdd this to backend/.env (or run again with --write-env):\n{var}={value}")
+
+
+def smoke(keys: list[str], *, yes: bool) -> None:
+    """One tiny photo per key through its photo harness. A key can pass --check (it's valid)
+    and still never run a task (seen on 2026-11-19), so this is the test before going live."""
+    ids = settings.harnessrouter_vision_harness_ids
+    if not yes:
+        sys.exit(f"--smoke runs {len(keys)} paid task(s), one per key (a few cents). Add --yes.")
+    import asyncio
+    import io
+    import time
+
+    from PIL import Image, ImageDraw
+
+    from app.ai.providers.harnessrouter import HarnessRouterVisionProvider, KeySlot
+
+    img = Image.new("RGB", (640, 480), (205, 170, 125))  # a drawn desk: no people, no text
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([120, 220, 230, 380], fill=(250, 250, 250), outline=(60, 60, 60), width=5)
+    draw.rectangle([330, 330, 560, 380], fill=(180, 40, 40), outline=(30, 30, 30), width=4)
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=85)
+    photo = buf.getvalue()
+
+    async def one(n: int, key: str, harness: str) -> str:
+        provider = HarnessRouterVisionProvider()
+        start = time.monotonic()
+        try:
+            result = await asyncio.wait_for(
+                provider._detect(KeySlot(n, key, harness), photo, "smoke.jpg", start), 90
+            )
+        except Exception as exc:  # noqa: BLE001 — report every failure the same way
+            reason = type(exc).__name__ if isinstance(exc, TimeoutError) else str(exc)[:120]
+            return f"key {n}/{len(keys)}: FAILED after {time.monotonic() - start:.0f} s ({reason})"
+        took = time.monotonic() - start
+        return f"key {n}/{len(keys)}: OK in {took:.0f} s, {len(result.items)} item(s)"
+
+    async def run_all() -> list[str]:
+        jobs = []
+        for n, key in enumerate(keys, 1):
+            harness = ids[0] if len(ids) == 1 else ids[n - 1] if n <= len(ids) else None
+            if harness is None:
+                print(
+                    f"key {n}/{len(keys)}: no photo harness yet (run --all --missing --write-env)"
+                )
+                continue
+            jobs.append(one(n, key, harness))
+        return await asyncio.gather(*jobs)
+
+    for line in asyncio.run(run_all()):
+        print(line)
 
 
 if __name__ == "__main__":
