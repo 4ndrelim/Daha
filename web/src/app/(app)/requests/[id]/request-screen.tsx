@@ -164,7 +164,7 @@ export function RequestScreen() {
             <span className="truncate text-muted-foreground">{r.requester.dorm_name ?? r.community_label} · {timeAgo(r.created_at)}</span>
           </p>
           <div className="mt-1 rounded-2xl rounded-tl-md bg-card px-4 py-3 text-[17px] leading-snug shadow-sm ring-1 ring-border/60">
-            {r.raw_text}
+            <h1 className="font-normal">{r.raw_text}</h1>
             <span className="mt-2.5 flex flex-wrap gap-1.5">
               {r.item_name && <InfoChip>{r.item_name}</InfoChip>}
               {cat && <InfoChip>{cat.emoji} {cat.label}</InfoChip>}

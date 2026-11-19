@@ -59,8 +59,8 @@
   --card-foreground: #1c1917;
   --popover: #ffffff;
   --popover-foreground: #1c1917;
-  --primary: #059669;             /* emerald-600 */
-  --primary-hover: #047857;       /* emerald-700 */
+  --primary: #047857;             /* emerald-700: 5.5:1 on white (emerald-600 was 3.8:1, below WCAG AA) */
+  --primary-hover: #065f46;       /* emerald-800 */
   --primary-foreground: #ffffff;
   --primary-soft: #ecfdf5;        /* emerald-50 */
   --points: #fbbf24;              /* amber-400: points & badges */
@@ -68,7 +68,7 @@
   --secondary: #f5f5f4;           /* stone-100 */
   --secondary-foreground: #1c1917;
   --muted: #f5f5f4;
-  --muted-foreground: #78716c;    /* stone-500 */
+  --muted-foreground: #716a65;    /* a touch darker than stone-500: 4.9:1 on the grey cards */
   --accent: #ecfdf5;
   --accent-foreground: #065f46;
   --destructive: #e11d48;         /* rose-600 */
@@ -83,7 +83,7 @@
   --radius: 0.75rem;
   --sidebar: #fafaf9;
   --sidebar-foreground: #1c1917;
-  --sidebar-primary: #059669;
+  --sidebar-primary: #047857;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #ecfdf5;
   --sidebar-accent-foreground: #065f46;
