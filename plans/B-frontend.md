@@ -35,7 +35,7 @@
 1. The weekly top 5 UX fixes from feedback (`plans/INTEGRATION.md` → "Iterate").
 2. ✅ Phone location for "Buy or rent nearby" (built by A in #24).
 3. ✅ The Playwright smoke test (P1 #6) and the missing `page_view` event (B8).
-4. From the research list above: an accessibility audit, messaging-style motion, a map view for "near me".
+4. From the research list above: ✅ an accessibility audit (B9: axe, 17 screens, 0 violations),  messaging-style motion, a map view for "near me".
 
 **If behind, cut** (in this order):
 1. invite links

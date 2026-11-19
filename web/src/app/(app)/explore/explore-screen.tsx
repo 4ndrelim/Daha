@@ -148,6 +148,7 @@ export function ExploreScreen() {
 
   return (
     <div className="space-y-3">
+      <h1 className="sr-only">Explore</h1>
       <form
         role="search"
         onSubmit={(e) => { e.preventDefault(); update({ q: text.trim() }); (document.activeElement as HTMLElement | null)?.blur(); }}

@@ -35,7 +35,7 @@ test("demo login → home → search → item → post a request → every tab",
   // 3. The item page opens.
   await first.click();
   await page.waitForURL(/\/items\/\d+/);
-  await expect(page.locator("main:visible h1")).toContainText(/calculator/i);
+  await expect(page.getByRole("heading", { level: 1, name: /calculator/i })).toBeVisible();
 
   // 4. Post a request; it opens its own page.
   await page.goto("/add/request?text=" + encodeURIComponent("anyone have a tape measure tonight? (e2e)"));
