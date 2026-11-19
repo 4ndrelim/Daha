@@ -122,6 +122,9 @@ def create_harness(
         "timeout_seconds": settings.harnessrouter_timeout_s,
         "max_cost_usd": 0.5,  # per-turn cap; the default is $10
         "disabled_tools": ["Write", "Edit", "Bash", "WebFetch", "WebSearch"],
+        # HarnessRouter gives a new harness long-term memory unless told otherwise; students'
+        # photos must not be remembered between scans (privacy), so every harness gets this.
+        "memory_hint": NO_MEMORY,
     }
     if profile:  # mutual matching (docs/plans/mutual-matching.md): text in, JSON out, no tools
         body.update(

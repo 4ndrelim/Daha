@@ -74,6 +74,7 @@ def test_harnesses_get_the_model_and_reasoning_effort(setup_script, monkeypatch)
     body = json.loads(create.calls[0].request.content)
     assert body["default_model"] == "claude-opus-5.5"
     assert body["reasoning_effort"] == "low"
+    assert body["memory_hint"] == setup_script.NO_MEMORY  # photos are never remembered
 
     monkeypatch.setattr(settings, "harnessrouter_reasoning_effort", "")  # unset → not sent
     setup_script.main()

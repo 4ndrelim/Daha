@@ -20,6 +20,7 @@ def _config(monkeypatch):
     monkeypatch.setattr(settings, "harnessrouter_vision_harness_id", HARNESS)
     monkeypatch.setattr(settings, "harnessrouter_est_cost_per_image", 0.07)
     monkeypatch.setattr(settings, "harnessrouter_max_concurrency", 2)
+    monkeypatch.setattr(settings, "harnessrouter_race", False)  # whatever a laptop's .env says
     monkeypatch.setattr(hr, "_pool", None)
 
 
@@ -317,3 +318,118 @@ async def test_balance_exhausted_mid_task_moves_to_the_next_key(monkeypatch):
     respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=run)
     result = await hr.HarnessRouterVisionProvider().detect(b"jpeg", "p.jpg")
     assert result.raw["key"] == 2
+
+
+# ---------------------------------------------------------------- racing (HARNESSROUTER_RACE)
+def race_on(monkeypatch, cap: int = 4) -> None:
+    use_keys(monkeypatch, "sk-hr-a,sk-hr-b")
+    monkeypatch.setattr(settings, "harnessrouter_race", True)
+    monkeypatch.setattr(settings, "harnessrouter_max_concurrency", cap)
+
+
+def idle(pool: hr.KeyPool) -> bool:
+    return all(s.in_flight == 0 for s in pool.slots) and not pool.backups and not pool.preempted
+
+
+@respx.mock
+async def test_race_takes_the_first_good_answer_and_cancels_the_other(monkeypatch):
+    race_on(monkeypatch)
+    finished: list[str] = []
+
+    async def run(request):
+        key = auth_header(request)
+        await asyncio.sleep(0.5 if key == "Bearer sk-hr-a" else 0.05)  # key a has a slow spell
+        finished.append(key)
+        return sse(GOOD)
+
+    up = respx.post(f"{BASE}/v1/files").mock(return_value=httpx.Response(200, json={"id": "f"}))
+    respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=run)
+    loop = asyncio.get_running_loop()
+    t0 = loop.time()
+    result = await hr.HarnessRouterVisionProvider().detect(b"jpeg", "p.jpg")
+    assert loop.time() - t0 < 0.4  # didn't wait for the slow key
+    assert result.raw["key"] == 2 and result.raw["race"] == "backup won"
+    assert sorted(auth(c) for c in up.calls) == ["Bearer sk-hr-a", "Bearer sk-hr-b"]
+    assert finished == ["Bearer sk-hr-b"]  # the slow copy was cancelled, not waited for
+    assert result.cost_usd == pytest.approx(0.14)  # two tasks' worth (0.07 each)
+    assert [i.name for i in result.items] == ["Desk lamp"]
+    assert idle(hr.get_pool())
+
+
+@respx.mock
+async def test_race_only_uses_spare_slots(monkeypatch):
+    race_on(monkeypatch, cap=2)  # two photos fill both slots: no room for second copies
+
+    async def run(request):
+        await asyncio.sleep(0.05)
+        return sse(GOOD)
+
+    up = respx.post(f"{BASE}/v1/files").mock(return_value=httpx.Response(200, json={"id": "f"}))
+    respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=run)
+    provider = hr.HarnessRouterVisionProvider()
+    results = await asyncio.gather(*(provider.detect(b"jpeg", f"p{i}.jpg") for i in range(2)))
+    assert len(up.calls) == 2
+    assert sorted(r.raw["key"] for r in results) == [1, 2]
+    assert all("race" not in r.raw and r.cost_usd == pytest.approx(0.07) for r in results)
+    assert idle(hr.get_pool())
+
+
+@respx.mock
+async def test_race_survives_one_copy_failing(monkeypatch):
+    race_on(monkeypatch)
+
+    async def run(request):
+        if auth_header(request) == "Bearer sk-hr-a":
+            await asyncio.sleep(0.01)
+            return sse("", terminal="response.failed", error={"message": "boom"})
+        await asyncio.sleep(0.1)  # the good copy is slower but still wins
+        return sse(GOOD)
+
+    respx.post(f"{BASE}/v1/files").mock(return_value=httpx.Response(200, json={"id": "f"}))
+    respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=run)
+    result = await hr.HarnessRouterVisionProvider().detect(b"jpeg", "p.jpg")
+    assert result.raw["key"] == 2 and result.raw["race"] == "backup won"
+    assert idle(hr.get_pool())
+
+
+@respx.mock
+async def test_race_both_copies_failing_gives_the_usual_error(monkeypatch):
+    race_on(monkeypatch)
+
+    async def run(request):
+        await asyncio.sleep(0.01)
+        return sse("", terminal="response.failed", error={"message": "boom"})
+
+    respx.post(f"{BASE}/v1/files").mock(return_value=httpx.Response(200, json={"id": "f"}))
+    respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=run)
+    with pytest.raises(ProviderError) as exc:
+        await hr.HarnessRouterVisionProvider().detect(b"jpeg", "p.jpg")
+    assert "task failed" in str(exc.value)
+    assert idle(hr.get_pool())
+
+
+@respx.mock
+async def test_a_new_photo_takes_a_backups_slot_instead_of_waiting(monkeypatch):
+    race_on(monkeypatch, cap=2)  # photo 1 races on both slots, then photo 2 arrives
+
+    async def run(request):
+        await asyncio.sleep(0.3)
+        return sse(GOOD)
+
+    up = respx.post(f"{BASE}/v1/files").mock(return_value=httpx.Response(200, json={"id": "f"}))
+    respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=run)
+    provider = hr.HarnessRouterVisionProvider()
+    loop = asyncio.get_running_loop()
+
+    async def second():
+        await asyncio.sleep(0.05)
+        t0 = loop.time()
+        result = await provider.detect(b"jpeg", "p2.jpg")
+        return result, loop.time() - t0
+
+    first, (other, took) = await asyncio.gather(provider.detect(b"jpeg", "p1.jpg"), second())
+    assert took < 0.45  # ran straight away on the backup's slot, not after photo 1 finished
+    assert first.raw["key"] == 1 and first.raw["race"] == "backup gave its slot to another photo"
+    assert other.raw["key"] == 2 and "race" not in other.raw
+    assert len(up.calls) == 3  # photo 1 twice (one copy cancelled), photo 2 once
+    assert idle(hr.get_pool())

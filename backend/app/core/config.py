@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     harnessrouter_model: str = ""
     # low | medium | high | xhigh, set on every harness the setup script creates; "" = model default
     harnessrouter_reasoning_effort: str = ""
+    # Run each photo on two keys at once when a task slot is free; the first answer wins
+    # (app/ai/providers/harnessrouter.py, _race). Faster and steadier, about twice the cost.
+    harnessrouter_race: bool = False
     harnessrouter_max_concurrency: int = 2
     harnessrouter_timeout_s: int = 180
     harnessrouter_est_cost_per_image: float = 0.10

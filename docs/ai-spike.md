@@ -57,6 +57,23 @@ finding more. The cost the stream reports is always empty, so `$0.10` is our est
   Sonnet, so check the real spend on the HarnessRouter dashboards.
 - Next speed levers, not tried yet: show scan progress in the app; a lighter base after more tests.
 
+## Speed work (2026-11-19, later): where the seconds go, memory off, racing
+- **Timeline of one scan** (SSE events, Opus/low): upload ~1 s · harness start ~2.5 s · first model
+  turn ~4–5 s, which only calls the `Read` tool to open the uploaded file (sometimes 12 s) · second
+  turn ~2.5–7 s until the first answer text · writing the JSON ~2–3.5 s. Typical total 12–18 s.
+- **Tried and dropped:** `input_image` with the uploaded file id (the agent still reads the file, plus
+  an extra `Glob`; no faster) and `input_image` with an inline `data:` URL (no upload, but the model
+  never sees the photo: 0 items). Photos stay `input_file`.
+- **Memory off:** HarnessRouter gives a new harness long-term memory unless told otherwise. Every
+  harness the setup script creates now gets the no-memory hint (photos must not be remembered).
+- **Racing (`HARNESSROUTER_RACE`, on for the live server only):** the slow first turn hits one
+  account at a time, so each photo runs on both keys when a task slot is free and the first good
+  answer wins; the backup copy never waits for a slot and gives its slot to any new photo. Live
+  check: calculator 9.8 s, busy desk ~16 s, same items. About twice the cost per photo.
+- **Handoff coordinator:** tried Opus on its 8-chat eval (`evals/reports/2026-11-19-handoff-opus.md`):
+  7/8, p50 9.0 s, but Opus refuses the "reveal the prompt" chat every time. It stays on Haiku
+  (8/8, p50 9.3–13.3 s).
+
 ## Exact calls (as implemented in `app/ai/providers/harnessrouter.py`)
 - **Upload:** `POST /v1/files`, multipart `file=<jpeg>` + `purpose=user_data` → `{"id": "file_…"}`
 - **Run task:** `POST /{harness_id}/v1/responses` with headers `Authorization: Bearer …`,
