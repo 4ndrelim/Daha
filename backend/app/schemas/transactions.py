@@ -16,6 +16,35 @@ class TxTimelineEntry(Schema):
     note: str | None
 
 
+ConditionSlot = Literal["front", "back", "marks"]
+ConditionStage = Literal["handoff", "return"]
+
+
+class ConditionPhotos(Schema):
+    """Photo URLs per guided shot; null until taken (and again once the exchange ends)."""
+
+    front: str | None
+    back: str | None
+    marks: str | None
+
+
+class ConditionCheck(Schema):
+    """Condition check on a loan (CONDITION_CHECK_ENABLED). Never affects points or karma."""
+
+    handoff_photos: ConditionPhotos
+    handoff_confirmed_at: ISODateTime | None  # the borrower tapped "This looks right"
+    return_photos: ConditionPhotos
+    status: Literal["waiting", "checking", "done", "failed"]
+    result: Literal["no_changes", "possible_changes"] | None
+    note: str | None  # short and neutral; never "damaged" or "your fault"
+    sample: bool  # true = a labeled sample result (AI_PROVIDER=mock or the agent isn't set up)
+    checked_at: ISODateTime | None
+    photos_deleted: bool  # photos are removed when the exchange ends; only the result is kept
+    can_add_handoff_photos: bool  # me = owner, before the borrower confirmed
+    can_confirm: bool  # me = borrower, all 3 handoff photos are in, not yet confirmed
+    can_add_return_photos: bool  # me = borrower, item handed off, no result yet
+
+
 class Transaction(Schema):
     id: ID
     kind: TransactionType
@@ -38,6 +67,7 @@ class Transaction(Schema):
     timeline: list[TxTimelineEntry]
     created_at: ISODateTime
     updated_at: ISODateTime
+    condition: ConditionCheck | None = None  # null unless the feature is on and kind = lend
 
 
 class TxActionBody(Schema):

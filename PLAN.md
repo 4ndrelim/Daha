@@ -172,6 +172,10 @@ MUTUAL_MATCHING=off                  # off | rules (free) | ai (rules + paid hab
 MUTUAL_BUDGET_USD=3                  # hard stop for paid profile tasks
 MUTUAL_EST_COST_PER_PROFILE=0.05
 HARNESSROUTER_PROFILE_HARNESS_ID=    # set by setup_harnessrouter.py --profile --write-env
+CONDITION_CHECK_ENABLED=false        # condition check on loans (web: NEXT_PUBLIC_CONDITION_CHECK)
+HARNESSROUTER_CONDITION_HARNESS_ID=  # set by setup_harnessrouter.py --condition --write-env
+CONDITION_BUDGET_USD=2               # hard stop for paid condition checks
+CONDITION_EST_COST_PER_CHECK=0.05
 ANTHROPIC_API_KEY=                   # optional fallback provider
 ANTHROPIC_MODEL=claude-opus-5-5
 ANTHROPIC_EFFORT=medium
@@ -201,6 +205,8 @@ NEXT_PUBLIC_MOCK=none   # all | none | comma list of mocked domains (default non
                         # auth,users,communities,places,uploads,items,requests,transactions,
                         # conversations,notifications,events,search,feed,matches,ai,scans
 NEXT_PUBLIC_DEMO_MODE=true
+NEXT_PUBLIC_THEME=holiday          # holiday | classic
+NEXT_PUBLIC_CONDITION_CHECK=false  # condition check on loans (backend: CONDITION_CHECK_ENABLED)
 ```
 
 ### 5.5 Makefile targets (A)
@@ -405,6 +411,24 @@ export interface Transaction {
   pickup_place: Place | null; pickup_note: string | null; conversation_id: ID;
   allowed_actions: TxAction[]; can_review: boolean; timeline: TxTimelineEntry[];
   created_at: ISODateTime; updated_at: ISODateTime;
+  condition: ConditionCheck | null;  // null unless CONDITION_CHECK_ENABLED and kind = lend
+}
+
+// ---------- condition check (loans; CONDITION_CHECK_ENABLED) ----------
+export type ConditionSlot = "front" | "back" | "marks";
+export type ConditionStage = "handoff" | "return";
+export interface ConditionPhotos { front: string | null; back: string | null; marks: string | null }  // URLs; null until taken / after the loan ends
+export interface ConditionCheck {
+  handoff_photos: ConditionPhotos;
+  handoff_confirmed_at: ISODateTime | null;  // the borrower tapped "This looks right"
+  return_photos: ConditionPhotos;
+  status: "waiting" | "checking" | "done" | "failed";
+  result: "no_changes" | "possible_changes" | null;
+  note: string | null;              // short and neutral; never "damaged" or "your fault"
+  sample: boolean;                  // a labeled sample result (AI off or not set up)
+  checked_at: ISODateTime | null;
+  photos_deleted: boolean;          // photos are removed when the loan ends; the result stays
+  can_add_handoff_photos: boolean; can_confirm: boolean; can_add_return_photos: boolean;
 }
 export interface TxActionBody { action: TxAction; note?: string | null; due_date?: ISODate | null; pickup_place_id?: ID | null }
 export interface ReviewCreate { rating: 1 | 2 | 3 | 4 | 5; body?: string | null }
@@ -540,6 +564,9 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | A | `GET /transactions/{id}` | | `Transaction` | Parties only |
 | A | `POST /transactions/{id}/actions` | `TxActionBody` | `Transaction` | Rules in §7.7; 409 if the action isn't allowed |
 | A | `POST /transactions/{id}/review` | `ReviewCreate` | `Review` 201 | Only when completed; one review per party |
+| A | `PUT /transactions/{id}/condition/{handoff\|return}/{front\|back\|marks}` | multipart `file` | `Transaction` | Condition check (404 while `CONDITION_CHECK_ENABLED=false`; lend only, else 409). Handoff photos: owner, before the borrower confirms. Return photos: borrower, after handoff; the 3rd starts the comparison. Same image pipeline as `/uploads` |
+| A | `POST /transactions/{id}/condition/confirm` | | `Transaction` | Borrower: "This looks right" (all 3 handoff photos in) |
+| A + C | `POST /transactions/{id}/condition/compare` | | `Transaction` | Runs C's condition agent in the background (`status: "checking"` → `done`/`failed`); idempotent. `AI_PROVIDER=mock` or no harness → a labeled sample (`sample: true`). Never changes points. Photos are deleted when the loan ends (completed, cancelled or declined); the result text stays |
 | A | `GET /conversations` | | `ConversationSummary[]` | Newest activity first |
 | A | `POST /conversations` | `DirectConversationBody` | `ConversationSummary` | Gets or creates the direct thread |
 | A | `GET /conversations/{id}` | | `ConversationSummary` | |

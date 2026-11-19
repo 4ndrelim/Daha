@@ -362,6 +362,17 @@ class Transaction(IdMixin, Base):
     declined_at: Mapped[datetime | None] = _ts_null()
     cancelled_at: Mapped[datetime | None] = _ts_null()
     updated_at: Mapped[datetime] = _updated()
+    # Condition check (CONDITION_CHECK_ENABLED; app/services/condition.py). Photo maps are
+    # {"front"|"back"|"marks": upload_id}; they are emptied when the exchange ends.
+    condition_handoff_photos: Mapped[dict[str, int] | None] = mapped_column(JSONB)
+    condition_handoff_confirmed_at: Mapped[datetime | None] = _ts_null()
+    condition_return_photos: Mapped[dict[str, int] | None] = mapped_column(JSONB)
+    condition_status: Mapped[str | None] = mapped_column(Text)  # checking | done | failed
+    condition_result: Mapped[str | None] = mapped_column(Text)  # no_changes | possible_changes
+    condition_note: Mapped[str | None] = mapped_column(Text)
+    condition_sample: Mapped[bool] = mapped_column(Boolean, server_default="false", default=False)
+    condition_checked_at: Mapped[datetime | None] = _ts_null()
+    condition_photos_deleted_at: Mapped[datetime | None] = _ts_null()
 
     __table_args__ = (
         Index("ix_transactions_owner_id", "owner_id"),

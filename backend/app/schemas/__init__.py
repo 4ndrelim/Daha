@@ -88,6 +88,10 @@ from app.schemas.scans import (
     ScanPublishResponse,
 )
 from app.schemas.transactions import (
+    ConditionCheck,
+    ConditionPhotos,
+    ConditionSlot,
+    ConditionStage,
     Review,
     ReviewCreate,
     Transaction,
@@ -108,6 +112,10 @@ from app.schemas.users import (
 )
 
 __all__ = [
+    "ConditionCheck",
+    "ConditionPhotos",
+    "ConditionSlot",
+    "ConditionStage",
     "ID",
     "AuthResponse",
     "Badge",

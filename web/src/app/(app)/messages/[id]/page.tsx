@@ -10,6 +10,7 @@ import type { ID, Message } from "@/lib/api/types";
 import { useMe } from "@/lib/queries/me";
 import { UserAvatar } from "@/components/daha/user-avatar";
 import { TransactionCard } from "@/components/daha/transaction-card";
+import { ConditionCheckCard } from "@/components/daha/condition-check";
 import { EmptyState, ErrorState } from "@/components/daha/states";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, parseISO } from "date-fns";
@@ -123,6 +124,7 @@ export default function ChatPage() {
 
   return (
     <div className="-mt-4 flex min-h-[calc(100dvh-3.5rem)] flex-col">
+      <h1 className="sr-only">{other ? `Chat with ${other.name}` : "Chat"}</h1>
       <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 space-y-2 border-b border-border/60 bg-background/95 px-4 py-2 backdrop-blur">
         <div className="flex items-center gap-2">
           <Link href="/messages" aria-label="Back to messages" className="-ml-2 flex size-11 items-center justify-center rounded-full active:bg-muted"><ArrowLeft className="size-5" /></Link>
@@ -147,6 +149,7 @@ export default function ChatPage() {
       </div>
 
       <div className="flex-1 space-y-1.5 py-4 pb-24">
+        {txId && <div className="pb-3"><ConditionCheckCard txId={txId} /></div>}
         {messages.isPending && <div className="space-y-3">{[60, 40, 70].map((w) => <Skeleton key={w} className="h-10 rounded-2xl" style={{ width: `${w}%` }} />)}</div>}
         {messages.isError && <ErrorState message="Couldn't load messages." onRetry={() => messages.refetch()} />}
         {messages.data?.length === 0 && <p className="py-10 text-center text-muted-foreground">Say hi 👋 and sort out a time to meet.</p>}

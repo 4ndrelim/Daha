@@ -24,7 +24,7 @@ from app.models import (
     TransactionEvent,
     User,
 )
-from app.services import points, serializers
+from app.services import condition, points, serializers
 from app.services.notifications import notify
 from app.services.viewer import ViewerContext
 
@@ -528,6 +528,7 @@ def transactions_out(
                 timeline=timeline[t.id],
                 created_at=t.created_at,
                 updated_at=t.updated_at,
+                condition=condition.condition_out(db, t, viewer.user_id),
             )
         )
     return out

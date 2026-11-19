@@ -6,7 +6,7 @@ from sqlalchemy import or_, select
 from app import schemas
 from app.api.deps import DB, CurrentUser, Viewer
 from app.models import Transaction
-from app.services import transactions
+from app.services import condition, transactions
 
 router = APIRouter(tags=["transactions"])
 
@@ -48,6 +48,7 @@ def transaction_action(
 ):
     tx = transactions.get_for_party(db, transaction_id, user.id, lock=True)
     transactions.apply_action(db, tx, user, body)
+    condition.on_status_change(db, tx)  # an ended loan keeps only the condition result text
     db.commit()
     db.refresh(tx)
     return transactions.transaction_out(db, tx, viewer)

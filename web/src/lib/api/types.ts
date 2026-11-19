@@ -125,6 +125,24 @@ export interface Transaction {
   pickup_place: Place | null; pickup_note: string | null; conversation_id: ID;
   allowed_actions: TxAction[]; can_review: boolean; timeline: TxTimelineEntry[];
   created_at: ISODateTime; updated_at: ISODateTime;
+  condition: ConditionCheck | null;  // null unless CONDITION_CHECK_ENABLED and kind = lend
+}
+
+// ---------- condition check (loans; CONDITION_CHECK_ENABLED) ----------
+export type ConditionSlot = "front" | "back" | "marks";
+export type ConditionStage = "handoff" | "return";
+export interface ConditionPhotos { front: string | null; back: string | null; marks: string | null }  // URLs; null until taken / after the loan ends
+export interface ConditionCheck {
+  handoff_photos: ConditionPhotos;
+  handoff_confirmed_at: ISODateTime | null;  // the borrower tapped "This looks right"
+  return_photos: ConditionPhotos;
+  status: "waiting" | "checking" | "done" | "failed";
+  result: "no_changes" | "possible_changes" | null;
+  note: string | null;              // short and neutral; never "damaged" or "your fault"
+  sample: boolean;                  // a labeled sample result (AI off or not set up)
+  checked_at: ISODateTime | null;
+  photos_deleted: boolean;          // photos are removed when the loan ends; the result stays
+  can_add_handoff_photos: boolean; can_confirm: boolean; can_add_return_photos: boolean;
 }
 export interface TxActionBody { action: TxAction; note?: string | null; due_date?: ISODate | null; pickup_place_id?: ID | null }
 export interface ReviewCreate { rating: 1 | 2 | 3 | 4 | 5; body?: string | null }

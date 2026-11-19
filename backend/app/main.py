@@ -10,6 +10,7 @@ from app.discovery.router import router as discovery_router
 from app.routers import (
     auth,
     communities,
+    condition,
     conversations,
     health,
     items,
@@ -39,6 +40,7 @@ for module in (
     items,
     requests,
     transactions,
+    condition,
     conversations,
     notifications,
 ):
