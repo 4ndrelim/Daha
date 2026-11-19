@@ -129,7 +129,7 @@ export function TransactionCard({ tx, compact = false }: { tx: Transaction; comp
           ))}
           {tx.can_review && (
             <button type="button" onClick={() => setReview(true)}
-              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-points-soft px-4 font-semibold text-amber-800 ring-1 ring-amber-200">
+              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-points-soft px-4 font-semibold text-reward-800 ring-1 ring-reward-200">
               <Star className="size-4 fill-points text-points" /> Review {firstName(other.name)}
             </button>
           )}

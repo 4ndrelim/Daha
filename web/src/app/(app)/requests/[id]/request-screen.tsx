@@ -24,8 +24,8 @@ import { OfferSheet } from "./offer-sheet";
 import { cn } from "@/lib/utils";
 
 const STATUS: Record<RequestStatus, { label: string; cls: string }> = {
-  open: { label: "Open", cls: "bg-emerald-50 text-emerald-700" },
-  in_progress: { label: "Someone's helping", cls: "bg-amber-50 text-amber-700" },
+  open: { label: "Open", cls: "bg-brand-50 text-brand-700" },
+  in_progress: { label: "Someone's helping", cls: "bg-reward-50 text-reward-700" },
   fulfilled: { label: "Done ✓", cls: "bg-stone-100 text-stone-600" },
   cancelled: { label: "Cancelled", cls: "bg-stone-100 text-stone-500" },
   expired: { label: "Expired", cls: "bg-stone-100 text-stone-500" },
@@ -199,8 +199,8 @@ export function RequestScreen() {
             )}
           </div>
           {pinged > 0 && (
-            <p className="flex items-center gap-2 rounded-xl bg-points-soft px-3 py-2 text-[13px] text-amber-900">
-              <Sparkles className="size-4 shrink-0 text-amber-500" />
+            <p className="flex items-center gap-2 rounded-xl bg-points-soft px-3 py-2 text-[13px] text-reward-900">
+              <Sparkles className="size-4 shrink-0 text-reward-500" />
               Quietly asked {pinged} {pinged === 1 ? "person" : "people"} nearby who said they have one.
             </p>
           )}

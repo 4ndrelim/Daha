@@ -11,13 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const ICON: Record<NotificationType, { icon: typeof Bell; cls: string }> = {
-  match: { icon: Search, cls: "bg-emerald-50 text-emerald-700" },
-  private_match: { icon: Sparkles, cls: "bg-amber-50 text-amber-700" },
+  match: { icon: Search, cls: "bg-brand-50 text-brand-700" },
+  private_match: { icon: Sparkles, cls: "bg-reward-50 text-reward-700" },
   offer: { icon: Gift, cls: "bg-sky-50 text-sky-700" },
   borrow_request: { icon: HandHelping, cls: "bg-violet-50 text-violet-700" },
-  tx_update: { icon: MessageCircle, cls: "bg-emerald-50 text-emerald-700" },
-  review: { icon: Star, cls: "bg-amber-50 text-amber-700" },
-  badge: { icon: Award, cls: "bg-amber-50 text-amber-700" },
+  tx_update: { icon: MessageCircle, cls: "bg-brand-50 text-brand-700" },
+  review: { icon: Star, cls: "bg-reward-50 text-reward-700" },
+  badge: { icon: Award, cls: "bg-reward-50 text-reward-700" },
   system: { icon: Inbox, cls: "bg-stone-100 text-stone-600" },
 };
 

@@ -5,7 +5,7 @@ import { UserAvatar } from "./user-avatar";
 export function LevelBar({ user }: { user: UserPublic }) {
   const { level, points } = user;
   if (level.next_level_points === null) {
-    return <p className="text-[13px] font-medium text-amber-700">🏆 Top level reached · {points} points</p>;
+    return <p className="text-[13px] font-medium text-reward-700">🏆 Top level reached · {points} points</p>;
   }
   const span = level.next_level_points - level.min_points;
   const pct = Math.max(4, Math.min(100, Math.round(((points - level.min_points) / span) * 100)));
@@ -30,8 +30,8 @@ export function ProfileHeader({ user, dormName }: { user: UserPublic; dormName?:
           <p className="truncate text-[13px] text-muted-foreground">{dormName ?? user.dorm_name ?? "No dorm yet"} · {user.level.name}</p>
         </div>
         <div className="shrink-0 rounded-2xl bg-points-soft px-3 py-2 text-center">
-          <p className="text-[18px] leading-5 font-bold text-amber-700">{user.points}</p>
-          <p className="text-[11px] font-medium text-amber-800">points</p>
+          <p className="text-[18px] leading-5 font-bold text-reward-700">{user.points}</p>
+          <p className="text-[11px] font-medium text-reward-800">points</p>
         </div>
       </div>
       {user.bio && <p className="text-[14px]">{user.bio}</p>}
@@ -44,7 +44,7 @@ export function ProfileHeader({ user, dormName }: { user: UserPublic; dormName?:
       {user.badges.length > 0 && (
         <ul className="flex flex-wrap gap-2" aria-label="Badges">
           {user.badges.map((b) => (
-            <li key={b.code} title={b.description} className="flex items-center gap-1.5 rounded-full bg-points-soft px-3 py-1 text-[13px] font-medium text-amber-900 ring-1 ring-amber-200">
+            <li key={b.code} title={b.description} className="flex items-center gap-1.5 rounded-full bg-points-soft px-3 py-1 text-[13px] font-medium text-reward-900 ring-1 ring-reward-200">
               <span aria-hidden>{b.emoji}</span> {b.name}
             </li>
           ))}

@@ -14,6 +14,7 @@ import { invalidatePool } from "@/lib/api/mock/pool";
 import { fieldClass, PrimaryButton } from "@/components/daha/form";
 import { ItemThumb } from "@/components/daha/item-thumb";
 import { InstallCard } from "@/components/daha/install-card";
+import { LeaderboardCard } from "@/components/daha/leaderboard-card";
 import { LogoutButton } from "@/components/daha/logout-button";
 import { ProfileHeader } from "@/components/daha/profile-header";
 import { RequestCard } from "@/components/daha/request-card";
@@ -70,7 +71,7 @@ function InventoryRow({ item, pings }: { item: ItemCardT; pings?: boolean }) {
           Sharing
         </label>
       ) : (
-        <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[12px] font-medium text-amber-700">{STATUS_LABEL[item.status]}</span>
+        <span className="shrink-0 rounded-full bg-reward-50 px-2 py-0.5 text-[12px] font-medium text-reward-700">{STATUS_LABEL[item.status]}</span>
       )}
     </li>
   );
@@ -88,7 +89,7 @@ function Inventory() {
   if (items.isError) return <ErrorState onRetry={() => items.refetch()} />;
   return (
     <div className="space-y-6">
-      <Link href="/add/scan" className="flex min-h-14 items-center gap-3 rounded-2xl bg-primary-soft px-4 active:bg-emerald-100">
+      <Link href="/add/scan" className="flex min-h-14 items-center gap-3 rounded-2xl bg-primary-soft px-4 active:bg-brand-100">
         <Camera className="size-5 text-accent-foreground" />
         <span className="flex-1 font-semibold text-accent-foreground">Snap more stuff</span>
         <ChevronRight className="size-5 text-accent-foreground" />
@@ -220,6 +221,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-5">
       <ProfileHeader user={me.data} dormName={me.data.dorm?.name} />
+      <LeaderboardCard />
       <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-10 -mx-4 flex gap-5 overflow-x-auto border-b border-border bg-background/95 px-4 backdrop-blur" role="tablist">
         {TABS.map((t) => (
           <button key={t.value} type="button" role="tab" aria-selected={tab === t.value} onClick={() => setTab(t.value)}
