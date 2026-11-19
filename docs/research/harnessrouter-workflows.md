@@ -190,7 +190,7 @@ Rough per-use costs for planning (verify with the spike and the first week's log
 ## 7. Phased plan
 | Phase | Work | Owner |
 |---|---|---|
-| **Now (before Thu 10:30)** | Run the C0 spike (Arena or `hr_spike.py`) with 3 real photos; pick a base/model; set `AI_PROVIDER=harnessrouter` for the demo; register the harness ids for the hackathon. Optional: draft the pitch deck and a teaser with the Slides/Videos starter kits (§3.13) | C + key holder; B for the video |
+| **Now (before the Thu 11:30 freeze)** | Run the C0 spike (Arena or `hr_spike.py`) with 3 real photos; pick a base/model; set `AI_PROVIDER=harnessrouter` for the demo; register the harness ids for the hackathon. Optional: draft the pitch deck and a teaser with the Slides/Videos starter kits (§3.13) | C + key holder; B for the video |
 | **Week 1** | The task runner (§4) with the vision harness moved onto it; autofill from photo (§3.2); safety review on scans and listings (§3.3) | C (backend), B (button, notices), A (moderation field) |
 | **Week 2** | Course booklist → borrow before you buy (§3.12), timed for the start of next quarter; request enrichment (§3.4); the "nobody has it" concierge using C6 offers and the browser (§3.5); per-workflow budgets and an ops dashboard (§3.13) | C, B, A (PDF uploads) |
 | **After 4 weeks of real usage** | Prompt v2 from edits and eval auto-labels (§3.8); savings estimates (§3.9); weekly digest (§3.10); feedback → GitHub issues (§3.14) | C |

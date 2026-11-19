@@ -30,7 +30,7 @@ Say this up front: *"This takes about 5–10 minutes together: your role, how in
    - Check the tools (`git`, `gh auth status`, `docker info`, `node -v`, `pnpm -v`, `uv --version`) and walk the human through installing anything missing.
    - Run `gh auth login` if needed, turn on the git safety hooks (`git config core.hooksPath .githooks`), sync with `main`, and create the env files (`CONTRIBUTING.md` → "Start of a work session").
    - Go through the sub-plan's **🧑 Human TODOs**: API keys, accounts, photos (see Team resources, §7).
-6. **Show the plan in phases.** This is a hackathon: submit by **Thu Nov 19, 12:00** (`PLAN.md` §0). Give a short table of your milestones (id · what gets built · what the human will see · **target time from `PLAN.md` §0**), the checkpoints teammates wait on, and the human to-dos that come later.
+6. **Show the plan in phases.** This is a hackathon: submit by **Thu Nov 19, 11:59**, with the freeze and last redeploy at 11:30 (`PLAN.md` §0). Give a short table of your milestones (id · what gets built · what the human will see · **target time from `PLAN.md` §0**), the checkpoints teammates wait on, and the human to-dos that come later.
 7. **Get approval.** Then recommend auto mode:
    > *"Switch me to **auto mode** so I can keep going without asking about every command. In the terminal, press Shift+Tab until it shows auto mode; in the IDE or desktop app, use the mode menu. If auto mode isn't available, choose 'accept edits'. I'll still stop for: merging (unless you allowed it), paid API calls, secrets, and anything that breaks the contract."*
 8. **Start** the first unfinished milestone.
@@ -56,7 +56,7 @@ Say this up front: *"This takes about 5–10 minutes together: your role, how in
   - *Additive* changes are OK: a new optional field or a new endpoint. Update `PLAN.md` §7 in the same PR, and print a 🧑 TODO to announce it in the group chat.
   - *Breaking* changes (rename, remove, retype) need all three humans to agree first. Never make one silently.
 - **Keep `main` working.** Use small PRs (one milestone or less). Run your checks before every PR.
-- **Hackathon clock:** the deadline is **Thu Nov 19, 12:00** (`PLAN.md` §0). At each milestone, compare the time with your targets. If you're more than ~2 h behind, apply your sub-plan's **If behind, cut** list from the top, tell your human, and log it in `docs/decisions.md`.
+- **Hackathon clock:** the deadline is **Thu Nov 19, 11:59**; the freeze and last redeploy are at **11:30** (`PLAN.md` §0). At each milestone, compare the time with your targets. If you're more than ~2 h behind, apply your sub-plan's **If behind, cut** list from the top, tell your human, and log it in `docs/decisions.md`.
 - **Git:** follow `CONTRIBUTING.md` exactly.
   - **Always sync with `main`** at the start of a session, before each milestone, and before each PR (`CONTRIBUTING.md` → "Always sync with `main`"). Then work through **the development loop** one milestone at a time.
   - **Every change, docs and proposals included, goes branch → PR → merge.** Never commit on `main`, push to `main`, or force-push `main` (`CONTRIBUTING.md` → "The one rule"). Use your own branch (`a/…`, `b/…`, `c/…`).

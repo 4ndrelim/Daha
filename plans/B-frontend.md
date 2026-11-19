@@ -2,7 +2,7 @@
 
 **Mission:** every screen except the scan flow, the design system, and a mock API, so you're never blocked by A or C. Contract: `PLAN.md` §7. Your paths: `web/` except C's (`PLAN.md` §4).
 
-**⏰ Hackathon targets** (`PLAN.md` §0): B0 Tue 11:00 · B1 Tue 15:00 · B2 + B3 Tue 21:00 · B4 Wed 10:00 · B5 Wed 15:00 · B6 Wed 18:00 (feature freeze) · demo video Thu 08:00–10:30.
+**⏰ Hackathon targets** (`PLAN.md` §0): B0 Tue 11:00 · B1 Tue 15:00 · B2 + B3 Tue 21:00 · B4 Wed 10:00 · B5 Wed 15:00 · B6 Wed 18:00 · demo video Thu 08:00–11:30 · freeze and last redeploy Thu 11:30.
 
 ## Status (2026-11-17): the planned milestones are merged and the web runs live; next comes improving and iterating
 | Milestone | PR | Notes |

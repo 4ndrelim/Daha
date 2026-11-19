@@ -9,7 +9,7 @@ Contract: `PLAN.md` §6–§7. Your paths: `backend/app/ai/**`, `backend/app/dis
 
 **Order:** C0 → C1 → C4 → C2 → C3 → C5. B uses mocks for search, feed, and matches until C2 and C3 land.
 
-**⏰ Hackathon targets** (`PLAN.md` §0): C0 Tue 11:00 · C1 Tue 15:00 · C4 Tue 21:00 · C2 Wed 10:00 · C3 Wed 15:00 · C5 Wed 18:00 · integration Wed 18:00–22:00 · mini-eval and submission Thu.
+**⏰ Hackathon targets** (`PLAN.md` §0): C0 Tue 11:00 · C1 Tue 15:00 · C4 Tue 21:00 · C2 Wed 10:00 · C3 Wed 15:00 · C5 Wed 18:00 · integration Wed 18:00–22:00 · mini-eval Thu morning · freeze and last redeploy Thu 11:30 · submit by Thu 11:59.
 
 ## Status (2026-11-17): C1–C5 and the evals are merged; next comes improving and iterating
 | Milestone | Where | Notes |
