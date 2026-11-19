@@ -21,6 +21,7 @@ def _config(monkeypatch):
     monkeypatch.setattr(settings, "harnessrouter_est_cost_per_image", 0.07)
     monkeypatch.setattr(settings, "harnessrouter_max_concurrency", 2)
     monkeypatch.setattr(settings, "harnessrouter_race", False)  # whatever a laptop's .env says
+    monkeypatch.setattr(settings, "harnessrouter_agent_slots", 0)
     monkeypatch.setattr(hr, "_pool", None)
 
 
@@ -432,4 +433,57 @@ async def test_a_new_photo_takes_a_backups_slot_instead_of_waiting(monkeypatch):
     assert first.raw["key"] == 1 and first.raw["race"] == "backup gave its slot to another photo"
     assert other.raw["key"] == 2 and "race" not in other.raw
     assert len(up.calls) == 3  # photo 1 twice (one copy cancelled), photo 2 once
+    assert idle(hr.get_pool())
+
+
+# ------------------------------------------- a slot on key 1 kept free for the other agents
+def busy_tracker():
+    running: dict[str, int] = {}
+    peak: dict[str, int] = {"total": 0}
+
+    async def files(request):
+        key = auth_header(request)
+        running[key] = running.get(key, 0) + 1
+        peak["total"] = max(peak["total"], sum(running.values()))
+        peak[key] = max(peak.get(key, 0), running[key])
+        await asyncio.sleep(0.05)
+        running[key] -= 1
+        return httpx.Response(200, json={"id": "f"})
+
+    return files, peak
+
+
+@respx.mock
+async def test_photos_leave_a_slot_on_key_1_for_the_other_agents(monkeypatch):
+    use_keys(monkeypatch, "sk-hr-a,sk-hr-b")
+    monkeypatch.setattr(settings, "harnessrouter_max_concurrency", 4)  # 2 per key (2 orgs)
+    monkeypatch.setattr(settings, "harnessrouter_agent_slots", 1)
+    files, peak = busy_tracker()
+    respx.post(f"{BASE}/v1/files").mock(side_effect=files)
+    respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=lambda req: sse(GOOD))
+    provider = hr.HarnessRouterVisionProvider()
+    results = await asyncio.gather(*(provider.detect(b"jpeg", f"p{i}.jpg") for i in range(9)))
+    assert len(results) == 9
+    # never more than 1 photo on key 1, so the coordinator / condition check always fit there
+    assert peak == {"total": 3, "Bearer sk-hr-a": 1, "Bearer sk-hr-b": 2}
+
+
+@respx.mock
+async def test_a_racing_backup_never_takes_the_reserved_slot(monkeypatch):
+    race_on(monkeypatch)  # 2 keys, 4 at once
+    monkeypatch.setattr(settings, "harnessrouter_agent_slots", 1)
+    files, peak = busy_tracker()
+    respx.post(f"{BASE}/v1/files").mock(side_effect=files)
+
+    async def run(request):
+        await asyncio.sleep(0.05)
+        return sse(GOOD)
+
+    respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=run)
+    provider = hr.HarnessRouterVisionProvider()
+    alone = await provider.detect(b"jpeg", "p.jpg")
+    assert alone.raw["race"] in ("first won", "backup won")  # one photo still races
+    results = await asyncio.gather(*(provider.detect(b"jpeg", f"p{i}.jpg") for i in range(4)))
+    assert len(results) == 4
+    assert peak["Bearer sk-hr-a"] == 1 and peak["Bearer sk-hr-b"] <= 2 and peak["total"] <= 3
     assert idle(hr.get_pool())

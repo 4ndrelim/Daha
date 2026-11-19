@@ -78,12 +78,22 @@ class KeySlot:
     in_flight: int = 0  # photos running on this key now
     resting_until: float = 0.0  # time.monotonic()
     last_used: int = 0  # round-robin tie-break
+    cap: int = 1  # photos this key may run at once (its organization's limit, minus reserved slots)
 
 
 class KeyPool:
-    def __init__(self, pairs: list[tuple[str, str]], concurrency: int):
+    def __init__(self, pairs: list[tuple[str, str]], concurrency: int, reserve: int = 0):
+        """`concurrency` = tasks at once over all keys; HarnessRouter's limit is per organization
+        (key), so each key gets an equal share. `reserve` slots on key 1 are kept free for the
+        other agents (coordinator, condition check, profiles), which always run on key 1."""
         self.slots = [KeySlot(i + 1, key, harness) for i, (key, harness) in enumerate(pairs)]
-        self.semaphore = asyncio.Semaphore(concurrency)  # tasks at once, all keys together
+        per_key = -(-concurrency // max(1, len(self.slots)))  # ceil
+        for slot in self.slots:
+            slot.cap = per_key
+        if self.slots:
+            self.slots[0].cap = max(0, per_key - reserve)
+        photos = max(1, min(concurrency - reserve, sum(s.cap for s in self.slots)))
+        self.semaphore = asyncio.Semaphore(photos)  # photos at once, all keys together
         self._ticks = 0
         # Racing (HARNESSROUTER_RACE): the second copies of photos, newest last. They only use
         # spare task slots and give one back as soon as a new photo needs it.
@@ -96,7 +106,10 @@ class KeyPool:
     def awake_other(self, number: int) -> bool:
         """Is some key other than `number` free to take a backup copy right now?"""
         now = time.monotonic()
-        return any(s.number != number and s.resting_until <= now for s in self.slots)
+        return any(
+            s.number != number and s.resting_until <= now and s.in_flight < s.cap
+            for s in self.slots
+        )
 
     def preempt_backup(self) -> bool:
         """Cancel the newest backup copy so a waiting photo gets its task slot."""
@@ -108,7 +121,7 @@ class KeyPool:
         return False
 
     def pick(self, exclude: set[int]) -> KeySlot | None:
-        """The least-busy key that isn't resting (least recently used on a tie).
+        """The key with the most free room that isn't resting (least recently used on a tie).
 
         If every remaining key is resting, the one that wakes up first; None when all are excluded.
         """
@@ -117,8 +130,9 @@ class KeyPool:
             return None
         now = time.monotonic()
         awake = [s for s in left if s.resting_until <= now]
-        if awake:
-            return min(awake, key=lambda s: (s.in_flight, s.last_used))
+        roomy = [s for s in awake if s.in_flight < s.cap] or awake
+        if roomy:
+            return min(roomy, key=lambda s: (s.in_flight - s.cap, s.last_used))
         return min(left, key=lambda s: s.resting_until)
 
     @contextmanager
@@ -165,9 +179,10 @@ def get_pool() -> KeyPool:
     global _pool, _pool_config
     keys, ids = settings.harnessrouter_api_keys, settings.harnessrouter_vision_harness_ids
     concurrency = max(1, settings.harnessrouter_max_concurrency)
-    config = hashlib.sha256(f"{keys}|{ids}|{concurrency}".encode()).hexdigest()
+    reserve = max(0, settings.harnessrouter_agent_slots)
+    config = hashlib.sha256(f"{keys}|{ids}|{concurrency}|{reserve}".encode()).hexdigest()
     if _pool is None or config != _pool_config:
-        _pool = KeyPool(key_pairs(keys, ids), concurrency)
+        _pool = KeyPool(key_pairs(keys, ids), concurrency, reserve)
         _pool_config = config
     return _pool
 
@@ -323,8 +338,8 @@ class HarnessRouterVisionProvider:
             pool.preempt_backup()  # a racing duplicate gives its slot to this photo
         async with pool.semaphore:  # wait for a free task slot, then pick the least-busy key
             while (slot := pool.pick(tried)) is not None:
-                if backup and slot.resting_until > time.monotonic():
-                    break  # a backup never waits for a resting key
+                if backup and (slot.resting_until > time.monotonic() or slot.in_flight >= slot.cap):
+                    break  # a backup never waits for a resting key or takes a full one
                 tried.add(slot.number)
                 if chosen is not None:
                     chosen.append(slot.number)
