@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import type { AuthResponse } from "@/lib/api/types";
 import { safeNext, startSession } from "@/lib/auth";
+import { BrandLogo } from "@/components/daha/brand-logo";
 import { Field, fieldClass, PrimaryButton } from "@/components/daha/form";
 import { UserAvatar } from "@/components/daha/user-avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,8 +50,8 @@ export function LoginScreen() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-4 pt-[calc(3rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))]">
-      <p className="text-[34px] leading-none font-extrabold tracking-tight text-primary">daha</p>
-      <h1 className="mt-3 text-[22px] leading-7 font-semibold">Borrow it from down the hall.</h1>
+      <BrandLogo />
+      <h1 className="mt-5 text-[22px] leading-7 font-semibold">Borrow it from down the hall.</h1>
       <p className="mt-1 text-muted-foreground">Lend, borrow, give away and swap with people in your dorm.</p>
 
       <form onSubmit={handleSubmit((v) => login.mutate(v))} className="mt-8 space-y-4" noValidate>
