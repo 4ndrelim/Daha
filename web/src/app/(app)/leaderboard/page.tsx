@@ -132,7 +132,7 @@ function JoinCard({ board, realName }: { board: Leaderboard; realName: string })
           <p className="text-[13px] text-muted-foreground">
             {board.me.opted_in
               ? board.me.rank ? `You're #${board.me.rank} as ${board.me.nickname}.` : `You're on as ${board.me.nickname}. Finish an exchange to rank.`
-              : "Off. Nobody sees you here until you turn it on."}
+              : valid ? "Off. Nobody sees you here until you turn it on." : "Off. Pick a nickname below to turn it on."}
           </p>
         </div>
         <Switch
