@@ -247,12 +247,37 @@ async def test_every_key_failing_gives_a_friendly_error_without_keys(monkeypatch
     assert "sk-hr" not in str(exc.value) and "sk-hr" not in exc.value.user_message
 
 
-async def test_harness_ids_must_be_one_or_one_per_key(monkeypatch):
-    use_keys(monkeypatch, "sk-hr-a,sk-hr-b,sk-hr-c", "hrn_1,hrn_2")
-    with pytest.raises(ProviderError) as exc:
-        await hr.HarnessRouterVisionProvider().detect(b"jpeg", "p.jpg")
-    assert "2 ids for 3 keys" in str(exc.value)
-    assert "manually" in exc.value.user_message
+def test_keys_and_harness_ids_may_differ_in_length():
+    # a key without a harness id yet is skipped; ids without a key yet are ignored
+    assert hr.key_pairs(["a", "b", "c"], ["h1", "h2"]) == [("a", "h1"), ("b", "h2")]
+    assert hr.key_pairs(["a", "b"], ["h1", "h2", "h3"]) == [("a", "h1"), ("b", "h2")]
+    assert hr.key_pairs(["a", "b"], ["shared"]) == [("a", "shared"), ("b", "shared")]
+
+
+@respx.mock
+async def test_a_key_added_before_its_harness_is_skipped_not_an_error(monkeypatch):
+    use_keys(monkeypatch, "sk-hr-a,sk-hr-b,sk-hr-new", "hrn_1,hrn_2")
+    up = respx.post(f"{BASE}/v1/files").mock(return_value=httpx.Response(200, json={"id": "f"}))
+    respx.post(url__regex=rf"{BASE}/hrn_\d/v1/responses").mock(side_effect=lambda r: sse(GOOD))
+    provider = hr.HarnessRouterVisionProvider()
+    results = [await provider.detect(b"jpeg", f"p{i}.jpg") for i in range(4)]
+    assert {r.raw["key"] for r in results} == {1, 2}
+    assert "Bearer sk-hr-new" not in [auth(c) for c in up.calls]
+
+
+def test_capacity_follows_the_number_of_keys(monkeypatch):
+    monkeypatch.setattr(settings, "harnessrouter_max_concurrency", 0)  # auto
+    monkeypatch.setattr(settings, "harnessrouter_tasks_per_key", 2)
+    monkeypatch.setattr(settings, "harnessrouter_agent_slots", -1)  # auto
+    assert [hr.capacity(n) for n in (1, 2, 3, 4)] == [(2, 0), (4, 1), (6, 2), (8, 2)]
+    monkeypatch.setattr(settings, "harnessrouter_max_concurrency", 5)  # set: they win
+    monkeypatch.setattr(settings, "harnessrouter_agent_slots", 0)
+    assert hr.capacity(3) == (5, 0)
+    use_keys(monkeypatch, "sk-hr-a,sk-hr-b,sk-hr-c", "h1,h2,h3")
+    monkeypatch.setattr(settings, "harnessrouter_max_concurrency", 0)
+    monkeypatch.setattr(settings, "harnessrouter_agent_slots", -1)
+    pool = hr.get_pool()  # 3 keys: all of key 1 for the other agents, photos 4 at once
+    assert [s.cap for s in pool.slots] == [0, 2, 2] and pool.semaphore._value == 4
 
 
 @pytest.mark.parametrize("cap", [2, 4])  # 2 = one org's free-trial limit; 4 = two keys in two orgs

@@ -48,9 +48,11 @@ class Settings(BaseSettings):
     # (app/ai/providers/harnessrouter.py, _race). Faster and steadier, about twice the cost.
     harnessrouter_race: bool = False
     # Task slots on key 1 that photos leave free for the other agents (coordinator, condition
-    # check, profiles), which always run on key 1; HarnessRouter allows 2 per key on the free plan.
-    harnessrouter_agent_slots: int = 0
-    harnessrouter_max_concurrency: int = 2
+    # check, profiles), which always run on key 1. -1 = auto: 1 with 2 keys, all of key 1 with 3+.
+    harnessrouter_agent_slots: int = -1
+    # HarnessRouter's limit per organization (each key is one), free plan: 2 tasks at once.
+    harnessrouter_tasks_per_key: int = 2
+    harnessrouter_max_concurrency: int = 0  # tasks at once, all keys; 0 = tasks_per_key x keys
     harnessrouter_timeout_s: int = 180
     harnessrouter_est_cost_per_image: float = 0.10
     # Mutual matching (docs/plans/mutual-matching.md). Off unless backend/.env turns it on.

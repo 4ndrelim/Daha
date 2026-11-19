@@ -150,22 +150,20 @@ class KeyPool:
 
 
 def key_pairs(keys: list[str], harness_ids: list[str]) -> list[tuple[str, str]]:
-    """(key, harness id) per key: one shared harness id, or one per key in the same order."""
+    """(key, harness id) per key: one shared harness id, or one per key in the same order.
+
+    The lists may differ in length, so adding a key never breaks anything: a key without an id
+    yet is left out (until `setup_harnessrouter.py --all --missing --write-env`), and ids with no
+    key yet are ignored.
+    """
     if not keys or not harness_ids:
         raise ProviderError(
             "HARNESSROUTER_API_KEY / HARNESSROUTER_VISION_HARNESS_ID not set", NOT_SET_UP
         )
     if len(harness_ids) == 1:
         harness_ids = harness_ids * len(keys)
-    elif len(harness_ids) != len(keys):
-        raise ProviderError(
-            f"HARNESSROUTER_VISION_HARNESS_ID has {len(harness_ids)} ids for {len(keys)} keys: "
-            "use one shared id, or one per key in the same order "
-            "(scripts/setup_harnessrouter.py --write-env)",
-            SET_UP_WRONG,
-        )
     pairs: dict[str, str] = {}
-    for key, harness in zip(keys, harness_ids, strict=True):
+    for key, harness in zip(keys, harness_ids, strict=False):  # stops at the shorter list
         pairs.setdefault(key, harness)  # a key listed twice still counts once
     return list(pairs.items())
 
@@ -178,13 +176,35 @@ def get_pool() -> KeyPool:
     """The process-wide pool, rebuilt only when the key/harness settings change."""
     global _pool, _pool_config
     keys, ids = settings.harnessrouter_api_keys, settings.harnessrouter_vision_harness_ids
-    concurrency = max(1, settings.harnessrouter_max_concurrency)
-    reserve = max(0, settings.harnessrouter_agent_slots)
+    pairs = key_pairs(keys, ids)
+    concurrency, reserve = capacity(len(pairs))
     config = hashlib.sha256(f"{keys}|{ids}|{concurrency}|{reserve}".encode()).hexdigest()
     if _pool is None or config != _pool_config:
-        _pool = KeyPool(key_pairs(keys, ids), concurrency, reserve)
+        skipped = len(dict.fromkeys(keys)) - len(pairs)
+        if skipped > 0:
+            log.warning(
+                "harnessrouter: %d key(s) have no photo harness yet, so photos skip them "
+                "(scripts/setup_harnessrouter.py --all --missing --write-env)",
+                skipped,
+            )
+        _pool = KeyPool(pairs, concurrency, reserve)
         _pool_config = config
     return _pool
+
+
+def capacity(n_keys: int) -> tuple[int, int]:
+    """(tasks at once over all keys, slots on key 1 kept for the other agents).
+
+    Both follow the number of keys unless set: HarnessRouter allows HARNESSROUTER_TASKS_PER_KEY
+    tasks at once per organization (each key), and the coordinator, condition check and
+    profiles always run on key 1, so they get 1 of its slots with 2 keys and all of it with 3+.
+    """
+    per_key = max(1, settings.harnessrouter_tasks_per_key)
+    concurrency = max(1, settings.harnessrouter_max_concurrency or per_key * max(1, n_keys))
+    reserve = settings.harnessrouter_agent_slots
+    if reserve < 0:  # auto
+        reserve = 0 if n_keys <= 1 else 1 if n_keys == 2 else per_key
+    return concurrency, reserve
 
 
 def _idempotency_keys() -> tuple[str, str]:

@@ -24,7 +24,7 @@ def test_docker_style_comment_values_fall_back_to_defaults(monkeypatch):
     assert s.harnessrouter_condition_harness_ids == []
     assert s.anthropic_api_key == ""
     assert s.harnessrouter_base_url == "https://api.harnessrouter.ai"
-    assert s.harnessrouter_max_concurrency == 2
+    assert s.harnessrouter_max_concurrency == 0  # the default: 2 per key
 
 
 def test_env_file_read_locally_agrees(tmp_path, monkeypatch):
