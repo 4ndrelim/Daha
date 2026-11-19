@@ -3,6 +3,8 @@
     cd backend && uv run python scripts/setup_harnessrouter.py --check       # keys OK? which org?
     cd backend && uv run python scripts/setup_harnessrouter.py --list        # bases + models only
     cd backend && uv run python scripts/setup_harnessrouter.py --write-env   # create + save ids
+    cd backend && uv run python scripts/setup_harnessrouter.py --missing --write-env
+        # after adding a key: harnesses only for the new key(s); the other ids stay
     cd backend && uv run python scripts/setup_harnessrouter.py --profile --write-env
         # the same for the mutual-matching profile harness (HARNESSROUTER_PROFILE_HARNESS_ID)
     cd backend && uv run python scripts/setup_harnessrouter.py --condition --write-env
@@ -31,7 +33,7 @@ from app.ai.condition import CONDITION_PROMPT_VERSION, CONDITION_SYSTEM  # noqa:
 from app.ai.handoff import HANDOFF_SYSTEM, HARNESS_NAME  # noqa: E402
 from app.ai.profile import PROFILE_PROMPT_VERSION, PROFILE_SYSTEM  # noqa: E402
 from app.ai.prompts import PROMPT_VERSION, VISION_SYSTEM  # noqa: E402
-from app.core.config import BACKEND_DIR, settings  # noqa: E402
+from app.core.config import BACKEND_DIR, csv_list, settings  # noqa: E402
 
 ENV_FILE = BACKEND_DIR / ".env"
 HARNESS_VAR = "HARNESSROUTER_VISION_HARNESS_ID"
@@ -203,6 +205,11 @@ def main() -> None:
         help=f"create the handoff-coordinator harness ({HANDOFF_VAR}), not the vision one",
     )
     ap.add_argument("--model", default="", help="with --handoff: the model (else the .env one)")
+    ap.add_argument(
+        "--missing",
+        action="store_true",
+        help="after adding a key: create harnesses only for keys without one, keep the other ids",
+    )
     args = ap.parse_args()
     if args.profile + args.condition + args.handoff > 1:
         sys.exit("Pick one: --profile, --condition or --handoff")
@@ -219,8 +226,26 @@ def main() -> None:
     print("models:", json.dumps(models, indent=2)[:4000])
     if args.list:
         return
+    var = (
+        PROFILE_VAR
+        if args.profile
+        else CONDITION_VAR
+        if args.condition
+        else HANDOFF_VAR
+        if args.handoff
+        else HARNESS_VAR
+    )
     ids: list[str] = []
-    for n, key in enumerate(keys, 1):
+    todo = list(enumerate(keys, 1))
+    if args.missing:  # keep the existing ids (e.g. registered with the organizers)
+        ids = csv_list(getattr(settings, var.lower()))
+        if len(ids) == 1 and len(keys) > 1:
+            sys.exit(f"{var} has one shared id; run without --missing to give each key its own")
+        todo = todo[len(ids) :]
+        if not todo:
+            print(f"{var} already has an id for each of the {len(keys)} key(s); nothing to do")
+            return
+    for n, key in todo:
         with client(key) as c:
             ids.append(
                 create_harness(
@@ -234,15 +259,6 @@ def main() -> None:
             )
         print(f"key {n}/{len(keys)}: harness {ids[-1]}")
     value = ",".join(ids)
-    var = (
-        PROFILE_VAR
-        if args.profile
-        else CONDITION_VAR
-        if args.condition
-        else HANDOFF_VAR
-        if args.handoff
-        else HARNESS_VAR
-    )
     if args.write_env:
         write_env(value, var)
         print(f"\nSaved {var} ({len(ids)} id(s)) to backend/.env. Restart `make api`.")

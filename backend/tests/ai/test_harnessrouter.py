@@ -487,3 +487,28 @@ async def test_a_racing_backup_never_takes_the_reserved_slot(monkeypatch):
     assert len(results) == 4
     assert peak["Bearer sk-hr-a"] == 1 and peak["Bearer sk-hr-b"] <= 2 and peak["total"] <= 3
     assert idle(hr.get_pool())
+
+
+@respx.mock
+async def test_a_fully_reserved_key_runs_no_photos(monkeypatch):
+    # 3 keys = 6 slots: key 1 only for the other agents, photos (racing too) on keys 2 and 3
+    use_keys(monkeypatch, "sk-hr-a,sk-hr-b,sk-hr-c")
+    monkeypatch.setattr(settings, "harnessrouter_max_concurrency", 6)
+    monkeypatch.setattr(settings, "harnessrouter_agent_slots", 2)
+    monkeypatch.setattr(settings, "harnessrouter_race", True)
+    files, peak = busy_tracker()
+    respx.post(f"{BASE}/v1/files").mock(side_effect=files)
+
+    async def run(request):
+        await asyncio.sleep(0.05)
+        return sse(GOOD)
+
+    respx.post(f"{BASE}/{HARNESS}/v1/responses").mock(side_effect=run)
+    provider = hr.HarnessRouterVisionProvider()
+    alone = await provider.detect(b"jpeg", "p.jpg")
+    assert alone.raw["race"] in ("first won", "backup won")  # keys 2 and 3 race
+    results = await asyncio.gather(*(provider.detect(b"jpeg", f"p{i}.jpg") for i in range(7)))
+    assert len(results) == 7 and all(r.raw["key"] in (2, 3) for r in [alone, *results])
+    assert "Bearer sk-hr-a" not in peak and peak["total"] <= 4
+    assert peak["Bearer sk-hr-b"] <= 2 and peak["Bearer sk-hr-c"] <= 2
+    assert idle(hr.get_pool())
