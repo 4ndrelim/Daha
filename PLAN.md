@@ -168,6 +168,10 @@ HARNESSROUTER_MODEL=                 # model id chosen in the C0 spike (from GET
 HARNESSROUTER_MAX_CONCURRENCY=4      # total across keys (free trial: 2 per organization; 2 keys in 2 orgs)
 HARNESSROUTER_TIMEOUT_S=180
 HARNESSROUTER_EST_COST_PER_IMAGE=0.10   # from the spike; used when the API reports no cost
+MUTUAL_MATCHING=off                  # off | rules (free) | ai (rules + paid habit profiles); docs/plans/mutual-matching.md
+MUTUAL_BUDGET_USD=3                  # hard stop for paid profile tasks
+MUTUAL_EST_COST_PER_PROFILE=0.05
+HARNESSROUTER_PROFILE_HARNESS_ID=    # set by setup_harnessrouter.py --profile --write-env
 ANTHROPIC_API_KEY=                   # optional fallback provider
 ANTHROPIC_MODEL=claude-opus-5-5
 ANTHROPIC_EFFORT=medium
@@ -224,7 +228,7 @@ Unless a table says otherwise:
 
 | Table | Columns | Notes |
 |---|---|---|
-| `users` | `email` (unique, lowercase), `password_hash`, `name`, `avatar_url` null, `bio` null, `walking_radius_min` int default 10, `onboarded` bool default false, `is_demo` bool default false, `referred_by` FK users null | Never store room numbers or addresses |
+| `users` | `email` (unique, lowercase), `password_hash`, `name`, `avatar_url` null, `bio` null, `walking_radius_min` int default 10, `onboarded` bool default false, `is_demo` bool default false, `match_suggestions` bool default false (the opt-in for mutual matching), `referred_by` FK users null | Never store room numbers or addresses |
 | `communities` | `kind` (campus\|dorm\|group), `slug` unique, `name`, `description` null, `emoji` null, `group_type` (club\|class\|research\|team\|org\|other) null, `is_private` bool default false, `join_code` null, `lat` null, `lng` null, `created_by` FK users null | Exactly one row with `kind='campus'` (slug `campus`). Dorms carry coordinates |
 | `memberships` | PK(`user_id`, `community_id`), `role` (member\|admin) default member | Every user: campus + ≤ 1 dorm (enforced in the service) + groups |
 | `places` | `name`, `lat`, `lng`, `description` null | Campus exchange points |
@@ -306,13 +310,14 @@ export interface UserPublic extends UserRef {
 }
 export interface Me extends UserPublic {
   email: string; dorm: CommunityRef | null; groups: CommunityRef[]; walking_radius_min: number;
-  onboarded: boolean; unread_notifications: number; unread_messages: number;
+  onboarded: boolean; match_suggestions: boolean;   // match_suggestions = opted in to mutual matching
+  unread_notifications: number; unread_messages: number;
 }
 export interface AuthResponse { token: string; user: Me }
 export interface SignupBody { email: string; password: string; name: string; dorm_id?: ID | null; ref_user_id?: ID | null }
 export interface LoginBody { email: string; password: string }
 export interface DemoLoginBody { user_id: ID }
-export interface MeUpdate { name?: string; bio?: string | null; avatar_upload_id?: ID | null; dorm_id?: ID; walking_radius_min?: number; onboarded?: boolean }
+export interface MeUpdate { name?: string; bio?: string | null; avatar_upload_id?: ID | null; dorm_id?: ID; walking_radius_min?: number; onboarded?: boolean; match_suggestions?: boolean }
 
 // ---------- communities & places ----------
 export interface CommunityRef { id: ID; slug: string; name: string; kind: CommunityKind; emoji: string | null }
@@ -439,6 +444,28 @@ export type FeedEntry =
   | { kind: "request"; created_at: ISODateTime; request: RequestCard }
   | { kind: "item"; created_at: ISODateTime; item: ItemCard };
 
+// ---------- mutual matching (docs/plans/mutual-matching.md) ----------
+export interface MutualNeed {
+  kind: "request" | "search" | "predicted";  // "search" and "predicted" are guesses: word them as "might need"
+  name: string;                    // e.g. "tripod"
+  request: RequestCard | null;     // set when kind = "request"
+}
+export interface MutualLink { item: ItemCard; need: MutualNeed; score: number }  // this item answers that need
+export interface MutualMatch {
+  user: UserRef;                   // the other person
+  you_give: MutualLink[];          // my items they need (1..3)
+  you_get: MutualLink[];           // their items I need (1..3)
+  score: number;                   // 0..1
+  reason: string;                  // e.g. "Same dorm · you both asked"
+  uses_prediction: boolean;        // true if any link is a guess
+}
+export interface MutualMatchesResponse {
+  enabled: boolean;                // my opt-in (Me.match_suggestions)
+  matches: MutualMatch[];          // ≤ 10
+  summary: string | null;          // what the profile agent noticed about me (only with MUTUAL_MATCHING=ai)
+  likely_needs: string[];          // ≤ 5 guesses; word them as "might need"
+}
+
 // ---------- buy or rent nearby (C6) ----------
 export interface CommercialSearchBody {
   q: string;                     // the campus search text
@@ -529,6 +556,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | C | `GET /communities/{id}/feed` | `kind=all\|items\|requests, offset, limit` | `Page<FeedEntry>` | Newest first |
 | C | `GET /requests/{id}/matches` | | `MatchesResponse` | Only items visible to the viewer, plus `private_pinged_count` (a number only, never who) |
 | C | `GET /me/fulfillable` | | `FulfillableRequest[]` | ≤ 20 |
+| C | `GET /me/mutual-matches` | | `MutualMatchesResponse` | Pairs who both opted in and each have an item the other needs (`docs/plans/mutual-matching.md`). 404 while `MUTUAL_MATCHING=off`; visibility holds both ways; other people's private items never count |
 | C | `POST /ai/parse-request` | `ParseRequestBody` | `ParsedRequest` | Rule-based, < 300 ms |
 | C | `POST /scans` | `ScanCreate` | `Scan` 201 | 1..`AI_MAX_IMAGES_PER_SCAN` of your own uploads; 429 at the daily or budget limit |
 | C | `GET /scans/{id}` | | `Scan` | Poll every 1.5 s while processing |
@@ -557,7 +585,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | `badge` | earner | a badge is awarded | `/profile` |
 
 ### 7.6 Standard event types (`POST /events`; B and C send them, A stores them)
-`page_view`, `search_performed`, `search_result_clicked`, `item_viewed`, `scan_started`, `scan_review_shown`, `scan_published`, `onboarding_skipped`, `request_composer_opened`, `request_posted`, `offer_sent`, `share_clicked`, `invite_copied`, `feedback_submitted`, `commercial_search_shown`, `commercial_offer_clicked`, `location_permission` (`{state, opened_by}`; never coordinates). The payload is a small JSON object (ids, counts, seconds) and never contains free text from other people.
+`page_view`, `search_performed`, `search_result_clicked`, `item_viewed`, `scan_started`, `scan_review_shown`, `scan_published`, `onboarding_skipped`, `request_composer_opened`, `request_posted`, `offer_sent`, `share_clicked`, `invite_copied`, `feedback_submitted`, `commercial_search_shown`, `commercial_offer_clicked`, `mutual_match_shown` (`{count, uses_prediction}`), `mutual_match_clicked` (`{rank, action}`), `match_suggestions_changed` (`{enabled}`), `location_permission` (`{state, opened_by}`; never coordinates). The payload is a small JSON object (ids, counts, seconds) and never contains free text from other people.
 
 ### 7.7 Transaction rules (A's `services/transactions.py`: one `apply_action()` and one `allowed_actions()` from this table)
 | Status | Kind | Owner may | Borrower may |

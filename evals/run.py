@@ -1,6 +1,7 @@
-"""uv run --project backend python -m evals.run {scan|parse|search|match|all} [--provider P] [--limit N] [--yes]
+"""uv run --project backend python -m evals.run {scan|parse|search|match|mutual|all} [--provider P] [--limit N] [--yes]
 
-parse/search/match are free and use the seeded dev database (`make seed` first).
+parse/search/match/mutual are free and use the seeded dev database (`make seed` first).
+mutual needs MUTUAL_MATCHING=rules or ai in backend/.env (docs/plans/mutual-matching.md).
 scan uses AI_PROVIDER (mock by default); a paid provider needs --yes.
 Reports are written to evals/reports/YYYY-MM-DD-<suite>.md.
 """
@@ -167,6 +168,78 @@ def run_match(limit: int | None) -> dict:
 
 
 # ---------------------------------------------------------------- scan
+# ---------------------------------------------------------------- mutual matching
+def run_mutual(limit: int | None) -> dict:
+    """Pairs on the seed: are they the expected ones, are they valid both ways, do they leak?"""
+    from sqlalchemy import select
+
+    from app.core.config import settings
+    from app.discovery import mutual as MM
+    from app.models import Item, User
+    from app.services.visibility import item_visible_clause
+
+    if MM.mode() == "off":
+        raise SystemExit("MUTUAL_MATCHING is off in backend/.env — set it to rules or ai")
+    rows = load(DATA / "mutual" / "pairs.jsonl")[:limit]
+    precisions, recalls, times, detail = [], [], [], []
+    shown = invalid = leaks = guesses = 0
+    from app.core.db import SessionLocal
+
+    with SessionLocal() as db:
+        keys = dict(db.execute(select(User.id, User.seed_key)).all())
+        opted_in = set(db.scalars(select(User.id).where(User.match_suggestions.is_(True))))
+        for row in rows:
+            viewer = _viewer(db, row["user"])
+            start = time.perf_counter()
+            out = MM.mutual_matches(db, viewer)
+            times.append((time.perf_counter() - start) * 1000)
+            top = out.matches[:3]
+            got = [keys.get(m.user.id) for m in top]
+            expected = set(row["expected"])
+            hit = len(expected & set(got))
+            if expected:
+                recalls.append(hit / min(3, len(expected)))
+            if got:
+                precisions.append(hit / len(got))
+            for m in out.matches:
+                shown += 1
+                guesses += m.uses_prediction
+                theirs = [link.item.id for link in m.you_get]
+                visible = set(
+                    db.scalars(
+                        select(Item.id).where(
+                            Item.id.in_(theirs), Item.visibility != "private",
+                            item_visible_clause(viewer),
+                        )
+                    )
+                )
+                real = any(link.need.kind == "request" for link in m.you_give + m.you_get)
+                ok = bool(m.you_give) and bool(m.you_get) and real and set(theirs) <= visible
+                invalid += not ok
+                leaks += (m.user.id not in opted_in) or not (set(theirs) <= visible)
+            detail.append(f"| {row['user']} | {', '.join(row['expected']) or '—'} | {', '.join(got) or '—'} |")
+            db.expunge_all()
+    validity = 1 - invalid / shown if shown else 1.0
+    lines = [
+        f"{len(rows)} people on the seed, MUTUAL_MATCHING={settings.mutual_matching}. "
+        f"{shown} pair views shown, {guesses} of them with an AI guess on one side.",
+        "",
+        f"- **precision@3 {mean(precisions):.2f}** (target ≥ 0.80) · **recall@3 {mean(recalls):.2f}** "
+        "(target ≥ 0.80)",
+        f"- **validity {validity:.2f}** (target 1.00): both sides have a link, at least one side is a "
+        "real request, and every item shown is visible to the viewer",
+        f"- **privacy leaks {leaks}** (target 0): pairs with someone who is opted out, or showing an "
+        "item the viewer can't open",
+        f"- p95 {p95(times):.0f} ms per call (target < 300 ms)",
+        "",
+        "| person | expected partners | returned (top 3) |",
+        "|---|---|---|",
+        *detail,
+    ]
+    report("mutual", lines)
+    return {"precision": mean(precisions), "recall": mean(recalls), "validity": validity, "leaks": leaks}
+
+
 def run_scan(limit: int | None, provider_name: str | None, yes: bool) -> dict:
     from app.ai.providers.base import _provider
     from app.ai.vision import downscale
@@ -230,9 +303,15 @@ def run_scan(limit: int | None, provider_name: str | None, yes: bool) -> dict:
     return {"recall": recall, "precision": precision, "leaks": leaks}
 
 
+def _mutual_on() -> bool:
+    from app.discovery import mutual
+
+    return mutual.mode() != "off"
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("suite", choices=["scan", "parse", "search", "match", "all"])
+    ap.add_argument("suite", choices=["scan", "parse", "search", "match", "mutual", "all"])
     ap.add_argument("--provider")
     ap.add_argument("--limit", type=int)
     ap.add_argument("--yes", action="store_true")
@@ -243,6 +322,8 @@ def main() -> None:
         run_search(a.limit)
     if a.suite in ("match", "all"):
         run_match(a.limit)
+    if a.suite == "mutual" or (a.suite == "all" and _mutual_on()):
+        run_mutual(a.limit)
     if a.suite in ("scan", "all"):
         run_scan(a.limit, a.provider, a.yes)
 

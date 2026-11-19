@@ -1,0 +1,10 @@
+{"user": "user:maya", "expected": ["user:jordan", "user:emma"]}
+{"user": "user:jordan", "expected": ["user:maya"]}
+{"user": "user:emma", "expected": ["user:maya"]}
+{"user": "user:omar", "expected": ["user:hana"]}
+{"user": "user:hana", "expected": ["user:omar"]}
+{"user": "user:diego", "expected": ["user:noor"]}
+{"user": "user:noor", "expected": ["user:diego"]}
+{"user": "user:sam", "expected": []}
+{"user": "user:alex", "expected": []}
+{"user": "user:leo", "expected": []}

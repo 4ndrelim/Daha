@@ -156,6 +156,7 @@ class DemoSeeder:
                 name=row["name"],
                 bio=row["bio"],
                 is_demo=True,
+                match_suggestions=True,  # demo accounts show mutual matching; real users opt in
                 onboarded=row["key"] != "sam",  # Sam is the onboarding demo account
                 seed_key=f"user:{row['key']}",
                 created_at=self.ago(days=self.rng.randint(35, 60)),
@@ -226,8 +227,13 @@ class DemoSeeder:
             if row.get("avail") == "weekend":
                 available_from, available_until = self.weekend()
 
-            place = self.rng.choice(self.places) if self.rng.random() < 0.25 else None
-            created_at = self.ago(days=self.rng.randint(1, 30), hours=self.rng.randint(0, 23))
+            if row.get("days_ago") is not None:
+                # A fixed age draws nothing from the random stream, so adding such a row never
+                # reshuffles the rest of the seed.
+                place, created_at = None, self.ago(days=row["days_ago"])
+            else:
+                place = self.rng.choice(self.places) if self.rng.random() < 0.25 else None
+                created_at = self.ago(days=self.rng.randint(1, 30), hours=self.rng.randint(0, 23))
             key = row.get("key") or f"{index:03d}-{slugify(row['name'])}"
             item = Item(
                 owner_id=owner.id,
@@ -273,7 +279,10 @@ class DemoSeeder:
         for index, row in enumerate(load("requests.json"), start=1):
             requester = self.users[row["requester"]]
             needed_from, needed_until = self.needed(row.get("needed"))
-            created_at = self.ago(hours=self.rng.randint(1, 60))
+            if row.get("hours_ago") is not None:  # fixed age: see seed_items
+                created_at = self.ago(hours=row["hours_ago"])
+            else:
+                created_at = self.ago(hours=self.rng.randint(1, 60))
             key = row.get("key") or f"{index:02d}-{slugify(row['title'])}"
             req = ItemRequest(
                 requester_id=requester.id,
@@ -774,6 +783,39 @@ def _refresh_discovery() -> int:
     return reindexed
 
 
+def _seed_mutual_profiles() -> int:
+    """Habit profiles for the demo users (docs/plans/mutual-matching.md).
+
+    They were written once by the profile agent and saved with
+    `scripts/mutual_profiles.py --export-demo`, so a reseed never pays for them again.
+    """
+    path = DATA_DIR / "mutual_profiles.json"
+    if not path.exists():
+        return 0
+    from app.ai import profile
+
+    rows = json.loads(path.read_text())
+    count = 0
+    with SessionLocal() as db:
+        for user in db.scalars(select(User).where(User.seed_key.in_(list(rows)))):
+            payload, signals = profile.build_input(db, user.id)
+            cleaned = profile.clean_profile(
+                {**rows[user.seed_key], "likely_needs": rows[user.seed_key].get("needs", [])},
+                {},
+            )
+            profile.store_profile(
+                db,
+                user.id,
+                cleaned,
+                digest=profile.input_hash(payload),
+                signals=signals,
+                source="seed",
+            )
+            count += 1
+        db.commit()
+    return count
+
+
 def run(do_reset: bool = False, demo: bool = True) -> dict[str, int]:
     """`demo=False` seeds only the campus, dorms, and exchange points (a real deployment)."""
     with SessionLocal() as db:
@@ -782,7 +824,8 @@ def run(do_reset: bool = False, demo: bool = True) -> dict[str, int]:
         communities = seed_communities(db)
         places = seed_places(db)
         already = db.scalar(select(User.id).where(User.seed_key == "user:maya"))
-        if demo and already is None:
+        fresh_demo = demo and already is None
+        if fresh_demo:
             DemoSeeder(db, communities, places).run()
         db.commit()
 
@@ -799,6 +842,8 @@ def run(do_reset: bool = False, demo: bool = True) -> dict[str, int]:
             "reviews": count(Review),
         }
     counts["reindexed"] = _refresh_discovery()
+    if fresh_demo:
+        _seed_mutual_profiles()
     return counts
 
 

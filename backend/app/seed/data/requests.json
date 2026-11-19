@@ -321,5 +321,97 @@
    0,
    1
   ]
+ },
+ {
+  "key": "maya-suitcase",
+  "requester": "maya",
+  "raw_text": "Anyone have a big suitcase I could borrow for Thanksgiving break?",
+  "title": "Suitcase",
+  "item_name": "suitcase",
+  "category": "moving",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   5,
+   12
+  ],
+  "attributes": {
+   "size": "large"
+  },
+  "hours_ago": 5
+ },
+ {
+  "key": "diego-mini-fridge",
+  "requester": "diego",
+  "raw_text": "Does anyone have a mini fridge we could borrow for an event this week?",
+  "title": "Mini fridge",
+  "item_name": "mini fridge",
+  "category": "dorm",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   0,
+   4
+  ],
+  "attributes": {},
+  "hours_ago": 9
+ },
+ {
+  "key": "noor-speaker",
+  "requester": "noor",
+  "raw_text": "Looking for a Bluetooth speaker for Saturday",
+  "title": "Bluetooth speaker",
+  "item_name": "bluetooth speaker",
+  "category": "tech",
+  "type": "lend",
+  "vis": "campus",
+  "needed": "weekend",
+  "attributes": {},
+  "hours_ago": 7
+ },
+ {
+  "key": "omar-tennis-racket",
+  "requester": "omar",
+  "raw_text": "Can I borrow a tennis racket this weekend?",
+  "title": "Tennis racket",
+  "item_name": "tennis racket",
+  "category": "sports",
+  "type": "lend",
+  "vis": "campus",
+  "needed": "weekend",
+  "attributes": {},
+  "hours_ago": 12
+ },
+ {
+  "key": "hana-resume-review",
+  "requester": "hana",
+  "raw_text": "Could someone do a resume review before the career fair?",
+  "title": "Resume review",
+  "item_name": "resume review",
+  "category": "services",
+  "type": null,
+  "vis": "campus",
+  "needed": [
+   1,
+   4
+  ],
+  "attributes": {},
+  "hours_ago": 14
+ },
+ {
+  "key": "maya-sleeping-bag",
+  "requester": "maya",
+  "raw_text": "Does anyone have a sleeping bag I could borrow for a camping trip next weekend?",
+  "title": "Sleeping bag",
+  "item_name": "sleeping bag",
+  "category": "dorm",
+  "type": "lend",
+  "vis": "campus",
+  "needed": [
+   8,
+   10
+  ],
+  "attributes": {},
+  "hours_ago": 3
  }
 ]

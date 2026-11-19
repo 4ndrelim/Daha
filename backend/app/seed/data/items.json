@@ -1480,5 +1480,17 @@
   "type": "lend",
   "owner": "diego",
   "vis": "private"
+ },
+ {
+  "name": "Large suitcase (checked size)",
+  "description": "Hard-shell, four wheels, fits two weeks of clothes. Free to borrow over breaks.",
+  "category": "moving",
+  "condition": "good",
+  "type": "lend",
+  "owner": "jordan",
+  "vis": "campus",
+  "key": "jordan-suitcase",
+  "max_lend_days": 14,
+  "days_ago": 6
  }
 ]

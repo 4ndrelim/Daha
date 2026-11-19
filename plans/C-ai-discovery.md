@@ -35,6 +35,8 @@ C's work went straight to `main` without PRs, at the C human's explicit request 
 - **HarnessRouter concurrency** is per API process, so run one API worker on the free plan.
 - **Not done:** `AI_ENRICH_REQUESTS` (P1 #3) is only a flag; no code uses it yet.
 
+**Mutual matching (2026-11-18, built by A with B's and C's approval):** `app/discovery/mutual.py` finds pairs who both opted in and each have an item the other asked for, by reading `request_matches` (it never writes it, and `matching.py` is unchanged). `app/ai/profile.py` runs one HarnessRouter task per person for a habit summary and up to 5 predicted needs. Everything sits behind `MUTUAL_MATCHING` (default `off`). Plan and results: `docs/plans/mutual-matching.md`.
+
 **Next phase: improve and iterate** (the evals tell us where; nothing here is final):
 1. The real C0 run: 3 real photos through `scripts/hr_spike.py`, then pick the base/model with the team.
 2. The evals loop (`plans/EVALS.md`): label the eval photos, prompt v2 from users' edits, tune ranking weights and the match threshold.

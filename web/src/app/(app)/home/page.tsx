@@ -8,6 +8,7 @@ import { useMe } from "@/lib/queries/me";
 import { firstName } from "@/lib/format";
 import { ItemCard } from "@/components/daha/item-card";
 import { ItemThumb } from "@/components/daha/item-thumb";
+import { MutualMatches } from "@/components/daha/mutual-matches";
 import { RequestCard } from "@/components/daha/request-card";
 import { UserAvatar } from "@/components/daha/user-avatar";
 import { EmptyState, ErrorState, ItemGridSkeleton, RequestListSkeleton, SectionHeader } from "@/components/daha/states";
@@ -101,6 +102,9 @@ export default function HomePage() {
       {feed.isError && <ErrorState message="Couldn't load your feed." onRetry={() => feed.refetch()} />}
 
       {feed.data && (feed.data.show_scan_cta ? <ScanCard /> : <ScanBanner />)}
+
+      {/* Pairs where each has something the other needs; hidden when the server has it off. */}
+      <MutualMatches />
 
       {feed.data && feed.data.you_can_help.length > 0 && (
         <section>

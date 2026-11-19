@@ -1,6 +1,6 @@
 # Plan: AI-powered mutual matching ("You two can help each other")
 
-- Status: **planned (not built)** · waiting for A's human to say "go" · proposal: `docs/proposals/A-mutual-matching.md`
+- Status: **hackathon version built 2026-11-18** (H0–H5, behind `MUTUAL_MATCHING`, default `off`) · full version not started · proposal: `docs/proposals/A-mutual-matching.md` · results in §13
 - Owners by path: **C** (`backend/app/discovery/**`, `backend/app/ai/**`, `evals/`) · **A** (models, migration, schemas, config, seed, `.env.example`) · **B** (`web/` Home card, settings, types, mocks). Built by A with B's and C's scope approval; every PR that touches B's or C's files waits for their 👍.
 - Effort: hackathon version about **9 h** of building (§9a) · full version about **2 weeks** across A, B and C (§9b)
 - Depends on: C3 matching and C5 anonymous pings (merged), A3 notifications and events (merged), the HarnessRouter keys and harness setup (working since 2026-11-18), and **C's OK for each paid run** (`AGENTS.md` §3)
@@ -392,3 +392,25 @@ evals/data/mutual/profiles.jsonl  {"user_seed_key","expected_needs":[...],"must_
 - **Learning-to-rank and bandits** for pairs (`plans/ROADMAP.md` #2 and #3), once there are outcomes to learn from.
 - **Group and class matching** ("your lab group has 4 things you need").
 - **A cheaper or local model** for profiles, if the evals show the summary doesn't need a large one.
+
+## 13. What was built and measured (2026-11-18)
+**H0, measured before building**
+- The seed had **0 reciprocal pairs** (14 match rows, 12 one-way pairs, 0 search logs). So the seed now has 3 two-way demo pairs and one pair that uses a guess.
+- Profile tasks: **30 run, 30 valid** on the first answer, **8–12 s each** (median about 9 s). The API reported **no cost** for any of them, so the $0.05 per profile is still the estimate; by that estimate $1.50 of the $3 line is used. The real figure is on the HarnessRouter dashboard.
+
+**Built** (new files; `matching.py`, `feeds.py` and `hooks.py` are unchanged)
+- `backend/app/discovery/mutual.py`, `GET /api/me/mutual-matches` (404 when off), `users.match_suggestions` (migration 0002), `Me` / `MeUpdate`.
+- `backend/app/ai/profile.py`, `scripts/setup_harnessrouter.py --profile`, `scripts/mutual_profiles.py`.
+- Web: `web/src/components/daha/mutual-matches.tsx` on Home (opt-in card, pair cards, "what DAHA noticed" line, Turn off).
+- Evals: `evals.run mutual` with `evals/data/mutual/pairs.jsonl`.
+
+**Results on the seed** (`evals/reports/2026-11-18-mutual.md`): precision@3 1.00, recall@3 1.00, validity 1.00, privacy leaks 0, p95 53 ms. The expected pairs were written by the same person who seeded them, so this is a regression check, not an independent quality measure. Match and search evals are unchanged (recall@5 1.00, nDCG@10 0.94).
+
+**Deviations from the plan above**
+- `MutualMatchesResponse` also carries `summary` and `likely_needs` (the person's own profile, shown only to them). The separate `GET /me/match-profile` stays in the full version.
+- Demo profiles are saved in `backend/app/seed/data/mutual_profiles.json` and loaded by the seed, so a reseed costs nothing and the demo makes no paid call. Demo users' profiles are never re-bought.
+- A person gets at most 2 paid profile runs per 24 h, so turning matching off and on can't burn credit.
+- The profile harness's per-task cap is $0.15, not $0.05, because the real cost per task isn't known yet.
+- Needs from searches (weight 0.6 in §5) are sent to the profile agent but are not yet matched directly; that stays in F3.
+- Predicted needs live in `ai_cache` and paid runs are counted from `mutual_profile_run` events (no new tables, as planned for this version). **A reseed with `--reset` clears that counter**, so the dashboard is the only durable record of spend.
+- No "Message" button: the card has "Offer yours" (the existing offer flow) and "Ask for theirs" (the item page).

@@ -3,6 +3,8 @@
     cd backend && uv run python scripts/setup_harnessrouter.py --check       # keys OK? which org?
     cd backend && uv run python scripts/setup_harnessrouter.py --list        # bases + models only
     cd backend && uv run python scripts/setup_harnessrouter.py --write-env   # create + save ids
+    cd backend && uv run python scripts/setup_harnessrouter.py --profile --write-env
+        # the same for the mutual-matching profile harness (HARNESSROUTER_PROFILE_HARNESS_ID)
 
 Reads HARNESSROUTER_API_KEY (one key, or several comma-separated) / _BASE / _MODEL from
 backend/.env. Each key gets its own harness, so keys from different workspaces work too; the ids
@@ -20,11 +22,13 @@ import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # `python scripts/x.py` finds `app`
 
+from app.ai.profile import PROFILE_PROMPT_VERSION, PROFILE_SYSTEM  # noqa: E402
 from app.ai.prompts import PROMPT_VERSION, VISION_SYSTEM  # noqa: E402
 from app.core.config import BACKEND_DIR, settings  # noqa: E402
 
 ENV_FILE = BACKEND_DIR / ".env"
 HARNESS_VAR = "HARNESSROUTER_VISION_HARNESS_ID"
+PROFILE_VAR = "HARNESSROUTER_PROFILE_HARNESS_ID"
 
 
 def api_keys() -> list[str]:
@@ -75,7 +79,7 @@ def check(keys: list[str]) -> None:
     sys.exit(1 if failed else 0)
 
 
-def create_harness(c: httpx.Client) -> str:
+def create_harness(c: httpx.Client, profile: bool = False) -> str:
     body = {
         "name": f"daha-vision-{PROMPT_VERSION}",
         "base": settings.harnessrouter_base,
@@ -88,6 +92,15 @@ def create_harness(c: httpx.Client) -> str:
         "max_cost_usd": 0.5,  # per-turn cap; the default is $10
         "disabled_tools": ["Write", "Edit", "Bash", "WebFetch", "WebSearch"],
     }
+    if profile:  # mutual matching (docs/plans/mutual-matching.md): text in, JSON out, no tools
+        body.update(
+            name=f"daha-{PROFILE_PROMPT_VERSION}",
+            system_prompt=PROFILE_SYSTEM,
+            max_step=3,
+            timeout_seconds=90,
+            max_cost_usd=0.15,
+            disabled_tools=["Write", "Edit", "Bash", "WebFetch", "WebSearch", "Read"],
+        )
     r = c.post("/v1/harnesses", json={k: v for k, v in body.items() if v is not None})
     if r.status_code >= 400 and "disabled_tools" in r.text:
         body.pop("disabled_tools")  # base doesn't support it
@@ -99,11 +112,11 @@ def create_harness(c: httpx.Client) -> str:
     return harness_id
 
 
-def write_env(value: str) -> None:
-    """Set HARNESSROUTER_VISION_HARNESS_ID in backend/.env; every other line stays as it is."""
+def write_env(value: str, var: str = HARNESS_VAR) -> None:
+    """Set the harness id variable in backend/.env; every other line stays as it is."""
     lines = ENV_FILE.read_text().splitlines() if ENV_FILE.exists() else []
-    line = f"{HARNESS_VAR}={value}"
-    pattern = re.compile(rf"^\s*{HARNESS_VAR}\s*=")
+    line = f"{var}={value}"
+    pattern = re.compile(rf"^\s*{var}\s*=")
     for i, existing in enumerate(lines):
         if pattern.match(existing):
             lines[i] = line
@@ -117,7 +130,12 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--check", action="store_true", help="only check that every key works")
     ap.add_argument("--list", action="store_true", help="only print bases and models")
-    ap.add_argument("--write-env", action="store_true", help=f"save {HARNESS_VAR} to backend/.env")
+    ap.add_argument("--write-env", action="store_true", help="save the harness ids to backend/.env")
+    ap.add_argument(
+        "--profile",
+        action="store_true",
+        help=f"create the mutual-matching profile harness ({PROFILE_VAR}), not the vision one",
+    )
     args = ap.parse_args()
     keys = api_keys()
     if args.check:
@@ -132,15 +150,16 @@ def main() -> None:
     ids: list[str] = []
     for n, key in enumerate(keys, 1):
         with client(key) as c:
-            ids.append(create_harness(c))
+            ids.append(create_harness(c, profile=args.profile))
         print(f"key {n}/{len(keys)}: harness {ids[-1]}")
     value = ",".join(ids)
+    var = PROFILE_VAR if args.profile else HARNESS_VAR
     if args.write_env:
-        write_env(value)
-        print(f"\nSaved {HARNESS_VAR} ({len(ids)} id(s)) to backend/.env. Restart `make api`.")
+        write_env(value, var)
+        print(f"\nSaved {var} ({len(ids)} id(s)) to backend/.env. Restart `make api`.")
     else:
         print("\nAdd this to backend/.env (or run again with --write-env):\n")
-        print(f"{HARNESS_VAR}={value}")
+        print(f"{var}={value}")
 
 
 if __name__ == "__main__":

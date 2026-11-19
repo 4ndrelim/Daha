@@ -7,6 +7,7 @@ from app.schemas.common import Category, ISODateTime, Schema, TransactionType
 from app.schemas.communities import Community, CommunityRef
 from app.schemas.items import ItemCard
 from app.schemas.requests import RequestCard
+from app.schemas.users import UserRef
 
 
 class ParsedQuery(Schema):
@@ -95,3 +96,33 @@ class CommercialSearchResponse(Schema):
     provider: str  # "exa" | "mock" (sample data)
     cached: bool
     fetched_at: ISODateTime
+
+
+# ---------- mutual matching (docs/plans/mutual-matching.md) ----------
+class MutualNeed(Schema):
+    kind: Literal["request", "search", "predicted"]  # "search"/"predicted" are guesses
+    name: str  # e.g. "tripod"
+    request: RequestCard | None  # set when kind = "request"
+
+
+class MutualLink(Schema):
+    item: ItemCard  # this item answers that need
+    need: MutualNeed
+    score: float
+
+
+class MutualMatch(Schema):
+    user: UserRef  # the other person
+    you_give: list[MutualLink]  # my items they need (1..3)
+    you_get: list[MutualLink]  # their items I need (1..3)
+    score: float  # 0..1
+    reason: str  # e.g. "Same dorm · you both asked"
+    uses_prediction: bool  # true if any link is a guess
+
+
+class MutualMatchesResponse(Schema):
+    enabled: bool  # my opt-in (Me.match_suggestions)
+    matches: list[MutualMatch]  # ≤ 10
+    # What the profile agent noticed about me (MUTUAL_MATCHING=ai only; shown only to me).
+    summary: str | None = None  # one sentence, e.g. "You lend outdoor gear and borrow tools."
+    likely_needs: list[str] = []  # ≤ 5 guesses, e.g. ["duffel bag"]; word them as "might need"
