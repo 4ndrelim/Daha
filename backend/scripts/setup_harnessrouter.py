@@ -112,6 +112,9 @@ def create_harness(
         "name": f"daha-vision-{PROMPT_VERSION}",
         "base": settings.harnessrouter_base,
         "default_model": settings.harnessrouter_model or None,
+        # Every harness (vision, profile, condition, handoff) gets the same effort. A harness
+        # can't be edited later, so a new effort or model means new harnesses (docs/ai-spike.md).
+        "reasoning_effort": settings.harnessrouter_reasoning_effort or None,
         "system_prompt": VISION_SYSTEM,
         "mcp_servers": [],
         "skills": [],
@@ -119,6 +122,9 @@ def create_harness(
         "timeout_seconds": settings.harnessrouter_timeout_s,
         "max_cost_usd": 0.5,  # per-turn cap; the default is $10
         "disabled_tools": ["Write", "Edit", "Bash", "WebFetch", "WebSearch"],
+        # HarnessRouter gives a new harness long-term memory unless told otherwise; students'
+        # photos must not be remembered between scans (privacy), so every harness gets this.
+        "memory_hint": NO_MEMORY,
     }
     if profile:  # mutual matching (docs/plans/mutual-matching.md): text in, JSON out, no tools
         body.update(

@@ -61,6 +61,27 @@ def test_creates_one_harness_per_key_in_order(setup_script, monkeypatch, capsys)
 
 
 @respx.mock
+def test_harnesses_get_the_model_and_reasoning_effort(setup_script, monkeypatch):
+    respx.get(f"{BASE}/v1/bases").mock(return_value=httpx.Response(200, json=[]))
+    respx.get(f"{BASE}/v1/models").mock(return_value=httpx.Response(200, json=[]))
+    create = respx.post(f"{BASE}/v1/harnesses").mock(
+        return_value=httpx.Response(200, json={"id": "hrn_x"})
+    )
+    monkeypatch.setattr(settings, "harnessrouter_model", "claude-opus-5.5")
+    monkeypatch.setattr(settings, "harnessrouter_reasoning_effort", "low")
+    monkeypatch.setattr(sys, "argv", ["setup_harnessrouter.py"])
+    setup_script.main()
+    body = json.loads(create.calls[0].request.content)
+    assert body["default_model"] == "claude-opus-5.5"
+    assert body["reasoning_effort"] == "low"
+    assert body["memory_hint"] == setup_script.NO_MEMORY  # photos are never remembered
+
+    monkeypatch.setattr(settings, "harnessrouter_reasoning_effort", "")  # unset → not sent
+    setup_script.main()
+    assert "reasoning_effort" not in json.loads(create.calls[-1].request.content)
+
+
+@respx.mock
 def test_check_reports_each_key_without_printing_it(setup_script, monkeypatch, capsys):
     monkeypatch.setattr(settings, "harnessrouter_api_key", "sk-hr-a,sk-hr-b,sk-hr-c")
     me = {"org": "org_1", "org_name": "Daha", "workspace": "org_1__hr_default"}

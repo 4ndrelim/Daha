@@ -56,6 +56,10 @@ class _RateLimited(_Retryable):
         self.retry_after = retry_after
 
 
+class _NoRoom(Exception):
+    """A racing backup copy found no free task slot, so it doesn't run (it never waits)."""
+
+
 class _KeyUnavailable(Exception):
     """This key can't serve the photo right now; another key might."""
 
@@ -81,9 +85,27 @@ class KeyPool:
         self.slots = [KeySlot(i + 1, key, harness) for i, (key, harness) in enumerate(pairs)]
         self.semaphore = asyncio.Semaphore(concurrency)  # tasks at once, all keys together
         self._ticks = 0
+        # Racing (HARNESSROUTER_RACE): the second copies of photos, newest last. They only use
+        # spare task slots and give one back as soon as a new photo needs it.
+        self.backups: dict[asyncio.Task, None] = {}
+        self.preempted: set[asyncio.Task] = set()
 
     def __len__(self) -> int:
         return len(self.slots)
+
+    def awake_other(self, number: int) -> bool:
+        """Is some key other than `number` free to take a backup copy right now?"""
+        now = time.monotonic()
+        return any(s.number != number and s.resting_until <= now for s in self.slots)
+
+    def preempt_backup(self) -> bool:
+        """Cancel the newest backup copy so a waiting photo gets its task slot."""
+        for task in reversed(list(self.backups)):
+            if not task.done():
+                self.preempted.add(task)
+                task.cancel()
+                return True
+        return False
 
     def pick(self, exclude: set[int]) -> KeySlot | None:
         """The least-busy key that isn't resting (least recently used on a tie).
@@ -188,6 +210,29 @@ def _final_text(response: dict[str, Any]) -> str:
 
 
 # ---------------------------------------------------------------- provider
+async def _first_good(
+    primary: asyncio.Task, backup: asyncio.Task
+) -> tuple[ProviderResult, asyncio.Task]:
+    """The first copy that succeeds. A failed copy doesn't end the race while the other runs;
+    a cancelled (preempted) backup is ignored. Both failing raises the first copy's error."""
+    pending = {primary, backup}
+    errors: dict[asyncio.Task, BaseException] = {}
+    while pending:
+        done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+        for task in done:
+            if task.cancelled() or isinstance(task.exception(), _NoRoom):
+                continue  # a backup that gave its slot away, or never found one
+            exc = task.exception()
+            if exc is None:
+                return task.result(), task
+            errors[task] = exc
+    raise (
+        errors.get(primary)
+        or errors.get(backup)
+        or ProviderError("harnessrouter: both copies of the photo were cancelled", NOT_SET_UP)
+    )
+
+
 class HarnessRouterVisionProvider:
     name = "harnessrouter"
 
@@ -206,11 +251,83 @@ class HarnessRouterVisionProvider:
     async def detect(self, image_jpeg: bytes, filename: str) -> ProviderResult:
         pool = get_pool()
         start = time.monotonic()
-        tried: set[int] = set()
+        if settings.harnessrouter_race and len(pool) > 1:
+            return await self._race(pool, image_jpeg, filename, start)
+        return await self._on_a_key(pool, image_jpeg, filename, start)
+
+    async def _race(
+        self, pool: KeyPool, image_jpeg: bytes, filename: str, start: float
+    ) -> ProviderResult:
+        """The photo on two keys at once when there's room; the first good answer wins.
+
+        HarnessRouter's speed varies a lot between tasks (the same photo took 12 s or 28 s), and
+        a slow spell usually hits one account at a time. The second copy is a backup: it starts
+        only when a task slot is free, and it is cancelled the moment another photo needs that
+        slot, so racing never delays anyone. A finished race costs about two tasks.
+        """
+        chosen: list[int] = []
+        primary = asyncio.create_task(
+            self._on_a_key(pool, image_jpeg, filename, start, chosen=chosen)
+        )
+        await asyncio.sleep(0)  # the primary takes its slot and key (so do sibling photos)
+        if (
+            primary.done()
+            or not chosen
+            or pool.semaphore.locked()
+            or not pool.awake_other(chosen[0])
+        ):
+            return await primary
+        ran: list[int] = []  # the backup's key, once it has one
+        backup = asyncio.create_task(
+            self._on_a_key(
+                pool, image_jpeg, filename, start, avoid=chosen[0], chosen=ran, backup=True
+            )
+        )
+        pool.backups[backup] = None
+        backup.add_done_callback(lambda task: pool.backups.pop(task, None))
+        try:
+            result, winner = await _first_good(primary, backup)
+        finally:
+            for task in (primary, backup):
+                task.cancel()  # the loser; no-op for the finished one
+            await asyncio.gather(primary, backup, return_exceptions=True)
+            preempted = backup in pool.preempted
+            pool.preempted.discard(backup)
+        if not ran:
+            return result  # no free slot for a second copy: an ordinary run
+        cost = result.cost_usd
+        if cost is not None:
+            cost += settings.harnessrouter_est_cost_per_image  # the other copy ran too
+        race = "backup won" if winner is backup else "first won"
+        if preempted:
+            race = "backup gave its slot to another photo"
+        return result.model_copy(update={"cost_usd": cost, "raw": {**result.raw, "race": race}})
+
+    async def _on_a_key(
+        self,
+        pool: KeyPool,
+        image_jpeg: bytes,
+        filename: str,
+        start: float,
+        *,
+        avoid: int | None = None,
+        chosen: list[int] | None = None,
+        backup: bool = False,
+    ) -> ProviderResult:
+        """Run the photo on the least-busy key, moving to the next key if one can't take it."""
+        tried: set[int] = set() if avoid is None else {avoid}
         last: _KeyUnavailable | None = None
+        if pool.semaphore.locked():
+            if backup:
+                raise _NoRoom  # a backup never waits; checking and taking a slot is atomic
+            pool.preempt_backup()  # a racing duplicate gives its slot to this photo
         async with pool.semaphore:  # wait for a free task slot, then pick the least-busy key
             while (slot := pool.pick(tried)) is not None:
+                if backup and slot.resting_until > time.monotonic():
+                    break  # a backup never waits for a resting key
                 tried.add(slot.number)
+                if chosen is not None:
+                    chosen.append(slot.number)
                 with pool.running(slot):
                     try:
                         return await asyncio.wait_for(

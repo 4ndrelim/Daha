@@ -47,6 +47,10 @@ services:
         API_PROXY_TARGET: http://api:8000
         NEXT_PUBLIC_MOCK: none
         NEXT_PUBLIC_DEMO_MODE: "${NEXT_PUBLIC_DEMO_MODE:-true}"
+        # Feature switches, baked in at build time (the deploy sets them from backend/.env)
+        NEXT_PUBLIC_THEME: "${NEXT_PUBLIC_THEME:-holiday}"
+        NEXT_PUBLIC_CONDITION_CHECK: "${NEXT_PUBLIC_CONDITION_CHECK:-false}"
+        NEXT_PUBLIC_HANDOFF_COORDINATOR: "${NEXT_PUBLIC_HANDOFF_COORDINATOR:-false}"
     depends_on:
       api:
         condition: service_healthy
