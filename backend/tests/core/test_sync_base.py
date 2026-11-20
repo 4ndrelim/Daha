@@ -33,8 +33,8 @@ def test_sync_adds_missing_dorms_and_keeps_everything_else(client, db):
     db.commit()
     before = (count(db, User), count(db, Item), count(db, Membership))
 
-    assert sync_base() == {"communities added": 4, "dorms now": 19}
-    assert sync_base() == {"communities added": 0, "dorms now": 19}  # running it again is harmless
+    assert sync_base() == {"communities added": 4, "dorms now": 39}
+    assert sync_base() == {"communities added": 0, "dorms now": 39}  # running it again is harmless
     db.expire_all()
     assert (count(db, User), count(db, Item), count(db, Membership)) == before
     assert db.get(Community, group["id"]).name == "Robotics"  # people's own groups are untouched
@@ -74,8 +74,45 @@ def test_a_group_that_already_uses_the_slug_is_left_alone(client, db, capsys):
     db.execute(delete(Community).where(Community.slug == "evgr-a"))
     db.add(Community(slug="evgr-a", name="EVGR A board games", kind="group", group_type="club"))
     db.commit()
-    assert sync_base() == {"communities added": 0, "dorms now": 18}
+    assert sync_base() == {"communities added": 0, "dorms now": 38}
     assert "evgr-a" in capsys.readouterr().out
     db.expire_all()
     mine = db.scalar(select(Community).where(Community.slug == "evgr-a"))
     assert mine.kind == "group" and mine.name == "EVGR A board games"
+
+
+GRAD = [
+    "ev-blackwelder", "ev-quillen", "ev-abrams", "ev-barnes", "ev-hoskins", "ev-hulme",
+    "ev-mcfarland", "ev-studio-1", "ev-studio-2", "ev-studio-3", "ev-studio-4", "ev-studio-5",
+    "ev-studio-6", "kennedy", "rains", "lyman", "munger", "schwab", "jack-mcdonald", "highland",
+]  # fmt: skip
+
+
+def test_graduate_residences_reach_a_live_database_and_work_like_any_dorm(client, db):
+    seed_base(db)
+    headers, _ = signup(client, "Rae", dorm_id=community_id(db, "wilbur"))
+    post_item(client, headers, "Kettle")
+    db.execute(delete(Community).where(Community.slug.in_(GRAD)))  # a database from before
+    db.commit()
+    before = (count(db, User), count(db, Item), count(db, Membership))
+    assert sync_base() == {"communities added": 20, "dorms now": 39}
+    assert sync_base() == {"communities added": 0, "dorms now": 39}
+    db.expire_all()
+    assert (count(db, User), count(db, Item), count(db, Membership)) == before
+
+    dorms = client.get("/api/communities", params={"kind": "dorm"}, headers=headers).json()
+    by_slug = {c["slug"]: c for c in dorms}
+    assert all(by_slug[s]["lat"] and by_slug[s]["lng"] and by_slug[s]["emoji"] for s in GRAD)
+    assert len({c["name"] for c in dorms}) == len(dorms)  # no two dorms share a name
+
+    m, m_me = signup(client, "Mo", dorm_id=by_slug["munger"]["id"])  # the signup dorm picker
+    assert m_me["dorm"]["slug"] == "munger"
+    seen = {c["slug"]: c for c in client.get("/api/communities", headers=m).json()}
+    assert 1 <= seen["rains"]["distance_min"] <= 15  # Munger → Rains: a short walk
+    assert seen["lyman"]["distance_min"] > seen["rains"]["distance_min"]  # Lyman is the far west
+    assert seen["ev-studio-5"]["distance_min"] >= seen["ev-blackwelder"]["distance_min"]
+
+    moved = client.patch("/api/me", headers=m, json={"dorm_id": by_slug["lyman"]["id"]})
+    assert moved.json()["dorm"]["slug"] == "lyman"  # the profile dorm switcher
+    page = client.get("/api/communities/lyman", headers=m).json()  # the community page
+    assert page["member_count"] == 1 and page["is_member"] is True

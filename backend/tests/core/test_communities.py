@@ -7,7 +7,7 @@ def test_list_and_get(client, db):
     everything = client.get("/api/communities", headers=headers).json()
     assert everything[0]["kind"] == "campus" and everything[0]["is_member"] is True
     dorms = client.get("/api/communities", params={"kind": "dorm"}, headers=headers).json()
-    assert len(dorms) == 19  # 15 + EVGR A–D
+    assert len(dorms) == 39  # 15 + EVGR A–D + 20 graduate residences
     found = client.get("/api/communities", params={"q": "flo"}, headers=headers).json()
     assert [c["slug"] for c in found] == ["flomo"]
     assert found[0]["distance_min"] is not None and found[0]["is_member"] is False
