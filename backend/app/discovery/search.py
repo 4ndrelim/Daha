@@ -9,12 +9,13 @@ from sqlalchemy import exists, false, func, literal, or_, select
 from sqlalchemy.orm import Session
 
 from app import schemas
+from app.core.geo import campus_today
 from app.discovery import config as cfg
 from app.discovery import embeddings
 from app.discovery.query_parser import parse_query
 from app.discovery.scoring import freshness, loc_for, locations, proximity, reason, tsquery_or
 from app.models import Community, Item, ItemAudience, ItemRequest, Membership, SearchLog
-from app.services import serializers
+from app.services import availability, serializers
 from app.services.viewer import ViewerContext
 from app.services.visibility import (
     DISCOVERY_ITEM_STATUSES,
@@ -57,6 +58,7 @@ def _in_my_dorm(owner_col, viewer: ViewerContext):
 
 
 def item_conditions(viewer: ViewerContext, f: Filters) -> list:
+    not_ended = availability.not_ended_clause()
     conds = [
         item_visible_clause(viewer),
         Item.owner_id != viewer.user_id,
@@ -81,6 +83,11 @@ def item_conditions(viewer: ViewerContext, f: Filters) -> list:
         conds.append(or_(Item.available_from.is_(None), Item.available_from <= f.available_until))
     if f.available_from is not None:
         conds.append(or_(Item.available_until.is_(None), Item.available_until >= f.available_from))
+    # Availability dates. Past its "until" date: gone. Not out yet: hidden while "available
+    # only" is on (the default), shown as "From <date>" when it is off. A search that names
+    # dates ("this weekend") is judged on those dates above, not on today.
+    dated = f.available_from is not None or f.available_until is not None
+    conds.append(availability.in_window_clause() if f.available_only and not dated else not_ended)
     return conds
 
 
@@ -203,6 +210,8 @@ def rank_items(
     rows = [s[0] for s in signals.values()]
     dorms, places = locations(db, {r.owner_id for r in rows}, {r.pickup_place_id for r in rows})
     w = _weights(parsed.near_me)
+    today = campus_today()
+    dated = f.available_from is not None or f.available_until is not None
     ranked = []
     for item, semantic, keyword in signals.values():
         loc = loc_for(viewer, item.owner_id, item.pickup_place_id, dorms, places)
@@ -228,7 +237,13 @@ def rank_items(
                 if item.transaction_type == parsed.transaction_type:
                     score += cfg.PARSED_TYPE_BOOST
             score *= cfg.AVAILABILITY_FACTOR.get(item.status, 0.3)
-        ranked.append((item, round(score, 4), reason(viewer, loc, item.status)))
+        label = None
+        if item.status == "available" and not availability.available_now(item, today):
+            # Not out yet: it ranks below things you can pick up today, and says when.
+            if text and not dated:  # asking for dates ("this weekend") already filtered on them
+                score *= cfg.UPCOMING_FACTOR
+            label = f"From {availability.nice(item.available_from)}"
+        ranked.append((item, round(score, 4), reason(viewer, loc, item.status, label)))
     ranked.sort(key=lambda t: (-t[1], -t[0].id))
     return ranked
 

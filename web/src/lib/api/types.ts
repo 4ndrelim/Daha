@@ -68,6 +68,9 @@ export interface ItemCard {
   match_score: number | null;    // only in search/match/fulfillable responses, else null
   match_reason: string | null;   // e.g. "Same dorm · 2 min walk"
   value_usd?: number | null;     // ITEM_VALUE_ENABLED: estimated new price, whole US dollars; display only
+  // Availability dates: campus calendar days (America/Los_Angeles), inclusive, both optional.
+  available_from?: ISODate | null; available_until?: ISODate | null;
+  available_now?: boolean;       // false while available_from is ahead, or once available_until has passed
 }
 export interface ItemDetail extends ItemCard {
   description: string | null; images: ItemImage[]; max_lend_days: number | null;

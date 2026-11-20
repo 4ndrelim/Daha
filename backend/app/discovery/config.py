@@ -6,6 +6,7 @@ NEAR_ME_PROXIMITY_WEIGHT = 0.35  # replaces proximity when the query says "near 
 PARSED_CATEGORY_BOOST = 0.12  # parsed (not explicit) category is a soft boost, never a hard filter
 PARSED_TYPE_BOOST = 0.05
 AVAILABILITY_FACTOR = {"available": 1.0, "reserved": 0.5, "borrowed": 0.3}
+UPCOMING_FACTOR = 0.6  # `available_from` is still ahead: shown, but below things you can get today
 PROXIMITY_DECAY_MIN = 12.0  # e^(-walk/12)
 FRESHNESS_DECAY_DAYS = 30.0
 UNKNOWN_DISTANCE_PROXIMITY = 0.2

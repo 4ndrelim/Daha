@@ -8,7 +8,7 @@ from app import schemas
 from app.discovery import matching
 from app.discovery.scoring import loc_for, locations
 from app.models import Community, Item, ItemAudience, ItemRequest, Membership, RequestAudience
-from app.services import serializers, value_exchange
+from app.services import availability, serializers, value_exchange
 from app.services.communities import get_community
 from app.services.viewer import ViewerContext
 from app.services.visibility import (
@@ -38,6 +38,7 @@ def _discoverable_items(viewer: ViewerContext) -> list:
         item_visible_clause(viewer),
         Item.visibility != "private",
         Item.status.in_(DISCOVERY_ITEM_STATUSES),
+        availability.not_ended_clause(),  # past its "until" date: gone from every feed
     ]
 
 

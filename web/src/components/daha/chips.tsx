@@ -1,6 +1,7 @@
-import { Footprints } from "lucide-react";
+import { CalendarDays, Footprints } from "lucide-react";
 import type { Category, ItemStatus, TransactionType } from "@/lib/api/types";
 import { categoryInfo, STATUS_LABEL, TX_TYPE_LABEL } from "@/lib/categories";
+import { availabilityNote } from "@/lib/availability";
 import { cn } from "@/lib/utils";
 import { worthChip } from "@/lib/value";
 
@@ -51,4 +52,16 @@ export function InfoChip({ children, className }: { children: React.ReactNode; c
 export function ValueChips({ value, className }: { value: number | null | undefined; className?: string }) {
   if (value == null) return null;
   return <span className={cn(chip, "w-fit bg-reward-50 text-reward-800 tabular-nums", className)}>{worthChip(value)}</span>;
+}
+
+/** "Available from Sat 21 Nov" / "Available until Mon 23 Nov" / "Ended …". Nothing when the item has no dates to mention. */
+export function AvailabilityLine({ item, className }: { item: { available_from?: string | null; available_until?: string | null; available_now?: boolean }; className?: string }) {
+  const note = availabilityNote(item);
+  if (!note) return null;
+  return (
+    <p className={cn("flex min-w-0 items-center gap-1 text-[12px] leading-4", note.kind === "until" ? "text-muted-foreground" : "font-medium text-reward-700", className)}>
+      <CalendarDays className="size-3.5 shrink-0" aria-hidden />
+      <span className="min-w-0 break-words">{note.text}</span>
+    </p>
+  );
 }

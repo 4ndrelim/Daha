@@ -26,7 +26,7 @@ from app.core.config import settings
 from app.discovery.matching import MATCH_STATUSES, score_items
 from app.discovery.scoring import loc_for, locations, proximity, reason
 from app.models import Item, ItemRequest, RequestMatch, User
-from app.services import serializers
+from app.services import availability, serializers
 from app.services.viewer import ViewerContext, build_viewer
 from app.services.visibility import (
     item_visible_clause,
@@ -74,6 +74,7 @@ def _public(*extra) -> list:
         Item.archived.is_(False),
         Item.status.in_(MATCH_STATUSES),
         Item.visibility != "private",
+        availability.in_window_clause(),  # only things that can change hands today
         *extra,
     ]
 

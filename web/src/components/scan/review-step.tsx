@@ -40,7 +40,7 @@ export function ReviewStep({ scan, photos, me, startedAt, aboveNav, onPublished 
   const [edits, setEdits] = useState<Record<string, Row>>({});
   const [extras, setExtras] = useState<Row[]>([]);
   const [visibility, setVisibility] = useState<Visibility | null>(null); // null = My dorm, or Campus without a dorm
-  const [rest, setRest] = useState<Omit<Defaults, "visibility">>({ groupIds: [], type: "auto", pickupPlaceId: null });
+  const [rest, setRest] = useState<Omit<Defaults, "visibility">>({ groupIds: [], type: "auto", pickupPlaceId: null, from: "", until: "" });
   const [showProblems, setShowProblems] = useState(false);
 
   const defaults: Defaults = { ...rest, visibility: visibility ?? defaultVisibility(me) };

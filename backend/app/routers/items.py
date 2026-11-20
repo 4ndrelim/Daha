@@ -4,8 +4,8 @@ from sqlalchemy import select
 from app import schemas
 from app.api.deps import DB, CurrentUser, Viewer
 from app.models import Item, ItemRequest
+from app.services import availability, serializers, transactions, value_exchange
 from app.services import items as items_service
-from app.services import serializers, transactions, value_exchange
 from app.services.notifications import notify
 from app.services.viewer import build_viewer
 
@@ -90,6 +90,9 @@ def borrow_item(item_id: int, body: schemas.BorrowBody, user: CurrentUser, viewe
         raise HTTPException(400, "This is your own item")
     if item.status != "available" or item.visibility == "private":
         raise HTTPException(409, "This item isn't available right now")
+    problem = availability.borrow_problem(item, body.start_date, body.due_date)
+    if problem:
+        raise HTTPException(409, problem)
     if transactions.has_open_transaction(db, item.id, user.id):
         raise HTTPException(409, "You already asked for this item")
     request = None

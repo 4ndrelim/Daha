@@ -4,16 +4,17 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Lock, MapPin, MessageCircle, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronRight, Lock, MapPin, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api, ApiError, track } from "@/lib/api";
 import type { ItemDetail, TransactionType } from "@/lib/api/types";
 import { categoryInfo, CONDITION_LABEL } from "@/lib/categories";
 import { VALUE_EXCHANGE, worthLabel } from "@/lib/value";
-import { firstName, shortDate } from "@/lib/format";
+import { availabilityNote, availabilityRange, campusToday } from "@/lib/availability";
+import { firstName } from "@/lib/format";
 import { invalidatePool } from "@/lib/api/mock/pool";
 import { BackButton } from "@/components/daha/back-button";
-import { CategoryChip, DistanceChip, StatusBadge, TxTypeChip, ValueChips } from "@/components/daha/chips";
+import { AvailabilityLine, CategoryChip, DistanceChip, StatusBadge, TxTypeChip, ValueChips } from "@/components/daha/chips";
 import { Field, fieldClass, PrimaryButton } from "@/components/daha/form";
 import { ItemThumb } from "@/components/daha/item-thumb";
 import { ErrorState, EmptyState } from "@/components/daha/states";
@@ -72,8 +73,14 @@ function BorrowSheet({ item, open, onOpenChange }: { item: ItemDetail; open: boo
   const qc = useQueryClient();
   const a = ACTION[item.transaction_type];
   const [message, setMessage] = useState("");
-  const [start, setStart] = useState("");
+  // Availability dates: the pickers only offer days inside them, and an item that isn't out yet
+  // starts on its first day (so asking ahead works for free and swap items too).
+  const today = campusToday();
+  const earliest = item.available_from && item.available_from > today ? item.available_from : today;
+  const latest = item.available_until ?? undefined;
+  const [start, setStart] = useState(earliest > today ? earliest : "");
   const [due, setDue] = useState("");
+  const note = availabilityNote(item);
   const borrow = useMutation({
     mutationFn: () => api.items.borrow(item.id, { message: message.trim() || null, start_date: start || null, due_date: due || null }),
     onSuccess: (tx) => {
@@ -81,7 +88,8 @@ function BorrowSheet({ item, open, onOpenChange }: { item: ItemDetail; open: boo
       toast.success(`Sent! ${firstName(item.owner.name)} will get a notification.`);
       router.push(`/messages/${tx.conversation_id}`);
     },
-    onError: (e) => toast.error(e instanceof ApiError && e.status === 409 ? "Someone just got there first, or you already asked." : "Couldn't send. Try again?"),
+    // The server's 409s are written for people ("… is available from Sat 21 Nov. Pick a start date on or after that.").
+    onError: (e) => toast.error(e instanceof ApiError && e.status === 409 ? e.detail || "Someone just got there first, or you already asked." : "Couldn't send. Try again?"),
   });
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -92,13 +100,19 @@ function BorrowSheet({ item, open, onOpenChange }: { item: ItemDetail; open: boo
             <textarea id="msg" rows={3} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={a.placeholder}
               className={cn(fieldClass, "h-auto py-3")} maxLength={500} />
           </Field>
+          {note && (
+            <p className="flex items-start gap-1.5 rounded-xl bg-muted px-3 py-2 text-[13px]">
+              <CalendarDays className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <span>{note.text}.{item.transaction_type === "lend" ? " Pick dates inside that." : note.kind === "upcoming" ? " You can ask now and pick it up then." : ""}</span>
+            </p>
+          )}
           {item.transaction_type === "lend" && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
               <Field label="From" htmlFor="start">
-                <input id="start" type="date" value={start} onChange={(e) => setStart(e.target.value)} className={fieldClass} />
+                <input id="start" type="date" value={start} min={earliest} max={latest} onChange={(e) => setStart(e.target.value)} className={fieldClass} />
               </Field>
               <Field label="Back by" htmlFor="due" hint={item.max_lend_days ? `Up to ${item.max_lend_days} days` : undefined}>
-                <input id="due" type="date" value={due} min={start || undefined} onChange={(e) => setDue(e.target.value)} className={fieldClass} />
+                <input id="due" type="date" value={due} min={start || earliest} max={latest} onChange={(e) => setDue(e.target.value)} className={fieldClass} />
               </Field>
             </div>
           )}
@@ -195,6 +209,7 @@ export default function ItemPage() {
   }
 
   const i = item.data;
+  const dates = availabilityNote(i);
   const a = ACTION[i.transaction_type];
   const cat = categoryInfo(i.category);
 
@@ -218,6 +233,17 @@ export default function ItemPage() {
         </h1>
         {!VALUE_EXCHANGE && i.value_usd != null && <p className="text-[14px] text-muted-foreground">{worthLabel(i.value_usd)}</p>}
         <DistanceChip min={i.distance_min} label={i.community_label} />
+        {dates && dates.kind !== "until" && (
+          <p role="status" className="flex items-start gap-1.5 rounded-xl bg-reward-50 px-3 py-2 text-[14px] font-medium text-reward-700">
+            <CalendarDays className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              {dates.text}
+              {dates.kind === "upcoming" && !i.is_mine && ". You can ask now and pick it up then."}
+              {dates.kind === "ended" && (i.is_mine ? ". Nobody can find it until you change the dates." : ". It isn't being shared anymore.")}
+            </span>
+          </p>
+        )}
+        {dates?.kind === "until" && <AvailabilityLine item={i} className="text-[13px]" />}
         {i.visibility === "private" && (
           <p className="flex items-center gap-1.5 rounded-xl bg-muted px-3 py-2 text-[13px]">
             <Lock className="size-4" /> Only you can see this. {i.pings_enabled ? "We'll quietly ping you if someone nearby needs one." : "Pings are off."}
@@ -232,11 +258,7 @@ export default function ItemPage() {
       <dl className="space-y-2.5 rounded-2xl bg-card p-4 text-[14px] ring-1 ring-border/60">
         <div className="flex justify-between gap-3">
           <dt className="text-muted-foreground">Available</dt>
-          <dd className="text-right">
-            {i.available_from || i.available_until
-              ? `${i.available_from ? shortDate(i.available_from) : "Now"} – ${i.available_until ? shortDate(i.available_until) : "whenever"}`
-              : "Anytime"}
-          </dd>
+          <dd className="text-right">{availabilityRange(i)}</dd>
         </div>
         {i.transaction_type === "lend" && i.max_lend_days && (
           <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Lend for up to</dt><dd>{i.max_lend_days} days</dd></div>
@@ -270,7 +292,7 @@ export default function ItemPage() {
               </Link>
             ) : (
               <span className="flex h-12 flex-1 items-center justify-center rounded-full bg-muted font-semibold text-muted-foreground">
-                {i.status === "available" ? "Not available to you" : i.status === "borrowed" ? "Lent out right now" : i.status === "reserved" ? "Reserved" : "Not available"}
+                {dates?.kind === "ended" ? "No longer available" : i.status === "available" ? "Not available to you" : i.status === "borrowed" ? "Lent out right now" : i.status === "reserved" ? "Reserved" : "Not available"}
               </span>
             )}
           </div>

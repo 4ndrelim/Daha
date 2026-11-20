@@ -2,6 +2,7 @@
 
 import { Check, Lock, MapPin } from "lucide-react";
 import type { ID, Me, Place, Visibility } from "@/lib/api/types";
+import { AvailabilityFields } from "@/components/daha/availability-fields";
 import { cn } from "@/lib/utils";
 import { NativeSelect, Segmented, type SegmentOption } from "./controls";
 import type { Defaults, DefaultType } from "./review-model";
@@ -76,6 +77,8 @@ export function DefaultsBar({ me, places, defaults, onChange }: {
           ))}
         </NativeSelect>
       </div>
+
+      <AvailabilityFields idPrefix="scan" from={defaults.from} until={defaults.until} onChange={onChange} />
     </section>
   );
 }
