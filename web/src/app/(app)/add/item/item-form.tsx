@@ -8,9 +8,11 @@ import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import type { Category, Condition, ID, ItemCreate, ItemDetail, TransactionType, Visibility } from "@/lib/api/types";
 import { CATEGORIES, categoryInfo, CONDITION_LABEL, TX_TYPE_LABEL } from "@/lib/categories";
+import { datesProblem } from "@/lib/availability";
 import { useMe } from "@/lib/queries/me";
 import { valueExchangeOn } from "@/lib/value";
 import { invalidatePool } from "@/lib/api/mock/pool";
+import { AvailabilityFields } from "@/components/daha/availability-fields";
 import { ChoicePills } from "@/components/daha/choice-pills";
 import { Field, fieldClass, PrimaryButton } from "@/components/daha/form";
 import { PhotoPicker, type PickedPhoto } from "@/components/daha/photo-picker";
@@ -143,6 +145,8 @@ function ItemFormBody({ editId, initial, initialPhotos }: { editId: ID | null; i
     if (f.visibility === "groups" && f.groupIds.length === 0) errs.groups = "Pick at least one group";
     setErrors(errs);
     if (Object.keys(errs).length) return;
+    const dates = datesProblem(f.from, f.until); // also shown under the date fields
+    if (dates) { toast.error(dates); return; }
     if (photos.some((p) => !p.upload && !p.key.startsWith("img-"))) {
       toast.message("Wait a sec, photos are still uploading.");
       return;
@@ -233,14 +237,7 @@ function ItemFormBody({ editId, initial, initialPhotos }: { editId: ID | null; i
         </Field>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Available from" htmlFor="from">
-          <input id="from" type="date" value={f.from} onChange={(e) => set("from", e.target.value)} className={fieldClass} />
-        </Field>
-        <Field label="Until" htmlFor="until">
-          <input id="until" type="date" value={f.until} min={f.from || undefined} onChange={(e) => set("until", e.target.value)} className={fieldClass} />
-        </Field>
-      </div>
+      <AvailabilityFields idPrefix="item" from={f.from} until={f.until} onChange={(patch) => setF((prev) => ({ ...prev, ...patch }))} />
 
       <section className="space-y-2">
         <h2 className="text-[13px] font-medium">Who can see it?</h2>

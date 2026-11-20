@@ -1492,5 +1492,57 @@
   "key": "jordan-suitcase",
   "max_lend_days": 14,
   "days_ago": 6
+ },
+ {
+  "name": "Ski jacket and snow pants (M)",
+  "description": "Warm and waterproof. Back from the cleaners in a couple of days, free to borrow after that.",
+  "category": "clothing",
+  "condition": "good",
+  "type": "lend",
+  "owner": "jordan",
+  "vis": "campus",
+  "key": "jordan-ski-jacket",
+  "max_lend_days": 7,
+  "days_ago": 2,
+  "avail": {"from": 2, "until": 23}
+ },
+ {
+  "name": "Mini projector with HDMI cable",
+  "description": "Movie-night size. I'm using it for a class demo first, yours after.",
+  "category": "tech",
+  "condition": "like_new",
+  "type": "lend",
+  "owner": "leo",
+  "vis": "campus",
+  "key": "leo-mini-projector",
+  "max_lend_days": 3,
+  "days_ago": 1,
+  "avail": {"from": 3}
+ },
+ {
+  "name": "Folding hand truck (dolly)",
+  "description": "Holds about 150 lb. Around until I leave for winter break.",
+  "category": "moving",
+  "condition": "good",
+  "type": "lend",
+  "owner": "priya",
+  "vis": "campus",
+  "key": "priya-hand-truck",
+  "max_lend_days": 2,
+  "days_ago": 3,
+  "avail": {"until": 12}
+ },
+ {
+  "name": "Camping stove with one fuel canister",
+  "description": "Two burners. Out on a trip this week, back next week.",
+  "category": "sports",
+  "condition": "good",
+  "type": "lend",
+  "owner": "alex",
+  "vis": "campus",
+  "key": "alex-camping-stove",
+  "max_lend_days": 4,
+  "days_ago": 4,
+  "avail": {"from": 6, "until": 30}
  }
 ]

@@ -43,14 +43,17 @@ class ItemCard(Schema):
     match_score: float | None  # only in search/match/fulfillable responses, else null
     match_reason: str | None
     value_usd: int | None = None  # estimated new price in US dollars; null if unset or flag off
+    # Availability dates (campus calendar days, inclusive; both optional). `available_now` is
+    # false while `available_from` is still ahead or once `available_until` has passed.
+    available_from: date | None = None
+    available_until: date | None = None
+    available_now: bool = True
 
 
 class ItemDetail(ItemCard):
     description: str | None
     images: list[ItemImage]
     max_lend_days: int | None
-    available_from: date | None
-    available_until: date | None
     pickup_place: Place | None
     pickup_note: str | None  # owner, or counterparty of an accepted/handed_off transaction
     group_ids: list[ID]  # owner only, else []

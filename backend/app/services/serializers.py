@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app import schemas
 from app.core.config import settings
-from app.core.geo import distance_min
+from app.core.geo import campus_today, distance_min
 from app.models import (
     Community,
     ConversationParticipant,
@@ -27,7 +27,7 @@ from app.models import (
     Upload,
     User,
 )
-from app.services import points, value_exchange
+from app.services import availability, points, value_exchange
 from app.services.viewer import ViewerContext
 from app.services.visibility import (
     DISCOVERY_ITEM_STATUSES,
@@ -348,6 +348,7 @@ def item_cards(
         thumbs.setdefault(item_id, url)
 
     scores = scores or {}
+    today = campus_today()
     out = []
     for i in items:
         dorm = dorms.get(i.owner_id)
@@ -371,6 +372,9 @@ def item_cards(
                 match_score=score,
                 match_reason=reason,
                 value_usd=i.value_usd if settings.item_value_enabled else None,
+                available_from=i.available_from,
+                available_until=i.available_until,
+                available_now=availability.available_now(i, today),
             )
         )
     return out
@@ -427,8 +431,6 @@ def item_detail(db: Session, item: Item, viewer: ViewerContext) -> schemas.ItemD
         description=item.description,
         images=images,
         max_lend_days=item.max_lend_days,
-        available_from=item.available_from,
-        available_until=item.available_until,
         pickup_place=place_out(place, viewer) if place else None,
         pickup_note=item.pickup_note if can_see_note else None,
         group_ids=group_ids,
@@ -439,6 +441,7 @@ def item_detail(db: Session, item: Item, viewer: ViewerContext) -> schemas.ItemD
             and not item.archived
             and item.status == "available"
             and item.visibility != "private"
+            and availability.window(item) != "ended"
             and not my_txs
         ),
         active_transaction_id=active.id if active else None,

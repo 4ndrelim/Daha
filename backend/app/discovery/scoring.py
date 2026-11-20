@@ -74,12 +74,17 @@ def freshness(created_at: datetime) -> float:
 STATUS_LABEL = {"available": "Available", "reserved": "Reserved", "borrowed": "Borrowed now"}
 
 
-def reason(viewer: ViewerContext, loc: Loc, status: str | None = None) -> str:
+def reason(
+    viewer: ViewerContext, loc: Loc, status: str | None = None, label: str | None = None
+) -> str:
+    """`label` replaces the status word, e.g. "From Fri 21 Nov" for an item that isn't out yet."""
     parts = []
     if viewer.dorm_id is not None and loc.dorm_id == viewer.dorm_id:
         parts.append("Same dorm")
     if loc.distance is not None:
         parts.append(f"{loc.distance} min walk")
-    if status:
+    if label:
+        parts.append(label)
+    elif status:
         parts.append(STATUS_LABEL.get(status, status.title()))
     return " · ".join(parts) or "On campus"

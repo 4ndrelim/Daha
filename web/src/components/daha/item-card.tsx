@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ItemCard as ItemCardT } from "@/lib/api/types";
-import { DistanceChip, StatusBadge, TxTypeChip, ValueChips } from "./chips";
+import { AvailabilityLine, DistanceChip, StatusBadge, TxTypeChip, ValueChips } from "./chips";
 import { ItemThumb } from "./item-thumb";
 import { UserAvatar } from "./user-avatar";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ export function ItemCard({ item, className, onClick }: { item: ItemCardT; classN
           <TxTypeChip type={item.transaction_type} />
           {item.status !== "available" && <StatusBadge status={item.status} />}
         </div>
+        <AvailabilityLine item={item} />
         <div className="flex items-center justify-between gap-1">
           <DistanceChip min={item.distance_min} label={item.same_dorm ? item.owner.dorm_name?.split(" ")[0] ?? undefined : item.community_label} className="min-w-0 truncate" />
           <UserAvatar user={item.owner} className="size-6 shrink-0" />

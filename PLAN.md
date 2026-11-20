@@ -361,6 +361,9 @@ export interface ItemCard {
   match_score: number | null;    // only in search/match/fulfillable responses, else null
   match_reason: string | null;   // e.g. "Same dorm · 2 min walk"
   value_usd?: number | null;     // ITEM_VALUE_ENABLED: estimated new price, whole US dollars; display only
+  // Availability dates (docs/plans/availability-dates.md): campus calendar days, inclusive, both optional.
+  available_from?: ISODate | null; available_until?: ISODate | null;
+  available_now?: boolean;       // false while available_from is ahead, or once available_until has passed
 }
 export interface ItemDetail extends ItemCard {
   description: string | null; images: ItemImage[]; max_lend_days: number | null;
@@ -590,7 +593,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | A | `POST /items/batch` | `ItemsBatchBody` | `ItemsBatchResponse` 201 | ≤ 30 items in one transaction, with the same validation as `POST /items`. Used by the "tick what you have" checklist |
 | A | `GET /items/{id}` · `PATCH` · `DELETE` | `ItemUpdate` | `ItemDetail` / 204 | Owner-only writes; DELETE sets `archived=true` |
 | A | `GET /me/items` | `status?` | `ItemCard[]` | All my non-archived items |
-| A | `POST /items/{id}/borrow` | `BorrowBody` | `Transaction` 201 | 409 if the item isn't available or the viewer already has an open transaction on it |
+| A | `POST /items/{id}/borrow` | `BorrowBody` | `Transaction` 201 | 409 if the item isn't available or the viewer already has an open transaction on it. Also 409, with a sentence to show the person, when the dates fall outside the item's `available_from`/`available_until` (no `start_date` means today on campus); asking ahead with a `start_date` inside the dates is allowed |
 | A | `POST /requests` | `RequestCreate` | `RequestDetail` 201 | Schedules `on_request_created` |
 | A | `GET /requests/{id}` · `PATCH` | `RequestUpdate` | `RequestDetail` | Requester-only writes; edits schedule `on_request_updated` |
 | A | `GET /me/requests` | | `RequestCard[]` | |
@@ -616,7 +619,7 @@ export interface ScanPublishResponse { items: ItemDetail[]; points_awarded: numb
 | A | `GET /notifications/unread-count` | | `UnreadCounts` | |
 | A | `POST /notifications/read` | `MarkReadBody` | 204 | |
 | A | `POST /events` | `EventsBody` | 204 | Never fails the client |
-| C | `GET /search` | `q, kind=all\|items\|requests\|communities, category, community_id, scope=campus\|dorm, max_walk_min, transaction_type, condition, available_only=true, offset, limit` | `SearchResponse` | Explicit params override what was parsed from `q`; an empty `q` = browse |
+| C | `GET /search` | `q, kind=all\|items\|requests\|communities, category, community_id, scope=campus\|dorm, max_walk_min, transaction_type, condition, available_only=true, offset, limit` | `SearchResponse` | Explicit params override what was parsed from `q`; an empty `q` = browse. Availability dates: items past `available_until` are never returned; items whose `available_from` is still ahead are hidden while `available_only` is true and returned (ranked lower, `match_reason` "From Sat 21 Nov") when it is false; a query that names dates ("this weekend") is judged on those dates |
 | C | `POST /search/commercial` | `CommercialSearchBody` | `CommercialSearchResponse` | Buy or rent nearby (C6). Only the cleaned words and a ~1 km area reach Exa. Area: typed place → the phone's location (when allowed) → Stanford campus (`plans/LOCATION.md`). Cached per (words, area); 400 if no specific words; 429 at the daily cap or monthly budget; 503 when `off` or not set up |
 | C | `GET /feed/home` | | `HomeFeed` | |
 | C | `GET /communities/{id}/feed` | `kind=all\|items\|requests, offset, limit` | `Page<FeedEntry>` | Newest first |

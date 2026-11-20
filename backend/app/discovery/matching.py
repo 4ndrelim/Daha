@@ -34,6 +34,7 @@ from app.models import (
     RequestMatch,
     User,
 )
+from app.services import availability
 from app.services.notifications import notify
 from app.services.viewer import ViewerContext, build_viewer
 from app.services.visibility import item_visible_clause, request_is_expired
@@ -186,6 +187,7 @@ def _match(db: Session, req: ItemRequest) -> None:
     base = [
         Item.archived.is_(False),
         Item.status.in_(MATCH_STATUSES),
+        availability.fits_request(req),  # available on a day the request is for
         Item.owner_id != req.requester_id,
         _owner_can_view(aud_ids),
     ]
@@ -286,6 +288,7 @@ def visible_matches(
             RequestMatch.anonymous.is_(False),
             Item.visibility != "private",
             Item.status.in_(("available", "reserved", "borrowed")),
+            availability.fits_request(req),
             item_visible_clause(viewer),
         )
         .order_by(RequestMatch.score.desc(), Item.id)
@@ -331,6 +334,7 @@ def reverse_match_item(item_id: int) -> None:
             not item.archived
             and item.status in MATCH_STATUSES
             and (item.visibility != "private" or item.pings_enabled)
+            and availability.window(item) != "ended"
         )
         if not live:
             db.commit()
@@ -344,6 +348,7 @@ def reverse_match_item(item_id: int) -> None:
         conds = [
             ItemRequest.status == "open",
             request_not_expired_clause(),
+            availability.requests_fitting_item_clause(item),
             ItemRequest.requester_id != item.owner_id,
             owner_can_view,
         ]
@@ -430,6 +435,7 @@ def fulfillable(db: Session, viewer: ViewerContext, limit: int = cfg.FULFILLABLE
             Item.owner_id == viewer.user_id,
             Item.archived.is_(False),
             Item.status == "available",
+            availability.fits_joined_request_clause(),
             request_visible_clause(viewer),
             ItemRequest.requester_id != viewer.user_id,
             ItemRequest.status == "open",

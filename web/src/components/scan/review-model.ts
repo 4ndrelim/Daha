@@ -1,4 +1,5 @@
 import type { Category, Condition, Detection, ID, Me, ScanPublishItem, TransactionType, Visibility } from "@/lib/api/types";
+import { datesProblem } from "@/lib/availability";
 
 export type DefaultType = "auto" | TransactionType;
 
@@ -32,6 +33,9 @@ export interface Defaults {
   groupIds: ID[];
   type: DefaultType;
   pickupPlaceId: ID | null;
+  /** Availability dates for everything in this batch ("" = not set). */
+  from: string;
+  until: string;
 }
 
 export const NAME_MAX = 120;
@@ -78,6 +82,7 @@ export function rowProblem(row: Row, defaults: Defaults, me: Me | undefined): st
   const v = effectiveVisibility(row, defaults);
   if (v === "dorm" && !me?.dorm) return "Pick a dorm in your profile first, or share with Campus";
   if (v === "groups" && defaults.groupIds.length === 0) return "Pick at least one group";
+  if (datesProblem(defaults.from, defaults.until)) return "Fix the availability dates above";
   return null;
 }
 
@@ -95,6 +100,8 @@ export function toPublishItem(row: Row, defaults: Defaults, withValue = false): 
     visibility,
     group_ids: visibility === "groups" ? defaults.groupIds : [],
     pickup_place_id: defaults.pickupPlaceId,
+    available_from: defaults.from || null,
+    available_until: defaults.until || null,
     image_upload_ids: [], // empty → the server crops the scan photo to the detection's bbox
     pings_enabled: true,
   };

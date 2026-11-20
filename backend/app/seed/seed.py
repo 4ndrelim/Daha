@@ -238,8 +238,14 @@ class DemoSeeder:
                     visibility = "dorm"
 
             available_from = available_until = None
-            if row.get("avail") == "weekend":
+            avail = row.get("avail")
+            if avail == "weekend":
                 available_from, available_until = self.weekend()
+            elif isinstance(avail, dict):  # days from today, e.g. {"from": 2, "until": 23}
+                if avail.get("from") is not None:
+                    available_from = self.today + timedelta(days=avail["from"])
+                if avail.get("until") is not None:
+                    available_until = self.today + timedelta(days=avail["until"])
 
             if row.get("days_ago") is not None:
                 # A fixed age draws nothing from the random stream, so adding such a row never

@@ -11,7 +11,7 @@ from app import schemas
 from app.core.config import settings
 from app.discovery import hooks
 from app.models import Item, ItemAudience, ItemImage, Place, PointsLedger, Upload, User
-from app.services import points
+from app.services import availability, points
 from app.services.viewer import ViewerContext
 from app.services.visibility import item_visible_clause, resolve_audiences
 
@@ -19,11 +19,17 @@ MAX_IMAGES = 6
 MAX_BATCH = 30
 
 
-def _validate_core(category: str, transaction_type: str, available_from, available_until) -> None:
+def _validate_core(
+    category: str, transaction_type: str, available_from, available_until, check_past: bool = True
+) -> None:
     if category == "services" and transaction_type == "lend":
         raise HTTPException(400, "Services can be free or a swap, but not lent")
     if available_from and available_until and available_from > available_until:
         raise HTTPException(400, "The availability end date is before the start date")
+    if check_past:  # only when the dates were just typed: an old item stays editable
+        problem = availability.dates_problem(available_from, available_until)
+        if problem:
+            raise HTTPException(400, problem)
 
 
 def _validate_place(db: Session, place_id: int | None) -> None:
@@ -159,7 +165,13 @@ def update_item(
     if "value_usd" in sent and settings.item_value_enabled:
         item.value_usd = data.value_usd  # null clears it
 
-    _validate_core(item.category, item.transaction_type, item.available_from, item.available_until)
+    _validate_core(
+        item.category,
+        item.transaction_type,
+        item.available_from,
+        item.available_until,
+        check_past=bool({"available_from", "available_until"} & sent),
+    )
     if "pickup_place_id" in sent:
         _validate_place(db, item.pickup_place_id)
 
